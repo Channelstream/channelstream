@@ -20,7 +20,7 @@ def cli_start():
         'gc_channels_after': 3600 * 72,
         'wake_connections_after': 5,
         'allow_posting_from': [],
-        'port': 8088,
+        'port': 8000,
         'host': '0.0.0.0',
         'debug': False,
         'status_codes': {

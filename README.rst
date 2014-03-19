@@ -1,12 +1,12 @@
-channelstreama
+channelstream
 =============
 usage::
 
     YOUR_PYTHON_ENV/bin/channelstream
     
-you can also see simple pyramid demo includedin the package, open your browser and point it to following url:
+you can also see simple pyramid demo included in the package, open your browser and point it to following url:
 
-http://localhost:8088/demo
+http://127.0.0.1:8000/demo
 
 
 Data format and endpoints

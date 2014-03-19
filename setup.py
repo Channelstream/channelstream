@@ -13,18 +13,14 @@ setup(name='channelstream',
       zip_safe=True,
       packages=find_packages(),
       include_package_data=True,
-      package_data={
-          '': ['*.txt', '*.rst', '*.ini', '*.mak'],
-          'channelstream': ['wsgi_views','templates/*.jinja2', 'static'],
-      },
       install_requires=[
           'gevent>=1.0',
           'gevent-websocket>=0.9.3',
           'pyramid',
           'pyramid_jinja2',
       ],
-      entry_points="""
-      [console_scripts]
-      channelstream = channelstream.cli:cli_start
-      """,
-      )
+    entry_points = {
+        'console_scripts': [
+            'channelstream = channelstream.cli:cli_start',
+        ],
+        })
