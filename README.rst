@@ -5,9 +5,11 @@ Basic usage::
     YOUR_PYTHON_ENV/bin/channelstream
 
 
-You can also see simple pyramid/angularjs demo included in the package, open your browser and point it to following url::
+You can also see simple pyramid/angularjs demo included, open your browser and point it to following url::
 
     http://127.0.0.1:8000/demo
+
+**To run the demo you will need to have the `requests` package installed in your environment**
 
 Possible config options for the server::
 

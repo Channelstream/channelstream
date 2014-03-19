@@ -10,11 +10,14 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
     $scope.conn_id = null;
     $scope.websocket = null;
 
+    var webapp_url = window.location.toString();
+    var server_url = webapp_url.replace('/demo', '/ws').replace('http://', 'ws://');
+
     $scope.subscribe_channel = function () {
         var json_data = {
             channels: ['notify'],
             conn_id: $scope.conn_id };
-        $http({method: 'POST', url: app_config.webapp_url + '/subscribe', data: json_data}).
+        $http({method: 'POST', url: webapp_url + '/subscribe', data: json_data}).
             success(function (data, status, headers, config) {
                 $scope.channels = data;
             }).
@@ -28,7 +31,7 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
         var json_data = {message: $scope.message,
             channel: $scope.selected_channel.value,
             user: $scope.user.user_name };
-        $http({method: 'POST', url: app_config.webapp_url + '/message', data: json_data}).
+        $http({method: 'POST', url: webapp_url + '/message', data: json_data}).
             success(function (data, status, headers, config) {
                 $scope.message = ''
             }).
@@ -42,12 +45,12 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
         'channels': $scope.channels
     }
 
-    $http({method: 'POST', url: app_config.webapp_url + '/connect', data: json_data}).
+    $http({method: 'POST', url: webapp_url + '/connect', data: json_data}).
         success(function (data, status, headers, config) {
             console.log(data);
             $scope.conn_id = data.conn_id;
-            console.log(app_config.server_url + '/ws?conn_id=' + $scope.conn_id)
-            $scope.websocket = new WebSocket(app_config.server_url + '/ws?conn_id=' + $scope.conn_id);
+            console.log(server_url + '/ws?conn_id=' + $scope.conn_id)
+            $scope.websocket = new WebSocket(server_url + '/ws?conn_id=' + $scope.conn_id);
             $scope.websocket.onopen = function (event) {
                 console.log('open');
             };
