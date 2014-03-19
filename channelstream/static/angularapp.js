@@ -11,7 +11,8 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
     $scope.websocket = null;
 
     var webapp_url = window.location.toString();
-    var server_url = webapp_url.replace('/demo', '/ws').replace('http://', 'ws://');
+    var ws_url = webapp_url.replace('/demo', '').replace('http://', 'ws://');
+    var longpoll_url = webapp_url.replace('/demo', '').replace('http://', '//');
 
     $scope.subscribe_channel = function () {
         var json_data = {
@@ -41,39 +42,64 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
             });
     }
 
+    var on_message = function (data) {
+        console.log('message');
+        $scope.$apply(function (scope) {
+            _.each(data, function (message) {
+                if (scope.stream.length > 10) {
+                    scope.stream.shift();
+                }
+                scope.stream.push(message);
+
+            });
+        });
+    }
+    var on_close = function (event) {
+        console.log('closed');
+    }
+    var on_error = function () {
+        console.log('error');
+    }
+    var on_open = function (event) {
+        console.log('open');
+    }
     var json_data = {'user': $scope.user.user_name,
         'channels': $scope.channels
     }
 
+    var poll = function (url) {
+        $http({method: 'GET', url: longpoll_url + '/listen?conn_id=' + $scope.conn_id}).
+            success(function (data, status, headers, config) {
+                console.log(data);
+                setTimeout(function(){on_message(data)},0);
+                poll(url);
+            }).
+            error(function (data, status, headers, config) {
+                on_error()
+            });
+    }
+
+    var use_websocket = true;
     $http({method: 'POST', url: webapp_url + '/connect', data: json_data}).
         success(function (data, status, headers, config) {
-            console.log(data);
             $scope.conn_id = data.conn_id;
-            console.log(server_url + '/ws?conn_id=' + $scope.conn_id)
-            $scope.websocket = new WebSocket(server_url + '/ws?conn_id=' + $scope.conn_id);
-            $scope.websocket.onopen = function (event) {
-                console.log('open');
-            };
-            $scope.websocket.onmessage = function (event) {
-                var data = JSON.parse(event.data);
-                console.log('message');
-                $scope.$apply(function (scope) {
-                    _.each(data, function (message) {
-                        if (scope.stream.length > 10) {
-                            scope.stream.shift();
-                        }
-                        scope.stream.push(message);
-
-                    });
-                });
-            };
-            $scope.websocket.onclose = function (event) {
-                console.log('closed');
-            };
-
-            $scope.websocket.onerror = function (event) {
-                console.log('error');
-            };
+            if (use_websocket) {
+                var url = ws_url + '/ws?conn_id=' + $scope.conn_id;
+                console.log(url);
+                $scope.websocket = new WebSocket(url);
+                $scope.websocket.onopen = on_open;
+                $scope.websocket.onmessage = function (event) {
+                    on_message(JSON.parse(event.data));
+                };
+                $scope.websocket.onclose = on_close;
+                $scope.websocket.onerror = on_error;
+            }
+            else {
+                $scope.conn_id = data.conn_id;
+                var url = longpoll_url + '/listen?conn_id=' + $scope.conn_id;
+                console.log(url);
+                poll(url);
+            }
         }).
         error(function (data, status, headers, config) {
             // called asynchronously if an error occurs

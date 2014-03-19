@@ -4,14 +4,17 @@ from datetime import datetime
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget
+from pyramid.response import Response
 
 from channelstream import total_messages, started_on, total_unique_messages
 from channelstream.user import User, users
 from channelstream.connection import Connection, connections
 from channelstream.channel import Channel, channels
-
+from channelstream.ext_json import json
+from gevent.queue import Queue, Empty
 
 log = logging.getLogger(__name__)
+
 
 class ServerViews(object):
     def __init__(self, request):
@@ -84,6 +87,61 @@ class ServerViews(object):
             if user.user_name in channel.connections:
                 subscribed_channels.append(channel.name)
         return subscribed_channels
+
+
+    @view_config(route_name='action', match_param='action=listen',
+                 request_method="OPTIONS", renderer='string')
+    def handle_CORS(self):
+        self.request.response.headers.add('Access-Control-Allow-Origin', '*')
+        self.request.response.headers.add('XDomainRequestAllowed', '1')
+        self.request.response.headers.add('Access-Control-Allow-Methods',
+                                          'GET, POST, OPTIONS, PUT')
+        self.request.response.headers.add('Access-Control-Allow-Headers',
+                                          'Content-Type, Depth, User-Agent, '
+                                          'X-File-Size, X-Requested-With, '
+                                          'If-Modified-Since, X-File-Name, '
+                                          'Cache-Control, Pragma, Origin, '
+                                          'Connection, Referer, Cookie')
+        self.request.response.headers.add('Access-Control-Max-Age', '86400')
+        # self.request.response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return {}
+
+    @view_config(route_name='action', match_param='action=listen',
+                 renderer='string')
+    def listen(self):
+        config = self.request.registry.server_config
+        self.conn_id = self.request.params.get('conn_id')
+        connection = connections.get(self.conn_id)
+        if not connection:
+            raise HTTPUnauthorized()
+        # attach a queue to connection
+        connection.queue = Queue()
+
+        def yield_response():
+            # for chrome issues
+            # yield ' ' * 1024
+            # wait for this to wake up
+            messages = []
+            # block for first message - wake up after a while
+            try:
+                messages.extend(connection.queue.get(
+                    timeout=config['wake_connections_after']))
+            except Empty as e:
+                pass
+            # get more messages if enqueued takes up total 0.25s
+            while True:
+                try:
+                    messages.extend(connection.queue.get(timeout=0.25))
+                except Empty as e:
+                    break
+            cb = self.request.params.get('callback')
+            if cb:
+                yield cb + '(' + json.dumps(messages) + ')'
+            else:
+                yield json.dumps(messages)
+
+        return Response(app_iter=yield_response(), request=self.request,
+                        content_type='application/json')
 
     @view_config(route_name='action', match_param='action=user_status',
                  renderer='json', permission='access')
@@ -169,7 +227,8 @@ class ServerViews(object):
             })
         return json_data
 
-    @view_config(context='channelstream.wsgi_views.wsgi_security:RequestBasicChannenge')
+    @view_config(
+        context='channelstream.wsgi_views.wsgi_security:RequestBasicChannenge')
     def admin_challenge(self):
         response = HTTPUnauthorized()
         response.headers.update(forget(self.request))

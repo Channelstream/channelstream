@@ -16,6 +16,7 @@ class ChatApplication(WebSocketApplication):
             # close connection instantly if user played with id
             self.ws.close()
         else:
+            # attach a socket to connection
             connections[self.conn_id].socket = self
 
 

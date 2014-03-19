@@ -26,17 +26,19 @@ class Connection(object):
         return '<Connection: id:%s, owner:%s>' % (self.id, self.user_name)
 
     def add_message(self, message=None):
+        # handle websockets
         if self.socket:
-            self.last_active = datetime.datetime.utcnow()
             if message:
                 self.socket.ws.send(json.dumps([message]))
             else:
                 self.socket.ws.send(json.dumps([]))
         else:
+            # handle long polling
             if message:
-                self.queue.put(json.dumps([message]))
+                self.queue.put([message])
             else:
-                self.queue.put(json.dumps([]))
+                self.queue.put([])
+        self.last_active = datetime.datetime.utcnow()
 
     def mark_for_gc(self):
         # set last active time for connection 1 hour in past for GC
