@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dumb admin ;-)</title>
+</head>
+<body>
+
+<h1>Unique users remembered: {{ remembered_user_count }}</h1>
+
+<h1>Unique users connected: {{ unique_user_count }}</h1>
+
+<h1>Total connections: {{ total_connections }}</h1>
+
+<h1>Uptime: {{ uptime }}</h1>
+
+<h1>Messages since start: {{ total_unique_messages }}</h1>
+
+<h1>All frames sent: {{ total_messages }}</h1>
+
+<h2>Channels</h2>
+<ul>
+    {% for channel in channels.values() %}
+        <li><strong>{{ channel.name }}</strong>
+            - {{ channel.connections |length }} users subscribed<br/>
+            <h4>Config</h4>
+            <ul>
+                <li><strong>Name</strong> --> {{ channel.name }}</li>
+                <li><strong>Long Name</strong> --> {{ channel.long_name }}</li>
+                <li><strong>Presence</strong> --> {{ channel.presence }}</li>
+                <li><strong>Salvagable</strong> --> {{ channel.salvagable }}
+                </li>
+                <li><strong>Store History</strong>
+                    --> {{ channel.store_history }}</li>
+                <li><strong>History Size</strong> --> {{ channel.history_size }}
+                </li>
+            </ul>
+
+            <h4>Connections</h4>
+            <ul>
+                {% for user, conns in channel.connections.items() |sort %}
+                    <li><strong>{{ user }}</strong> : {{ conns|length }}
+                        connections
+                    </li>
+                {% endfor %}
+            </ul>
+        </li>
+        <br/>
+    {% endfor %}
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html ng-app="channelstreamApp">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat demo</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.14/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"
+          rel="stylesheet">
+    <script src="/static/angularapp.js"></script>
+</head>
+<script type="text/javascript">
+    var app_config = {
+        webapp_url: '{{ webapp_url }}',
+        server_url: '{{ server_url }}'
+    }
+</script>
+
+<body ng-controller="chatCtl">
+
+<div class="container">
+    <hr/>
+    <div class="messages">
+        {% raw %}
+        <div class="message" ng-repeat="message in stream">
+            [<span
+                class="channel {{ message.channel }}">{{ message.channel }}</span>]
+            <strong>{{ message.user }}</strong>: {{ message.message }}
+        </div>
+        {% endraw %}
+    </div>
+    <hr/>
+    <form id="msg_form" method="post" ng-submit="send_message()">
+        <div class="form-group">
+
+            {% raw %}
+            <label for="user">Channels you are subscribed and can send
+                to:</label>
+
+            <div class="radio" ng-repeat="chan in channels">
+                <label>
+                    <input type="radio" name="channel"
+                           value="{{chan}}"
+                           ng-model="selected_channel.value"> {{ chan }}
+                </label>
+            </div>
+            {% endraw %}
+        </div>
+
+        <div class="form-group">
+            <label for="user">User Name</label>
+            <input type="text" class="form-control" id="user"
+                   placeholder="Your username" ng-model="user.user_name">
+        </div>
+        <div class="form-group">
+            <label for="message">Message</label>
+            <input type="text" class="form-control" id="message"
+                   placeholder="Your message" ng-model="message">
+        </div>
+        <input type="submit" value="send message" class="btn btn-primary">
+
+        <a class="btn btn-default" ng-click="subscribe_channel()">Subscribe to
+            'notify' channel</a>
+    </form>
+
+</div>
+
+<style type="text/css">
+    .notify {
+        color: #ff0000;
+    }
+</style>
+</body>
+</html>
