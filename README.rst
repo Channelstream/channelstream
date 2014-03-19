@@ -1,12 +1,30 @@
 channelstream
 =============
-usage::
+Basic usage::
 
     YOUR_PYTHON_ENV/bin/channelstream
-    
-you can also see simple pyramid demo included in the package, open your browser and point it to following url:
 
-http://127.0.0.1:8000/demo
+
+You can also see simple pyramid/angularjs demo included in the package, open your browser and point it to following url::
+
+    http://127.0.0.1:8000/demo
+
+Possible config options for the server::
+
+    YOUR_PYTHON_ENV/bin/channelstream -h
+
+The server can also be configured via ini files, example::
+
+    [channelstream]
+    debug = 0
+    port = 8000
+    demo_app_url = http://127.0.0.1
+    secret = YOURSECRET
+    admin_secret = YOURADMINSECRET
+    allow_posting_from = 127.0.0.1,
+                         x.x.x.x,
+                         y.y.y.y,
+
 
 
 Data format and endpoints
