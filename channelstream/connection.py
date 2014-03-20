@@ -18,7 +18,7 @@ class Connection(object):
         self.user_name = user_name  # hold user id/name of connection
         self.last_active = datetime.datetime.utcnow()
         self.socket = None
-        self.queue = Queue()
+        self.queue = None
         self.id = conn_id
         gevent.spawn_later(5, self.heartbeat)
 
@@ -32,13 +32,13 @@ class Connection(object):
                 self.socket.ws.send(json.dumps([message]))
             else:
                 self.socket.ws.send(json.dumps([]))
-        else:
+            self.last_active = datetime.datetime.utcnow()
+        elif self.queue:
             # handle long polling
             if message:
                 self.queue.put([message])
             else:
                 self.queue.put([])
-        self.last_active = datetime.datetime.utcnow()
 
     def mark_for_gc(self):
         # set last active time for connection 1 hour in past for GC
@@ -46,10 +46,11 @@ class Connection(object):
 
 
     def heartbeat(self):
-        try:
-            self.add_message()
-        except Exception as e:
-            self.mark_for_gc()
-            if self.socket:
-                self.socket.ws.close()
-        gevent.spawn_later(5, self.heartbeat)
+        if self.socket or self.queue:
+            try:
+                self.add_message()
+                gevent.spawn_later(5, self.heartbeat)
+            except Exception as e:
+                self.mark_for_gc()
+                if self.socket:
+                    self.socket.ws.close()

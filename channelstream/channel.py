@@ -3,6 +3,7 @@ import logging
 
 import gevent
 
+from channelstream import lock
 from channelstream.connection import connections
 from channelstream.user import users
 
@@ -56,8 +57,7 @@ class Channel(object):
 
 
 def gc_conns():
-    while True:
-        gevent.sleep(5)
+    with lock:
         start_time = datetime.utcnow()
         threshold = start_time - timedelta(seconds=15)
         collected_conns = []
@@ -81,5 +81,6 @@ def gc_conns():
             if conn.socket:
                 conn.socket.ws.close()
         log.info('gc_conns() time %s' % (datetime.utcnow() - start_time))
+        gevent.spawn_later(5, gc_conns)
 
-gevent.spawn(gc_conns)
+gevent.spawn_later(5, gc_conns)

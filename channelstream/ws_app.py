@@ -3,6 +3,7 @@ import urlparse
 
 from geventwebsocket import WebSocketApplication
 
+from channelstream import lock
 from channelstream.connection import connections
 from channelstream.channel import channels
 from channelstream.user import users
@@ -34,12 +35,13 @@ class ChatApplication(WebSocketApplication):
     def on_close(self, reason):
         if hasattr(self, 'conn_id') and self.conn_id in connections:
             connection = connections[self.conn_id]
-            if connection.user_name in users:
-                # remove conn id instance from user
-                users[connection.user_name].connections.remove(connection)
-            # remove from channel
-            for channel in channels.itervalues():
-                if connection.user_name in channel.connections:
-                    channel.connections[connection.user_name].remove(connection)
-            # remove from conections
-            del connections[self.conn_id]
+            with lock:
+                if connection.user_name in users:
+                    # remove conn id instance from user
+                    users[connection.user_name].connections.remove(connection)
+                # remove from channel
+                for channel in channels.itervalues():
+                    if connection.user_name in channel.connections:
+                        channel.connections[connection.user_name].remove(connection)
+                # remove from conections
+                del connections[self.conn_id]

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from channelstream import lock
 import logging
 
 import gevent
@@ -38,13 +39,13 @@ class User(object):
 
 
 def gc_users():
-    while True:
-        gevent.sleep(60)
+    with lock:
         start_time = datetime.utcnow()
         threshold = datetime.utcnow() - timedelta(days=1)
         for user in users.values():
             if user.last_active < threshold:
                 users.pop(user.user_name)
         log.info('gc_users() time %s' % (datetime.utcnow() - start_time))
+    gevent.spawn_later(60, gc_users)
 
-gevent.spawn(gc_users)
+gevent.spawn_later(60, gc_users)
