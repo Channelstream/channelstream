@@ -1,5 +1,8 @@
 channelstream
 =============
+
+This is experimental code based on gevent-websocket.
+
 Basic usage::
 
     YOUR_PYTHON_ENV/bin/channelstream
