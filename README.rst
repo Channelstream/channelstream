@@ -1,7 +1,7 @@
 channelstream
 =============
 
-This is experimental code based on gevent-websocket.
+This is **experimental code** based on gevent-websocket.
 
 Basic usage::
 
