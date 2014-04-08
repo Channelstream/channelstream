@@ -97,7 +97,6 @@ def cli_start():
             config['demo_app_url'] = parser.get('channelstream', 'demo_app_url')
         except ConfigParser.NoOptionError as e:
             pass
-
     else:
         config['debug'] = int(options.debug)
         config['port'] = int(options.port)
@@ -108,11 +107,9 @@ def cli_start():
         config['allow_posting_from'].extend(
             [ip.strip() for ip in options.allow_posting_from.split(',')])
 
-    config['debug'] = True
     logging.basicConfig(level=logging.INFO)
 
     print 'Serving on http://%s:%s' % (config['host'], config['port'])
-
     WebSocketServer(
         (config['host'], config['port']),
 

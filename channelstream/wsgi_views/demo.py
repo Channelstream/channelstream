@@ -20,14 +20,20 @@ def make_request(request, payload, endpoint):
                              headers=secret_headers).json()
     return response
 
+def enable_demo(context, request):
+    if request.registry.settings['demo']:
+        return True
+    return False
+
+
 class DemoViews(object):
     def __init__(self, request):
         self.request = request
         self.request.response.headers.add('Cache-Control', 'no-cache, no-store')
-        
+
 
     @view_config(route_name='section_action', renderer='string',
-                 request_method="OPTIONS")
+                 request_method="OPTIONS", custom_predicates=[enable_demo])
     def handle_CORS(self):
         self.request.response.headers.add('Access-Control-Allow-Origin', '*')
         self.request.response.headers.add('XDomainRequestAllowed', '1')
@@ -43,7 +49,7 @@ class DemoViews(object):
         # self.request.response.headers.add('Access-Control-Allow-Credentials', 'true')
         return {}
 
-    @view_config(route_name='demo', renderer='templates/demo.jinja2')
+    @view_config(route_name='demo', renderer='templates/demo.jinja2', custom_predicates=[enable_demo])
     def demo(self):
         random_name = 'anon_%s' % random.randint(1, 999999)
         return {'username':random_name}
@@ -51,15 +57,15 @@ class DemoViews(object):
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=connect'],
-                 renderer='json', request_method="POST")
+                 renderer='json', request_method="POST", custom_predicates=[enable_demo])
     def connect(self):
         """handle authorization of users trying to connect"""
         channels = self.request.json_body['channels']
         POSSIBLE_CHANNELS.intersection(channels)
         random_name = 'anon_%s' % random.randint(1, 999999)
-        username = self.request.json_body.get('username',random_name)
-        
-        
+        username = self.request.json_body.get('username', random_name)
+
+
         payload = {"user": username,
                    "conn_id": str(uuid.uuid4()),
                    "channels": channels
@@ -70,7 +76,7 @@ class DemoViews(object):
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=subscribe'],
-                 renderer='json', request_method="POST")
+                 renderer='json', request_method="POST", custom_predicates=[enable_demo])
     def subscribe(self):
         """"can be used to subscribe specific connection to other channels"""
         self.request_data = self.request.json_body
@@ -84,7 +90,7 @@ class DemoViews(object):
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=message'],
-                 renderer='json', request_method="POST")
+                 renderer='json', request_method="POST", custom_predicates=[enable_demo])
     def message(self):
         """send message to channel/users"""
         self.request_data = self.request.json_body
@@ -99,7 +105,7 @@ class DemoViews(object):
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=channel_config'],
-                 renderer='json', request_method="POST")
+                 renderer='json', request_method="POST", custom_predicates=[enable_demo])
     def channel_config(self):
         """configure channel defaults"""
         return "DISABLED"
