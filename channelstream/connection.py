@@ -14,8 +14,8 @@ connections = {}
 class Connection(object):
     """ Represents a browser connection"""
 
-    def __init__(self, user_name, conn_id):
-        self.user_name = user_name  # hold user id/name of connection
+    def __init__(self, username, conn_id):
+        self.username = username  # hold user id/name of connection
         self.last_active = datetime.datetime.utcnow()
         self.socket = None
         self.queue = None
@@ -23,7 +23,7 @@ class Connection(object):
         gevent.spawn_later(5, self.heartbeat)
 
     def __repr__(self):
-        return '<Connection: id:%s, owner:%s>' % (self.id, self.user_name)
+        return '<Connection: id:%s, owner:%s>' % (self.id, self.username)
 
     def add_message(self, message=None):
         # handle websockets

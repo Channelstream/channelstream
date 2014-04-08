@@ -12,15 +12,15 @@ users ={}
 class User(object):
     """ represents a unique user of the system """
 
-    def __init__(self, user_name, status):
-        self.user_name = user_name
+    def __init__(self, username, status):
+        self.username = username
         self.status = status
         self.connections = []  # holds ids of connections
         self.last_active = datetime.utcnow()
 
     def __repr__(self):
         return '<User:%s, status:%s, connections:%s>' % (
-        self.user_name, self.status, len(self.connections))
+        self.username, self.status, len(self.connections))
 
     def add_connection(self, connection):
         """ creates a new connection for user"""
@@ -44,7 +44,7 @@ def gc_users():
         threshold = datetime.utcnow() - timedelta(days=1)
         for user in users.values():
             if user.last_active < threshold:
-                users.pop(user.user_name)
+                users.pop(user.username)
         log.info('gc_users() time %s' % (datetime.utcnow() - start_time))
     gevent.spawn_later(60, gc_users)
 

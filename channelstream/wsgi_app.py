@@ -13,7 +13,7 @@ def datetime_adapter(obj, request):
 
 
 def make_app(server_config):
-    config = Configurator(root_factory=APIFactory)
+    config = Configurator(settings=server_config, root_factory=APIFactory)
 
     def check_function(username, password, request):
         if password == server_config['admin_secret']:
@@ -32,6 +32,5 @@ def make_app(server_config):
     config.include('pyramid_jinja2')
     config.include('channelstream.wsgi_views')
     config.scan('channelstream.wsgi_views')
-    config.registry.server_config = server_config
     app = config.make_wsgi_app()
     return app

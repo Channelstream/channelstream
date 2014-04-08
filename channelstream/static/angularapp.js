@@ -2,7 +2,7 @@ var channelstreamApp = angular.module('channelstreamApp', []);
 
 channelstreamApp.controller('chatCtl', function ($scope, $http) {
     $scope.user = {
-        user_name: 'user_' + Math.round(Math.random() * 10000)
+        username: 'user_' + Math.round(Math.random() * 10000)
     };
     $scope.channels = ['pub_chan', 'pub_chan2'];
     $scope.selected_channel = {value: $scope.channels[0]}
@@ -31,7 +31,7 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
     $scope.send_message = function () {
         var json_data = {message: $scope.message,
             channel: $scope.selected_channel.value,
-            user: $scope.user.user_name };
+            user: $scope.user.username };
         $http({method: 'POST', url: webapp_url + '/message', data: json_data}).
             success(function (data, status, headers, config) {
                 $scope.message = ''
@@ -63,7 +63,7 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
     var on_open = function (event) {
         console.log('open');
     }
-    var json_data = {'user': $scope.user.user_name,
+    var json_data = {'user': $scope.user.username,
         'channels': $scope.channels
     }
 

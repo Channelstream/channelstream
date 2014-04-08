@@ -10,10 +10,7 @@
     <script src="/static/angularapp.js"></script>
 </head>
 <script type="text/javascript">
-    var app_config = {
-        webapp_url: '{{ webapp_url }}',
-        server_url: '{{ server_url }}'
-    }
+
 </script>
 
 <body ng-controller="chatCtl">
@@ -47,11 +44,6 @@
             {% endraw %}
         </div>
 
-        <div class="form-group">
-            <label for="user">User Name</label>
-            <input type="text" class="form-control" id="user"
-                   placeholder="Your username" ng-model="user.user_name">
-        </div>
         <div class="form-group">
             <label for="message">Message</label>
             <input type="text" class="form-control" id="message"

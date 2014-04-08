@@ -11,6 +11,7 @@ import ConfigParser
 from geventwebsocket import WebSocketServer, Resource
 from channelstream.wsgi_app import make_app
 from channelstream.ws_app import ChatApplication
+from pyramid.settings import asbool
 
 def cli_start():
     config = {
@@ -51,6 +52,9 @@ def cli_start():
     parser.add_option("-d", "--debug", dest="debug",
                       help="debug",
                       default=0)
+    parser.add_option("-e", "--demo", dest="demo",
+                      help="debug",
+                      default=False)
     parser.add_option("-x", "--allowed_post_ip", dest="allow_posting_from",
                       help="comma separated list of ip's that can post to server",
                       default="127.0.0.1"
@@ -61,6 +65,10 @@ def cli_start():
         parser.read(options.ini)
         try:
             config['debug'] = parser.getboolean('channelstream', 'debug')
+        except ConfigParser.NoOptionError as e:
+            pass
+        try:
+            config['demo'] = parser.getboolean('channelstream', 'demo')
         except ConfigParser.NoOptionError as e:
             pass
         try:
@@ -93,6 +101,7 @@ def cli_start():
     else:
         config['debug'] = int(options.debug)
         config['port'] = int(options.port)
+        config['demo'] = asbool(options.demo)
         config['host'] = options.host
         config['secret'] = options.secret
         config['admin_secret'] = options.admin_secret
@@ -102,7 +111,7 @@ def cli_start():
     config['debug'] = True
     logging.basicConfig(level=logging.INFO)
 
-    print 'Serving on %s:%s' % (config['host'], config['port'])
+    print 'Serving on http://%s:%s' % (config['host'], config['port'])
 
     WebSocketServer(
         (config['host'], config['port']),

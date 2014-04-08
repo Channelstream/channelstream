@@ -46,8 +46,8 @@ def pass_message(msg):
             )
     elif pm_users:
         # if pm then iterate over all users and notify about new message hiyoo!!
-        for user_name in pm_users:
-            user_inst = users.get(user_name)
+        for username in pm_users:
+            user_inst = users.get(username)
             if user_inst:
                 total_sent += user_inst.add_message(message)
     global total_messages
@@ -64,13 +64,13 @@ class ServerViews(object):
         """return the id of connected users - will be secured with password string
         for webapp to internally call the server - we combine conn string with user id,
         and we tell which channels the user is allowed to subscribe to"""
-        user_name = self.request.json_body.get('user')
-        def_status = self.request.registry.server_config['status_codes'][
+        username = self.request.json_body.get('user')
+        def_status = self.request.registry.settings['status_codes'][
             'online']
         user_status = int(self.request.json_body.get('status', def_status))
         conn_id = self.request.json_body.get('conn_id')
         subscribe_to_channels = self.request.json_body.get('channels')
-        if user_name is None:
+        if username is None:
             self.request.response.status = 400
             return {'error': "No username specified"}
         if not subscribe_to_channels:
@@ -79,12 +79,12 @@ class ServerViews(object):
 
         # everything is ok so lets add new connection to channel and connection list
         with lock:
-            if not user_name in users:
-                user = User(user_name, def_status)
-                users[user_name] = user
+            if not username in users:
+                user = User(username, def_status)
+                users[username] = user
             else:
-                user = users[user_name]
-            connection = Connection(user_name, conn_id)
+                user = users[username]
+            connection = Connection(username, conn_id)
             if not connection.id in connections:
                 connections[connection.id] = connection
             user.add_connection(connection)
@@ -94,7 +94,7 @@ class ServerViews(object):
                     channel = Channel(channel_name)
                     channels[channel_name] = channel
                 channels[channel_name].add_connection(connection)
-            log.info('connecting %s with uuid %s' % (user_name, connection.id))
+            log.info('connecting %s with uuid %s' % (username, connection.id))
         return {'conn_id': connection.id, 'status': user.status}
 
     @view_config(route_name='action', match_param='action=subscribe',
@@ -114,7 +114,7 @@ class ServerViews(object):
         # everything is ok so lets add new connection to channel and connection list
         # lets lock it just in case
         # find the right user
-        user = users.get(connection.user_name)
+        user = users.get(connection.username)
         subscribed_channels = []
         with lock:
             if user:
@@ -124,7 +124,7 @@ class ServerViews(object):
                         channels[channel_name] = channel
                     channels[channel_name].add_connection(connection)
             for channel in channels.itervalues():
-                if user.user_name in channel.connections:
+                if user.username in channel.connections:
                     subscribed_channels.append(channel.name)
         return subscribed_channels
 
@@ -149,7 +149,7 @@ class ServerViews(object):
     @view_config(route_name='action', match_param='action=listen',
                  renderer='string')
     def listen(self):
-        config = self.request.registry.server_config
+        config = self.request.registry.settings
         self.conn_id = self.request.params.get('conn_id')
         connection = connections.get(self.conn_id)
         if not connection:
@@ -189,15 +189,15 @@ class ServerViews(object):
                  renderer='json', permission='access')
     def user_status(self):
         """ set the status of specific user """
-        user_name = self.request.json_body.get('user')
-        def_status = self.request.registry.server_config['status_codes'][
+        username = self.request.json_body.get('user')
+        def_status = self.request.registry.settings['status_codes'][
             'online']
         user_status = int(self.request.json_body.get('status', def_status))
-        if not user_name:
+        if not username:
             self.request.response.status = 400
             return {'error': "No username specified"}
 
-        user_inst = users.get(user_name)
+        user_inst = users.get(username)
         if user_inst:
             user_inst.status = user_status
             # mark active
@@ -290,12 +290,12 @@ class ServerViews(object):
             json_data["channels"][channel_inst.name]['total_connections'] = sum(
                 [len(conns) for conns in channel_inst.connections.values()])
             json_data["channels"][channel_inst.name]['users'] = []
-            for user_name in channel_inst.connections.keys():
-                user_inst = users.get(user_name)
-                udata = {'user': user_inst.user_name,
+            for username in channel_inst.connections.keys():
+                user_inst = users.get(username)
+                udata = {'user': user_inst.username,
                          'status': user_inst.status,
                          "connections": [conn.id for conn in
-                                         channel_inst.connections[user_name]]}
+                                         channel_inst.connections[username]]}
                 json_data["channels"][channel_inst.name]['users'].append(udata)
             json_data["channels"][channel_inst.name][
                 'last_active'] = channel_inst.last_active

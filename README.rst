@@ -40,7 +40,7 @@ Data format and endpoints
 
 expects a json request in form of::
 
-    { "user": YOUR_USER_NAME,
+    { "user": YOUR_username,
       "conn_id": CUSTOM_UNIQUE_UID_OF_CONNECTION, # for example uuid.uuid4()
     "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ]
     }
@@ -76,7 +76,7 @@ expects a json request in form of::
 
     {
     "channel": "CHAN_NAME", #optional
-    "pm_users": [USER_NAME1,USER_NAME2], #optional
+    "pm_users": [username1,username2], #optional
     "user": "NAME_OF_POSTER",
     "message": MSG_PAYLOAD
     }
@@ -100,7 +100,7 @@ expects a json request in form of::
 
 expects a json request in form of::
 
-    { "user": USER_NAME, "status":STATUS_ID_INT}
+    { "user": username, "status":STATUS_ID_INT}
 
 
 Responses to js client

@@ -4,18 +4,27 @@ import uuid
 
 import requests
 from pyramid.view import view_config
+from channelstream.util import base64_decode, base64_encode, hmac_encode
 
+POSSIBLE_CHANNELS = set(['pub_chan', 'pub_chan2', 'notify'])
 
-possible_channels = set(['pub_chan', 'pub_chan2', 'notify'])
-
+def make_request(request, payload, endpoint):
+    server_port = request.registry.settings['port']
+    sig_for_server = hmac_encode(request.registry.settings['secret'],
+                                 endpoint)
+    secret_headers = {'x-channelstream-secret': sig_for_server,
+                      'x-channelstream-endpoint': endpoint,
+                      'Content-Type': 'application/json'}
+    url = 'http://127.0.0.1:%s%s' % (server_port, endpoint)
+    response = requests.post(url, data=json.dumps(payload),
+                             headers=secret_headers).json()
+    return response
 
 class DemoViews(object):
     def __init__(self, request):
         self.request = request
         self.request.response.headers.add('Cache-Control', 'no-cache, no-store')
-        self.server_port = self.request.registry.server_config['port']
-        self.secret_headers = {'x-channelstream-secret': 'secret',
-                               'Content-Type': 'application/json'}
+        
 
     @view_config(route_name='section_action', renderer='string',
                  request_method="OPTIONS")
@@ -36,9 +45,8 @@ class DemoViews(object):
 
     @view_config(route_name='demo', renderer='templates/demo.jinja2')
     def demo(self):
-        return {
-            'webapp_url': 'http://127.0.0.1:%s/demo' % self.server_port,
-            'server_url': 'ws://127.0.0.1:%s' % self.server_port}
+        random_name = 'anon_%s' % random.randint(1, 999999)
+        return {'username':random_name}
 
 
     @view_config(route_name='section_action',
@@ -47,16 +55,17 @@ class DemoViews(object):
     def connect(self):
         """handle authorization of users trying to connect"""
         channels = self.request.json_body['channels']
-        possible_channels.intersection(channels)
+        POSSIBLE_CHANNELS.intersection(channels)
         random_name = 'anon_%s' % random.randint(1, 999999)
-        payload = {"user": random_name,
+        username = self.request.json_body.get('username',random_name)
+        
+        
+        payload = {"user": username,
                    "conn_id": str(uuid.uuid4()),
                    "channels": channels
         }
-        url = 'http://127.0.0.1:%s/connect' % self.server_port
-        response = requests.post(url, data=json.dumps(payload),
-                                 headers=self.secret_headers).json()
-        payload['status'] = response['status']
+        result = make_request(self.request, payload, '/connect')
+        payload['status'] = result['status']
         return payload
 
     @view_config(route_name='section_action',
@@ -66,14 +75,12 @@ class DemoViews(object):
         """"can be used to subscribe specific connection to other channels"""
         self.request_data = self.request.json_body
         channels = self.request_data['channels']
-        possible_channels.intersection(channels)
+        POSSIBLE_CHANNELS.intersection(channels)
         payload = {"conn_id": self.request_data.get('conn_id', ''),
                    "channels": self.request_data.get('channels', [])
         }
-        url = 'http://127.0.0.1:%s/subscribe' % self.server_port
-        response = requests.post(url, data=json.dumps(payload),
-                                 headers=self.secret_headers).json()
-        return response
+        result = make_request(self.request, payload, '/subscribe')
+        return result
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=message'],
@@ -87,16 +94,15 @@ class DemoViews(object):
             "channel": self.request_data.get('channel', 'unknown_channel'),
             'message': self.request_data.get('message')
         }
-        url = 'http://127.0.0.1:%s/message' % self.server_port
-        response = requests.post(url, data=json.dumps([payload]),
-                                 headers=self.secret_headers).json()
-        return response
+        result = make_request(self.request, [payload], '/message')
+        return result
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=channel_config'],
                  renderer='json', request_method="POST")
     def channel_config(self):
         """configure channel defaults"""
+        return "DISABLED"
         payload = [('pub_chan', {
             "presence": True,
             "store_history": True,

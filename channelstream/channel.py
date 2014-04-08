@@ -28,10 +28,10 @@ class Channel(object):
         log.info('%s created' % self)
 
     def add_connection(self, connection):
-        if not connection.user_name in self.connections:
-            self.connections[connection.user_name] = []
-        if connection not in self.connections[connection.user_name]:
-            self.connections[connection.user_name].append(connection)
+        if not connection.username in self.connections:
+            self.connections[connection.username] = []
+        if connection not in self.connections[connection.username]:
+            self.connections[connection.username].append(connection)
 
     def add_message(self, message, pm_users=None, exclude_user=None):
         if not pm_users:
@@ -72,9 +72,9 @@ def gc_conns():
                     del channel.connections[k]
         # remove old conns from users and conn dict
         for conn in collected_conns:
-            if conn.user_name in users:
-                if conn in users[conn.user_name].connections:
-                    users[conn.user_name].connections.remove(conn)
+            if conn.username in users:
+                if conn in users[conn.username].connections:
+                    users[conn.username].connections.remove(conn)
             if conn.id in connections:
                 del connections[conn.id]
             # make sure connection is closed after we garbage collected it from our list
