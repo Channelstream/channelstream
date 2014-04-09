@@ -64,7 +64,7 @@ class ServerViews(object):
         """return the id of connected users - will be secured with password string
         for webapp to internally call the server - we combine conn string with user id,
         and we tell which channels the user is allowed to subscribe to"""
-        username = self.request.json_body.get('user')
+        username = self.request.json_body.get('username')
         def_status = self.request.registry.settings['status_codes'][
             'online']
         user_status = int(self.request.json_body.get('status', def_status))
