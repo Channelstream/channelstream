@@ -5,7 +5,7 @@ This is **experimental code** based on gevent-websocket.
 
 Basic usage::
 
-    YOUR_PYTHON_ENV/bin/channelstream
+    YOUR_PYTHON_ENV/bin/channelstream - filename.ini
 
 
 You can also see simple pyramid/angularjs demo included, open your browser and point it to following url::
@@ -18,6 +18,7 @@ Possible config options for the server::
 
     YOUR_PYTHON_ENV/bin/channelstream -h
 
+
 The server can also be configured via ini files, example::
 
     [channelstream]
@@ -29,6 +30,37 @@ The server can also be configured via ini files, example::
     allow_posting_from = 127.0.0.1,
                          x.x.x.x,
                          y.y.y.y,
+
+
+
+** USAGE **
+
+Refer to channelstream/wsgi_views/demo.py for example usage.
+
+** Security model **
+
+To send information client interacts only with your normal www application.
+Your app handled authentication and processing messages from client, then passed
+them as signed message to channelstream server for broadcast.
+
+socketio client -> webapp -> REST call to socket server -> broadcast to other client
+
+This model is easy to implement, secure, easy to scale and allows all kind of
+languages/apps/work queues to interact with socket server.
+
+All messages need to be signed with a HMAC::
+
+    # from channelstream.utils
+
+    def hmac_encode(secret, endpoint):
+        """Generates a HMAC hash for endpoint """
+        d = int(time.time())
+        h = hmac.new(secret, '%s.%s' % (endpoint, d), hashlib.sha256)
+        signature = base64.b64encode(h.digest())
+        return '%s.%s' % (signature, d)
+
+The function accepts endpoint in form of '/messages' if you want to send a message
+ to users. This will be validated on socketio server side.
 
 
 
@@ -134,6 +166,6 @@ examples:
 Installation and Setup
 ======================
 
-Obtain source from bitbucket and do::
+Obtain source from github and do::
 
     python setup.py develop
