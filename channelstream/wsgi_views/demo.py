@@ -66,12 +66,11 @@ class DemoViews(object):
         username = self.request.json_body.get('username', random_name)
 
 
-        payload = {"user": username,
+        payload = {"username": username,
                    "conn_id": str(uuid.uuid4()),
                    "channels": channels
         }
         result = make_request(self.request, payload, '/connect')
-        payload['status'] = result['status']
         return payload
 
     @view_config(route_name='section_action',
