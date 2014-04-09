@@ -12,6 +12,8 @@ from geventwebsocket import WebSocketServer, Resource
 from channelstream.wsgi_app import make_app
 from channelstream.ws_app import ChatApplication
 from pyramid.settings import asbool
+from channelstream.policy_server import client_handle
+from gevent.server import StreamServer
 
 def cli_start():
     config = {
@@ -108,7 +110,9 @@ def cli_start():
             [ip.strip() for ip in options.allow_posting_from.split(',')])
 
     logging.basicConfig(level=logging.INFO)
-
+    print 'Starting flash policy server on port 10843'
+    server = StreamServer(('0.0.0.0', 10843), client_handle)
+    server.start()
     print 'Serving on http://%s:%s' % (config['host'], config['port'])
     WebSocketServer(
         (config['host'], config['port']),
