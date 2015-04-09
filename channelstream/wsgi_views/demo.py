@@ -4,14 +4,14 @@ import uuid
 
 import requests
 from pyramid.view import view_config
-from channelstream.util import base64_decode, base64_encode, hmac_encode
+from itsdangerous import TimestampSigner
 
 POSSIBLE_CHANNELS = set(['pub_chan', 'pub_chan2', 'notify'])
 
 def make_request(request, payload, endpoint):
     server_port = request.registry.settings['port']
-    sig_for_server = hmac_encode(request.registry.settings['secret'],
-                                 endpoint)
+    signer = TimestampSigner(request.registry.settings['secret'])
+    sig_for_server = signer.sign(endpoint)
     secret_headers = {'x-channelstream-secret': sig_for_server,
                       'x-channelstream-endpoint': endpoint,
                       'Content-Type': 'application/json'}

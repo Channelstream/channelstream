@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='channelstream',
-      version='0.1',
+      version='0.2',
       description='Websocket server supporting channels/users communication',
       classifiers=[
           'Intended Audience :: Developers'
@@ -18,6 +18,7 @@ setup(name='channelstream',
           'gevent-websocket>=0.9.3',
           'pyramid',
           'pyramid_jinja2',
+          'itsdangerous'
       ],
     entry_points = {
         'console_scripts': [

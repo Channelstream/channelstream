@@ -48,16 +48,17 @@ socketio client -> webapp -> REST call to socket server -> broadcast to other cl
 This model is easy to implement, secure, easy to scale and allows all kind of
 languages/apps/work queues to interact with socket server.
 
-All messages need to be signed with a HMAC::
+All messages need to be signed with a HMAC of destination endpoint ::
 
-    # from channelstream.utils
-
-    def hmac_encode(secret, endpoint):
-        """Generates a HMAC hash for endpoint """
-        d = int(time.time())
-        h = hmac.new(secret, '%s.%s' % (endpoint, d), hashlib.sha256)
-        signature = base64.b64encode(h.digest())
-        return '%s.%s' % (signature, d)
+    import requests
+    from itsdangerous import TimestampSigner
+    signer = TimestampSigner(request.registry.settings['secret'])
+    sig_for_server = signer.sign('/connect')
+    secret_headers = {'x-channelstream-secret': sig_for_server,
+                      'x-channelstream-endpoint': endpoint,
+                      'Content-Type': 'application/json'}
+    response = requests.post(url, data=json.dumps(payload),
+                             headers=secret_headers).json()
 
 The function accepts endpoint in form of '/messages' if you want to send a message
  to users. This will be validated on socketio server side.
