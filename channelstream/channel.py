@@ -20,7 +20,7 @@ class Channel(object):
         self.long_name = long_name
         self.last_active = datetime.utcnow()
         self.connections = {}
-        self.presence = True
+        self.presence = False
         self.salvagable = False
         self.store_history = False
         self.history_size = 10
