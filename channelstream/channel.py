@@ -1,12 +1,13 @@
-from datetime import datetime, timedelta
+import gevent
+import copy
 import logging
 
-import gevent
+
 
 from channelstream import lock
 from channelstream.connection import connections
 from channelstream.user import users
-
+from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class Channel(object):
         self.long_name = long_name
         self.last_active = datetime.utcnow()
         self.connections = {}
-        self.presence = False
+        self.presence = True
         self.salvagable = False
         self.store_history = False
         self.history_size = 10
@@ -28,12 +29,22 @@ class Channel(object):
         log.info('%s created' % self)
 
     def add_connection(self, connection):
-        if not connection.username in self.connections:
+        if connection.username not in self.connections:
             self.connections[connection.username] = []
+        if not self.connections[connection.username] and self.presence:
+            payload = {
+                'type': 'presence',
+                'user': connection.username,
+                'channel': self.name,
+                'message': {}
+            }
+            self.add_message(payload, exclude_users=connection.username)
         if connection not in self.connections[connection.username]:
             self.connections[connection.username].append(connection)
 
-    def add_message(self, message, pm_users=None, exclude_user=None):
+    def add_message(self, message, pm_users=None, exclude_users=None):
+        """ Sends the message to all connections subscribed to this channel """
+        message = copy.deepcopy(message)
         if not pm_users:
             pm_users = []
         self.last_active = datetime.utcnow()
@@ -44,7 +55,7 @@ class Channel(object):
         # message everyone subscribed except excluded
         total_sent = 0
         for u, conns in self.connections.iteritems():
-            if u != exclude_user:
+            if not exclude_users or u not in exclude_users:
                 for connection in conns:
                     if not pm_users or connection.user in pm_users:
                         connection.add_message(message)

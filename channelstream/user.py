@@ -31,6 +31,7 @@ class User(object):
         return connection
 
     def add_message(self, message):
+        """ Send a message to ALL connections of this user """
         # mark active
         self.last_active = datetime.utcnow()
         for connection in self.connections:

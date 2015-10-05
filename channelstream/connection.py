@@ -26,6 +26,7 @@ class Connection(object):
         return '<Connection: id:%s, owner:%s>' % (self.id, self.username)
 
     def add_message(self, message=None):
+        """ Sends the message to the client connection """
         # handle websockets
         if self.socket:
             if message:
@@ -43,7 +44,6 @@ class Connection(object):
     def mark_for_gc(self):
         # set last active time for connection 1 hour in past for GC
         self.last_active -= datetime.timedelta(minutes=60)
-
 
     def heartbeat(self):
         if self.socket or self.queue:
