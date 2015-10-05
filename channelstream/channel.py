@@ -37,6 +37,7 @@ class Channel(object):
             self.connections[connection.username].append(connection)
 
     def send_presence_info(self, username, action):
+        self.last_active = datetime.utcnow()
         payload = {
             'type': 'presence',
             'user': username,
