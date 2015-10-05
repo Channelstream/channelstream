@@ -98,8 +98,8 @@ def gc_conns():
                     conn.socket.ws.close()
                 except Exception:
                     raise
-        log.info('gc_conns() time %s' % (datetime.utcnow() - start_time))
-        gevent.spawn_later(5, gc_conns)
+        log.debug('gc_conns() time %s' % (datetime.utcnow() - start_time))
+        gevent.spawn_later(1, gc_conns)
 
 
-gevent.spawn_later(5, gc_conns)
+gevent.spawn_later(1, gc_conns)
