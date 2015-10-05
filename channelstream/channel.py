@@ -2,8 +2,6 @@ import gevent
 import copy
 import logging
 
-
-
 from channelstream import lock
 from channelstream.connection import connections
 from channelstream.user import users
@@ -12,6 +10,7 @@ from datetime import datetime, timedelta
 log = logging.getLogger(__name__)
 
 channels = {}
+
 
 class Channel(object):
     """ Represents one of our chat channels - has some config options """
@@ -32,15 +31,19 @@ class Channel(object):
         if connection.username not in self.connections:
             self.connections[connection.username] = []
         if not self.connections[connection.username] and self.presence:
-            payload = {
-                'type': 'presence',
-                'user': connection.username,
-                'channel': self.name,
-                'message': {}
-            }
-            self.add_message(payload, exclude_users=connection.username)
+            self.send_presence_info(connection.username, 'joined')
+
         if connection not in self.connections[connection.username]:
             self.connections[connection.username].append(connection)
+
+    def send_presence_info(self, username, action):
+        payload = {
+            'type': 'presence',
+            'user': username,
+            'channel': self.name,
+            'message': {'action': action}
+        }
+        self.add_message(payload, exclude_users=username)
 
     def add_message(self, message, pm_users=None, exclude_users=None):
         """ Sends the message to all connections subscribed to this channel """
@@ -74,13 +77,14 @@ def gc_conns():
         collected_conns = []
         # collect every ref in chanels
         for channel in channels.itervalues():
-            for k, conns in channel.connections.items():
+            for username, conns in channel.connections.items():
                 for conn in conns:
                     if conn.last_active < threshold:
-                        channel.connections[k].remove(conn)
+                        channel.connections[username].remove(conn)
                         collected_conns.append(conn)
-                if not channel.connections[k]:
-                    del channel.connections[k]
+                if not channel.connections[username]:
+                    del channel.connections[username]
+                    channel.send_presence_info(username, 'parted')
         # remove old conns from users and conn dict
         for conn in collected_conns:
             if conn.username in users:
@@ -90,8 +94,12 @@ def gc_conns():
                 del connections[conn.id]
             # make sure connection is closed after we garbage collected it from our list
             if conn.socket:
-                conn.socket.ws.close()
+                try:
+                    conn.socket.ws.close()
+                except Exception:
+                    raise
         log.info('gc_conns() time %s' % (datetime.utcnow() - start_time))
         gevent.spawn_later(5, gc_conns)
+
 
 gevent.spawn_later(5, gc_conns)

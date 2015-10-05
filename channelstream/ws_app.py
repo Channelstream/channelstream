@@ -33,14 +33,5 @@ class ChatApplication(WebSocketApplication):
     def on_close(self, reason):
         if hasattr(self, 'conn_id') and self.conn_id in connections:
             connection = connections[self.conn_id]
-            with lock:
-                if connection.username in users:
-                    # remove conn id instance from user
-                    users[connection.username].connections.remove(connection)
-                # remove from channel
-                for channel in channels.itervalues():
-                    if connection.username in channel.connections:
-                        channel.connections[connection.username]\
-                            .remove(connection)
-                # remove from conections
-                del connections[self.conn_id]
+            # set activity date in past to salvage
+            connection.last_active = datetime(1970, 1, 1)

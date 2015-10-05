@@ -39,8 +39,7 @@ def pass_message(msg, stats):
         channel_inst = channels.get(msg['channel'])
         if channel_inst:
             total_sent += channel_inst.add_message(message,
-                                                   pm_users=pm_users
-            )
+                                                   pm_users=pm_users)
     elif pm_users:
         # if pm then iterate over all users and notify about new message hiyoo!!
         for username in pm_users:
@@ -75,13 +74,13 @@ class ServerViews(object):
 
         # everything is ok so lets add new connection to channel and connection list
         with lock:
-            if not username in users:
+            if username not in users:
                 user = User(username, def_status)
                 users[username] = user
             else:
                 user = users[username]
             connection = Connection(username, conn_id)
-            if not connection.id in connections:
+            if connection.id not in connections:
                 connections[connection.id] = connection
             user.add_connection(connection)
             for channel_name in subscribe_to_channels:
@@ -123,7 +122,6 @@ class ServerViews(object):
                 if user.username in channel.connections:
                     subscribed_channels.append(channel.name)
         return subscribed_channels
-
 
     @view_config(route_name='action', match_param='action=listen',
                  request_method="OPTIONS", renderer='string')
@@ -232,8 +230,7 @@ class ServerViews(object):
                                   'presence': channel_inst.presence,
                                   'salvagable': channel_inst.salvagable,
                                   'store_history': channel_inst.store_history,
-                                  'history_size': channel_inst.history_size
-                })
+                                  'history_size': channel_inst.history_size})
         return json_data
 
     @view_config(
@@ -263,7 +260,6 @@ class ServerViews(object):
             "channels": channels,
             "users": users, "uptime": uptime
         }
-
 
     @view_config(route_name='action', match_param='action=info',
                  renderer='json', permission='access')
