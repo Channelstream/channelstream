@@ -7,8 +7,7 @@ from pyramid.security import forget
 from pyramid.response import Response
 
 import gevent
-from channelstream import total_messages, started_on, total_unique_messages, \
-    lock
+from channelstream import stats, lock
 from channelstream.user import User, users
 from channelstream.connection import Connection, connections
 from channelstream.channel import Channel, channels
@@ -18,7 +17,7 @@ from gevent.queue import Queue, Empty
 log = logging.getLogger(__name__)
 
 
-def pass_message(msg):
+def pass_message(msg, stats):
     if msg.get('timestamp'):
         # if present lets use timestamp provided in the message
         if '.' in msg['timestamp']:
@@ -32,12 +31,10 @@ def pass_message(msg):
     message = {'user': msg.get('user'),
                'message': msg['message'],
                'type': 'message',
-               'timestamp': timestmp
-    }
+               'timestamp': timestmp}
     pm_users = msg.get('pm_users', [])
     total_sent = 0
-    global total_unique_messages
-    total_unique_messages += 1
+    stats['total_unique_messages'] += 1
     if msg.get('channel'):
         channel_inst = channels.get(msg['channel'])
         if channel_inst:
@@ -50,8 +47,7 @@ def pass_message(msg):
             user_inst = users.get(username)
             if user_inst:
                 total_sent += user_inst.add_message(message)
-    global total_messages
-    total_messages += total_sent
+    stats['total_messages'] += total_sent
 
 
 class ServerViews(object):
@@ -211,7 +207,7 @@ class ServerViews(object):
         for msg in msg_list:
             if not msg.get('channel') and not msg.get('pm_users', []):
                 continue
-            gevent.spawn(pass_message, msg)
+            gevent.spawn(pass_message, msg, stats)
 
     @view_config(route_name='action', match_param='action=channel_config',
                  renderer='json', permission='access')
@@ -250,7 +246,7 @@ class ServerViews(object):
     @view_config(route_name='admin',
                  renderer='templates/admin.jinja2', permission='access')
     def admin(self):
-        uptime = datetime.utcnow() - started_on
+        uptime = datetime.utcnow() - stats['started_on']
         remembered_user_count = len(
             [user for user in users.iteritems()])
         unique_user_count = len(
@@ -262,8 +258,8 @@ class ServerViews(object):
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
             "total_connections": total_connections,
-            "total_messages": total_messages,
-            "total_unique_messages": total_unique_messages,
+            "total_messages": stats['total_messages'],
+            "total_unique_messages": stats['total_unique_messages'],
             "channels": channels,
             "users": users, "uptime": uptime
         }
