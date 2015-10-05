@@ -20,7 +20,6 @@ class ChatApplication(WebSocketApplication):
             # attach a socket to connection
             connections[self.conn_id].socket = self
 
-
     def on_message(self, message):
         # this is to allow client heartbeats
         now = datetime.utcnow()
@@ -30,7 +29,6 @@ class ChatApplication(WebSocketApplication):
             user = users.get(connection.username)
             if user:
                 user.last_active = now
-
 
     def on_close(self, reason):
         if hasattr(self, 'conn_id') and self.conn_id in connections:
@@ -42,6 +40,7 @@ class ChatApplication(WebSocketApplication):
                 # remove from channel
                 for channel in channels.itervalues():
                     if connection.username in channel.connections:
-                        channel.connections[connection.username].remove(connection)
+                        channel.connections[connection.username]\
+                            .remove(connection)
                 # remove from conections
                 del connections[self.conn_id]

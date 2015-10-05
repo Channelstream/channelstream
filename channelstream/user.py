@@ -4,10 +4,10 @@ import logging
 
 import gevent
 
-
 log = logging.getLogger(__name__)
 
-users ={}
+users = {}
+
 
 class User(object):
     """ represents a unique user of the system """
@@ -20,7 +20,7 @@ class User(object):
 
     def __repr__(self):
         return '<User:%s, status:%s, connections:%s>' % (
-        self.username, self.status, len(self.connections))
+            self.username, self.status, len(self.connections))
 
     def add_connection(self, connection):
         """ creates a new connection for user"""
@@ -31,7 +31,7 @@ class User(object):
         return connection
 
     def add_message(self, message):
-        """ Send a message to ALL connections of this user """
+        """ Send a message to all connections of this user """
         # mark active
         self.last_active = datetime.utcnow()
         for connection in self.connections:
@@ -48,5 +48,6 @@ def gc_users():
                 users.pop(user.username)
         log.info('gc_users() time %s' % (datetime.utcnow() - start_time))
     gevent.spawn_later(60, gc_users)
+
 
 gevent.spawn_later(60, gc_users)
