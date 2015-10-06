@@ -109,13 +109,13 @@ class DemoViews(object):
         """configure channel defaults"""
         return "DISABLED"
         payload = [('pub_chan', {
-            "presence": True,
+            "notify_presence": True,
             "store_history": True,
             "history_size": 20
         }),
                    ('pub_chan2', {
-                       "presence": True,
-                       "salvagable": True,
+                       "notify_presence": True,
+                       "salvageable": True,
                        "store_history": True,
                        "history_size": 30
                    })

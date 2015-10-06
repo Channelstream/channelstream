@@ -60,9 +60,9 @@ class ServerViews(object):
         for webapp to internally call the server - we combine conn string with user id,
         and we tell which channels the user is allowed to subscribe to"""
         username = self.request.json_body.get('username')
-        def_status = self.request.registry.settings['status_codes'][
-            'online']
+        def_status = self.request.registry.settings['status_codes']['online']
         user_status = int(self.request.json_body.get('status', def_status))
+        channel_configs = self.request.json_body.get('channel_configs', {})
         conn_id = self.request.json_body.get('conn_id')
         subscribe_to_channels = self.request.json_body.get('channels')
         if username is None:
@@ -86,7 +86,8 @@ class ServerViews(object):
             for channel_name in subscribe_to_channels:
                 # user gets assigned to a channel
                 if channel_name not in channels:
-                    channel = Channel(channel_name)
+                    channel = Channel(channel_name,
+                                      channel_configs=channel_configs)
                     channels[channel_name] = channel
                 channels[channel_name].add_connection(connection)
             log.info('connecting %s with uuid %s' % (username, connection.id))
@@ -100,6 +101,7 @@ class ServerViews(object):
                                              self.request.GET.get('conn_id'))
         connection = connections.get(conn_id)
         subscribe_to_channels = self.request.json_body.get('channels')
+        channel_configs = self.request.json_body.get('channel_configs', {})
         if not connection:
             self.request.response.status = 403
             return {'error': "Unknown connection"}
@@ -115,7 +117,8 @@ class ServerViews(object):
             if user:
                 for channel_name in subscribe_to_channels:
                     if channel_name not in channels:
-                        channel = Channel(channel_name)
+                        channel = Channel(channel_name,
+                                          channel_configs=channel_configs)
                         channels[channel_name] = channel
                     channels[channel_name].add_connection(connection)
             for channel in channels.itervalues():
@@ -210,7 +213,7 @@ class ServerViews(object):
     @view_config(route_name='action', match_param='action=channel_config',
                  renderer='json', permission='access')
     def channel_config(self):
-        """ call this to subscribe specific connection to new channels """
+        """ call this to reconfigure channel """
         channel_data = self.request.json_body
         if not channel_data:
             self.request.response.status = 400
@@ -219,18 +222,18 @@ class ServerViews(object):
         json_data = []
         with lock:
             for channel_name, config in channel_data:
-                if not channel_inst:
-                    channel = Channel(channel_name)
+                if not channel:
+                    channel = Channel(channel_name, )
                     channels[channel_name] = channel
-                channel_inst = channels[channel_name]
+                channel = channels[channel_name]
                 for k, v in config.iteritems():
-                    setattr(channel_inst, k, v)
-                json_data.append({'name': channel_inst.name,
-                                  'long_name': channel_inst.long_name,
-                                  'presence': channel_inst.presence,
-                                  'salvagable': channel_inst.salvagable,
-                                  'store_history': channel_inst.store_history,
-                                  'history_size': channel_inst.history_size})
+                    setattr(channel, k, v)
+                json_data.append({'name': channel.name,
+                                  'long_name': channel.long_name,
+                                  'notify_presence': channel.notify_presence,
+                                  'salvageable': channel.salvageable,
+                                  'store_history': channel.store_history,
+                                  'history_size': channel.history_size})
         return json_data
 
     @view_config(

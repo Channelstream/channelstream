@@ -15,28 +15,37 @@ channels = {}
 class Channel(object):
     """ Represents one of our chat channels - has some config options """
 
-    def __init__(self, name, long_name=None):
+    def __init__(self, name, long_name=None, channel_configs=None):
         self.name = name
         self.long_name = long_name
         self.last_active = datetime.utcnow()
         self.connections = {}
-        self.presence = False
-        self.salvagable = False
+        self.notify_presence = False
+        self.salvageable = False
         self.store_history = False
         self.history_size = 10
         self.history = []
+        self.reconfigure_from_dict(channel_configs.get(self.name))
         log.info('%s created' % self)
+
+    def reconfigure_from_dict(self, config):
+        if config:
+            keys = ['notify_presence', 'store_history', 'history_size']
+            for key in keys:
+                val = config.get(key)
+                if val is not None:
+                    setattr(self, key, val)
 
     def add_connection(self, connection):
         if connection.username not in self.connections:
             self.connections[connection.username] = []
-        if not self.connections[connection.username] and self.presence:
-            self.send_presence_info(connection.username, 'joined')
+        if not self.connections[connection.username] and self.notify_presence:
+            self.send_notify_presence_info(connection.username, 'joined')
 
         if connection not in self.connections[connection.username]:
             self.connections[connection.username].append(connection)
 
-    def send_presence_info(self, username, action):
+    def send_notify_presence_info(self, username, action):
         self.last_active = datetime.utcnow()
         payload = {
             'type': 'presence',
@@ -85,7 +94,7 @@ def gc_conns():
                         collected_conns.append(conn)
                 if not channel.connections[username]:
                     del channel.connections[username]
-                    channel.send_presence_info(username, 'parted')
+                    channel.send_notify_presence_info(username, 'parted')
         # remove old conns from users and conn dict
         for conn in collected_conns:
             if conn.username in users:
