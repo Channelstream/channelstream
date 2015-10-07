@@ -210,6 +210,15 @@ class ServerViews(object):
                 continue
             gevent.spawn(pass_message, msg, stats)
 
+    @view_config(route_name='action', match_param='action=disconnect',
+                 renderer='json', permission='access')
+    def disconnect(self):
+        conn_id = self.request.json_body.get('conn_id',
+                                             self.request.GET.get('conn_id'))
+        conn = connections.get(conn_id)
+        if conn is not None:
+            conn.mark_for_gc()
+
     @view_config(route_name='action', match_param='action=channel_config',
                  renderer='json', permission='access')
     def channel_config(self):

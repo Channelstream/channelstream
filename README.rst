@@ -19,7 +19,7 @@ Possible config options for the server::
     YOUR_PYTHON_ENV/bin/channelstream -h
 
 
-The server can also be configured via ini files, example::
+The server can also be configured via ini files (channelstream -i filename), example::
 
     [channelstream]
     debug = 0
@@ -75,10 +75,12 @@ expects a json request in form of::
 
     { "user": YOUR_username,
       "conn_id": CUSTOM_UNIQUE_UID_OF_CONNECTION, # for example uuid.uuid4()
-    "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ]
+    "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
+    "channel_configs": {"CHAN_NAME1": {"notify_presence": true, "history_size": 50}} # channel_configs key is optional
     }
    
-where channels is a list of channels this connection/user should be subscribed to.
+where `channels` is a list of channels this connection/user should be subscribed to.
+`channel_configs` is optional dictionary of defaults used for channel creation.
 
 /info?secret=YOURSECRET
 --------------------------
@@ -108,8 +110,8 @@ marks specific connection to be garbage collected
 expects a json request in form of::
 
     {
-    "channel": "CHAN_NAME", #optional
-    "pm_users": [username1,username2], #optional
+    "channel": "CHAN_NAME", #optional if pm_users present
+    "pm_users": [username1,username2], #optional if channel present
     "user": "NAME_OF_POSTER",
     "message": MSG_PAYLOAD
     }
@@ -125,7 +127,9 @@ owned by pm_users.
 
 expects a json request in form of::
 
-    { "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ], "conn_id": "CONNECTION_ID"}
+    { "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
+    "channel_configs": {"CHAN_NAME1": {"notify_presence": true, "history_size": 50}}, # channel_configs key is optional
+    "conn_id": "CONNECTION_ID"}
 
 
 /user_status?secret=YOURSECRET
@@ -157,8 +161,8 @@ examples:
 
     {
     "date": "2011-09-15T11:43:47.434905",
-    "message": null,
-    "type": "join",
+    "message": {"action":"joined/parted"},
+    "type": "presence",
     "user": "NAME_OF_POSTER",
     "channel": "CHAN_NAME"
     }
