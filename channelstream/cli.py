@@ -4,16 +4,18 @@ from gevent import monkey
 
 monkey.patch_all()
 
+import ConfigParser
+import collections
 import logging
 import optparse
-import ConfigParser
 
-from geventwebsocket import WebSocketServer, Resource
+
 from channelstream.wsgi_app import make_app
 from channelstream.ws_app import ChatApplication
-from pyramid.settings import asbool
 from channelstream.policy_server import client_handle
 from gevent.server import StreamServer
+from geventwebsocket import WebSocketServer, Resource
+from pyramid.settings import asbool
 
 def cli_start():
     config = {
@@ -114,13 +116,12 @@ def cli_start():
     server = StreamServer(('0.0.0.0', 10843), client_handle)
     server.start()
     print 'Serving on http://%s:%s' % (config['host'], config['port'])
+    app_dict = collections.OrderedDict({
+        '^/ws.*': ChatApplication,
+        '^/*': make_app(config)
+    })
     WebSocketServer(
         (config['host'], config['port']),
-
-        Resource({
-            '^/ws.*': ChatApplication,
-            '^/*': make_app(config)
-        }),
-
+        Resource(app_dict),
         debug=False
     ).serve_forever()
