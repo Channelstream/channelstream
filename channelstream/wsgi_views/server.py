@@ -294,6 +294,8 @@ class ServerViews(object):
         json_data = {"channels": {}, "unique_users": len(users),
                      "users": []}
 
+        users_to_list = []
+
         # select everything for empty list
         if not self.request.body or not self.request.json_body.get('channels'):
             req_channels = channels.keys()
@@ -310,6 +312,7 @@ class ServerViews(object):
             json_data["channels"][channel_inst.name]['users'] = []
             for username in channel_inst.connections.keys():
                 user_inst = users.get(username)
+                users_to_list.append(user_inst.username)
                 udata = {'user': user_inst.username,
                          "connections": [conn.id for conn in
                                          channel_inst.connections[username]]}
@@ -317,6 +320,7 @@ class ServerViews(object):
             json_data["channels"][channel_inst.name][
                 'last_active'] = channel_inst.last_active
         for username, user in users.iteritems():
-            json_data['users'].append({'user': username, 'state': user.state})
+            if username in users_to_list:
+                json_data['users'].append({'user': username, 'state': user.state})
         log.info('info time: %s' % (datetime.now() - start_time))
         return json_data
