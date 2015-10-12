@@ -1,8 +1,13 @@
-from pyramid.security import Allow, Everyone, ALL_PERMISSIONS, authenticated_userid
+from pyramid.security import (Allow,
+                              Everyone,
+                              ALL_PERMISSIONS,
+                              authenticated_userid)
 from itsdangerous import TimestampSigner
+
 
 class RequestBasicChannenge(Exception):
     pass
+
 
 class APIFactory(object):
     def __init__(self, request):
@@ -20,6 +25,7 @@ class APIFactory(object):
         else:
             return
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]
+
 
 class BasicAuthFactory(object):
     def __init__(self, request):

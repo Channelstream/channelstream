@@ -3,10 +3,8 @@ import urlparse
 
 from geventwebsocket import WebSocketApplication
 
-from channelstream import lock
-from channelstream.connection import connections
-from channelstream.channel import channels
-from channelstream.user import users
+from .connection import connections
+from .user import users
 
 
 class ChatApplication(WebSocketApplication):

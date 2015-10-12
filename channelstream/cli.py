@@ -10,9 +10,9 @@ import logging
 import optparse
 
 
-from channelstream.wsgi_app import make_app
-from channelstream.ws_app import ChatApplication
-from channelstream.policy_server import client_handle
+from .wsgi_app import make_app
+from .ws_app import ChatApplication
+from .policy_server import client_handle
 from gevent.server import StreamServer
 from geventwebsocket import WebSocketServer, Resource
 from pyramid.settings import asbool
@@ -27,14 +27,7 @@ def cli_start():
         'allow_posting_from': [],
         'port': 8000,
         'host': '0.0.0.0',
-        'debug': False,
-        'status_codes': {
-            "offline": 0,
-            "online": 1,
-            "away": 2,
-            "hidden": 3,
-            "busy": 4,
-        }
+        'debug': False
     }
 
     parser = optparse.OptionParser()

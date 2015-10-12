@@ -1,4 +1,3 @@
-from gevent.server import StreamServer
 import socket
 import logging
 
@@ -6,6 +5,8 @@ log = logging.getLogger(__name__)
 
 POLICY = """<cross-domain-policy><allow-access-from domain="*" to-ports="*" /></cross-domain-policy>\0"""
 POLICYREQUEST = "<policy-file-request/>"
+
+
 def client_handle(sock, address):
     log.info("%s:%s: Connection accepted." % address)
     sock.settimeout(3)

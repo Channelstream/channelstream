@@ -7,11 +7,11 @@ from pyramid.security import forget
 from pyramid.response import Response
 
 import gevent
-from channelstream import stats, lock
-from channelstream.user import User, users
-from channelstream.connection import Connection, connections
-from channelstream.channel import Channel, channels
-from channelstream.ext_json import json
+from .. import stats, lock
+from ..user import User, users
+from ..connection import Connection, connections
+from ..channel import Channel, channels
+from ..ext_json import json
 from gevent.queue import Queue, Empty
 
 log = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ def pass_message(msg, stats):
             total_sent += channel_inst.add_message(message,
                                                    pm_users=pm_users)
     elif pm_users:
-        # if pm then iterate over all users and notify about new message hiyoo!!
+        # if pm then iterate over all users and notify about new message!
         for username in pm_users:
             user_inst = users.get(username)
             if user_inst:
@@ -56,13 +56,18 @@ class ServerViews(object):
     @view_config(route_name='action', match_param='action=connect',
                  renderer='json', permission='access')
     def connect(self):
-        """return the id of connected users - will be secured with password string
-        for webapp to internally call the server - we combine conn string with user id,
-        and we tell which channels the user is allowed to subscribe to"""
+        """
+        return the id of connected users - will be secured with password string
+        for webapp to internally call the server - we combine conn string
+        with user id, and we tell which channels the user is allowed to
+        subscribe to
+        """
         username = self.request.json_body.get('username')
-        def_status = self.request.registry.settings['status_codes']['online']
-        user_status = int(self.request.json_body.get('status', def_status))
+        fresh_user_state = self.request.json_body.get('fresh_user_state', {})
+        update_user_state = self.request.json_body.get('user_state', {})
         channel_configs = self.request.json_body.get('channel_configs', {})
+        state_public_keys = self.request.json_body.get('state_public_keys',
+                                                       None)
         conn_id = self.request.json_body.get('conn_id')
         subscribe_to_channels = self.request.json_body.get('channels')
         if username is None:
@@ -72,13 +77,19 @@ class ServerViews(object):
             self.request.response.status = 400
             return {'error': "No channels specified"}
 
-        # everything is ok so lets add new connection to channel and connection list
+        # everything is ok so lets add new connection to
+        # channel and connection list
         with lock:
             if username not in users:
-                user = User(username, def_status)
+                user = User(username)
+                user.state_from_dict(fresh_user_state)
                 users[username] = user
             else:
                 user = users[username]
+            if state_public_keys is not None:
+                user.state_public_keys = state_public_keys
+
+            user.state_from_dict(update_user_state)
             connection = Connection(username, conn_id)
             if connection.id not in connections:
                 connections[connection.id] = connection
@@ -91,7 +102,7 @@ class ServerViews(object):
                     channels[channel_name] = channel
                 channels[channel_name].add_connection(connection)
             log.info('connecting %s with uuid %s' % (username, connection.id))
-        return {'conn_id': connection.id, 'status': user.status}
+        return {'conn_id': connection.id, 'state': user.state}
 
     @view_config(route_name='action', match_param='action=subscribe',
                  renderer='json', permission='access')
@@ -108,7 +119,8 @@ class ServerViews(object):
         if not subscribe_to_channels:
             self.request.response.status = 400
             return {'error': "No channels specified"}
-        # everything is ok so lets add new connection to channel and connection list
+        # everything is ok so lets add new connection to channel
+        # and connection list
         # lets lock it just in case
         # find the right user
         user = users.get(connection.username)
@@ -140,7 +152,8 @@ class ServerViews(object):
                                           'Cache-Control, Pragma, Origin, '
                                           'Connection, Referer, Cookie')
         self.request.response.headers.add('Access-Control-Max-Age', '86400')
-        # self.request.response.headers.add('Access-Control-Allow-Credentials', 'true')
+        #self.request.response.headers.add('Access-Control-Allow-Credentials',
+        #                                  'true')
         return ''
 
     @view_config(route_name='action', match_param='action=listen',
@@ -182,24 +195,26 @@ class ServerViews(object):
         return Response(app_iter=yield_response(), request=self.request,
                         content_type='application/json')
 
-    @view_config(route_name='action', match_param='action=user_status',
+    @view_config(route_name='action', match_param='action=user_state',
                  renderer='json', permission='access')
-    def user_status(self):
+    def user_state(self):
         """ set the status of specific user """
         username = self.request.json_body.get('user')
-        def_status = self.request.registry.settings['status_codes'][
-            'online']
-        user_status = int(self.request.json_body.get('status', def_status))
+        user_state = self.request.json_body.get('user_state')
+        state_public_keys = self.request.json_body.get('state_public_keys',
+                                                       None)
         if not username:
             self.request.response.status = 400
             return {'error': "No username specified"}
 
         user_inst = users.get(username)
         if user_inst:
-            user_inst.status = user_status
+            user_inst.state_from_dict(user_state)
+            if state_public_keys is not None:
+                user_inst.state_public_keys = state_public_keys
             # mark active
             user_inst.last_active = datetime.utcnow()
-        return {}
+        return user_inst.state
 
     @view_config(route_name='action', match_param='action=message',
                  renderer='json', permission='access')
@@ -256,13 +271,11 @@ class ServerViews(object):
                  renderer='templates/admin.jinja2', permission='access')
     def admin(self):
         uptime = datetime.utcnow() - stats['started_on']
-        remembered_user_count = len(
-            [user for user in users.iteritems()])
-        unique_user_count = len(
-            [user for user in users.itervalues() if
-             user.connections])
-        total_connections = sum(
-            [len(user.connections) for user in users.itervalues()])
+        remembered_user_count = len([user for user in users.iteritems()])
+        unique_user_count = len([user for user in users.itervalues()
+                                 if user.connections])
+        total_connections = sum([len(user.connections)
+                                 for user in users.itervalues()])
         return {
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
@@ -278,7 +291,8 @@ class ServerViews(object):
     def info(self):
         start_time = datetime.now()
 
-        json_data = {"channels": {}, "unique_users": len(users)}
+        json_data = {"channels": {}, "unique_users": len(users),
+                     "users": []}
 
         # select everything for empty list
         if not self.request.body or not self.request.json_body.get('channels'):
@@ -297,11 +311,12 @@ class ServerViews(object):
             for username in channel_inst.connections.keys():
                 user_inst = users.get(username)
                 udata = {'user': user_inst.username,
-                         'status': user_inst.status,
                          "connections": [conn.id for conn in
                                          channel_inst.connections[username]]}
                 json_data["channels"][channel_inst.name]['users'].append(udata)
             json_data["channels"][channel_inst.name][
                 'last_active'] = channel_inst.last_active
+        for username, user in users.iteritems():
+            json_data['users'].append({'user': username, 'state': user.state})
         log.info('info time: %s' % (datetime.now() - start_time))
         return json_data

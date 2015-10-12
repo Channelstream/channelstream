@@ -2,9 +2,9 @@ import gevent
 import copy
 import logging
 
-from channelstream import lock
-from channelstream.connection import connections
-from channelstream.user import users
+from . import lock
+from .connection import connections
+from .user import users
 from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ class Channel(object):
         self.last_active = datetime.utcnow()
         self.connections = {}
         self.notify_presence = False
+        self.broadcast_presence_with_user_lists = False
         self.salvageable = False
         self.store_history = False
         self.history_size = 10
@@ -30,7 +31,8 @@ class Channel(object):
 
     def reconfigure_from_dict(self, config):
         if config:
-            keys = ['notify_presence', 'store_history', 'history_size']
+            keys = ['notify_presence', 'store_history', 'history_size',
+                    'broadcast_presence_with_user_lists']
             for key in keys:
                 val = config.get(key)
                 if val is not None:
@@ -46,13 +48,29 @@ class Channel(object):
             self.connections[connection.username].append(connection)
 
     def send_notify_presence_info(self, username, action):
+        """
+        Sends a message to other connected parties about a presence change
+        """
+        connected_users = []
+        if self.broadcast_presence_with_user_lists:
+            for _username in self.connections.keys():
+                user_inst = users.get(_username)
+                udata = {
+                    'user': user_inst.username,
+                    'state': user_inst.public_state
+                }
+                connected_users.append(udata)
+
         self.last_active = datetime.utcnow()
         payload = {
             'type': 'presence',
             'user': username,
+            'users': connected_users,
+            'timestamp': self.last_active,
             'channel': self.name,
             'message': {'action': action}
         }
+
         self.add_message(payload, exclude_users=username)
 
     def add_message(self, message, pm_users=None, exclude_users=None):
@@ -102,7 +120,8 @@ def gc_conns():
                     users[conn.username].connections.remove(conn)
             if conn.id in connections:
                 del connections[conn.id]
-            # make sure connection is closed after we garbage collected it from our list
+            # make sure connection is closed after we garbage
+            # collected it from our list
             if conn.socket:
                 try:
                     conn.socket.ws.close()

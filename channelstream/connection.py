@@ -3,8 +3,7 @@ import gevent
 import logging
 
 from gevent.queue import Queue
-
-from channelstream.ext_json import json
+from .ext_json import json
 
 log = logging.getLogger(__name__)
 

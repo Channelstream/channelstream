@@ -76,11 +76,22 @@ expects a json request in form of::
     { "user": YOUR_username,
       "conn_id": CUSTOM_UNIQUE_UID_OF_CONNECTION, # for example uuid.uuid4()
     "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
-    "channel_configs": {"CHAN_NAME1": {"notify_presence": true, "history_size": 50}} # channel_configs key is optional
+    "channel_configs": {"CHAN_NAME1": {"notify_presence": true, "history_size": 50}} # channel_configs key is optional,
+    "fresh_user_state": {"avatar":"foo", "bar":1}}, # if user object is not found set this state on newly created user object
+    "user_state": {"bar":2}} # update user object state with keys from this dictionary,
+    "state_public_keys": ["avatar", "bar"] # whitelist state keys to be sent back to clients inside presence payloads
     }
    
 where `channels` is a list of channels this connection/user should be subscribed to.
 `channel_configs` is optional dictionary of defaults used for channel creation.
+
+Keys used in `channel_configs` to describe channel behavior (and their defaults):
+
+* notify_presence = False
+* broadcast_presence_with_user_lists = False
+* store_history = False
+* history_size = 10
+
 
 /info?secret=YOURSECRET
 --------------------------
@@ -95,6 +106,7 @@ where channels is a list of channels you want information about.
 If channel list is empty server will return full list of all channels and their
 information.
 
+
 /disconnect
 --------------------------
 
@@ -103,6 +115,7 @@ expects a json request in form of::
     { "conn_id": CONN_ID}
 
 marks specific connection to be garbage collected
+
 
 /message?secret=YOURSECRET
 --------------------------
@@ -122,6 +135,7 @@ to connections subscribed to this specific channel.
 If only pm_users is present a private message is sent to all connections that are
 owned by pm_users.  
 
+
 /subscribe?secret=YOURSECRET
 ----------------------------
 
@@ -132,12 +146,13 @@ expects a json request in form of::
     "conn_id": "CONNECTION_ID"}
 
 
-/user_status?secret=YOURSECRET
+/user_state?secret=YOURSECRET
 ----------------------------
 
 expects a json request in form of::
 
-    { "user": username, "status":STATUS_ID_INT}
+    { "user": username, "user_state":{"bar":2}},
+    "state_public_keys": ["avatar", "bar"]}
 
 
 Responses to js client
