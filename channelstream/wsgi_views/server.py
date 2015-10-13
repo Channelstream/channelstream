@@ -138,9 +138,7 @@ class ServerViews(object):
                     subscribed_channels.append(channel.name)
         return subscribed_channels
 
-    @view_config(route_name='action', match_param='action=listen',
-                 request_method="OPTIONS", renderer='string')
-    def handle_CORS(self):
+    def _add_CORS(self):
         self.request.response.headers.add('Access-Control-Allow-Origin', '*')
         self.request.response.headers.add('XDomainRequestAllowed', '1')
         self.request.response.headers.add('Access-Control-Allow-Methods',
@@ -154,11 +152,17 @@ class ServerViews(object):
         self.request.response.headers.add('Access-Control-Max-Age', '86400')
         #self.request.response.headers.add('Access-Control-Allow-Credentials',
         #                                  'true')
+
+    @view_config(route_name='action', match_param='action=listen',
+                 request_method="OPTIONS", renderer='string')
+    def handle_CORS(self):
+        self._add_CORS()
         return ''
 
     @view_config(route_name='action', match_param='action=listen',
                  renderer='string')
     def listen(self):
+        self._add_CORS()
         config = self.request.registry.settings
         self.conn_id = self.request.params.get('conn_id')
         connection = connections.get(self.conn_id)
@@ -192,8 +196,8 @@ class ServerViews(object):
             else:
                 yield json.dumps(messages)
 
-        return Response(app_iter=yield_response(), request=self.request,
-                        content_type='application/json')
+        self.request.response.app_iter = yield_response()
+        return self.request.response
 
     @view_config(route_name='action', match_param='action=user_state',
                  renderer='json', permission='access')
