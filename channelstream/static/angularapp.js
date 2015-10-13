@@ -10,7 +10,7 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
     $scope.conn_id = null;
     $scope.websocket = null;
 
-    var use_websocket = false;
+    var use_websocket = true;
 
 
     var webapp_url = window.location.toString();
