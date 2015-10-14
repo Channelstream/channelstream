@@ -7,7 +7,7 @@ from . import lock
 
 log = logging.getLogger(__name__)
 
-users = {}
+USERS = {}
 
 
 class User(object):
@@ -50,16 +50,16 @@ class User(object):
 
     @property
     def public_state(self):
-        return dict([(k,v) for k,v in self.state.items()
+        return dict([(k, v) for k, v in self.state.items()
                      if k in self.state_public_keys])
 
 def gc_users():
     with lock:
         start_time = datetime.utcnow()
         threshold = datetime.utcnow() - timedelta(days=1)
-        for user in users.values():
+        for user in USERS.values():
             if user.last_active < threshold:
-                users.pop(user.username)
+                USERS.pop(user.username)
         log.info('gc_users() time %s' % (datetime.utcnow() - start_time))
     gevent.spawn_later(60, gc_users)
 

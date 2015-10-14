@@ -2,12 +2,11 @@ import datetime
 import gevent
 import logging
 
-from gevent.queue import Queue
 from .ext_json import json
 
 log = logging.getLogger(__name__)
 
-connections = {}
+CONNECTIONS = {}
 
 
 class Connection(object):

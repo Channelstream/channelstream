@@ -25,7 +25,7 @@ def make_app(server_config):
     authz_policy = ACLAuthorizationPolicy()
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
-    json_renderer = JSON(serializer=json.dumps)
+    json_renderer = JSON(serializer=json.dumps, indent=4)
     json_renderer.add_adapter(datetime.datetime, datetime_adapter)
     config.add_renderer('json', json_renderer)
     config.add_static_view('static', path='channelstream:static/')

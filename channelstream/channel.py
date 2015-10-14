@@ -1,15 +1,16 @@
-import gevent
 import copy
+import gevent
 import logging
+import uuid
 
 from . import lock
-from .connection import connections
-from .user import users
+from .connection import CONNECTIONS
+from .user import USERS
 from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
-channels = {}
+CHANNELS = {}
 
 
 class Channel(object):
@@ -41,6 +42,7 @@ class Channel(object):
     def add_connection(self, connection):
         if connection.username not in self.connections:
             self.connections[connection.username] = []
+
         if not self.connections[connection.username] and self.notify_presence:
             self.send_notify_presence_info(connection.username, 'joined')
 
@@ -54,7 +56,7 @@ class Channel(object):
         connected_users = []
         if self.broadcast_presence_with_user_lists:
             for _username in self.connections.keys():
-                user_inst = users.get(_username)
+                user_inst = USERS.get(_username)
                 udata = {
                     'user': user_inst.username,
                     'state': user_inst.public_state
@@ -63,6 +65,7 @@ class Channel(object):
 
         self.last_active = datetime.utcnow()
         payload = {
+            'uuid': str(uuid.uuid4()).replace('-', ''),
             'type': 'presence',
             'user': username,
             'users': connected_users,
@@ -74,12 +77,14 @@ class Channel(object):
         self.add_message(payload, exclude_users=username)
 
     def add_message(self, message, pm_users=None, exclude_users=None):
-        """ Sends the message to all connections subscribed to this channel """
+        """
+        Sends the message to all connections subscribed to this channel
+        """
         message = copy.deepcopy(message)
         if not pm_users:
             pm_users = []
         self.last_active = datetime.utcnow()
-        if self.store_history:
+        if self.store_history and message['type'] == 'message':
             self.history.append(message)
             self.history = self.history[(self.history_size) * -1:]
         message.update({'channel': self.name})
@@ -104,7 +109,7 @@ def gc_conns():
         threshold = start_time - timedelta(seconds=15)
         collected_conns = []
         # collect every ref in chanels
-        for channel in channels.itervalues():
+        for channel in CHANNELS.itervalues():
             for username, conns in channel.connections.items():
                 for conn in conns:
                     if conn.last_active < threshold:
@@ -115,11 +120,11 @@ def gc_conns():
                     channel.send_notify_presence_info(username, 'parted')
         # remove old conns from users and conn dict
         for conn in collected_conns:
-            if conn.username in users:
-                if conn in users[conn.username].connections:
-                    users[conn.username].connections.remove(conn)
-            if conn.id in connections:
-                del connections[conn.id]
+            if conn.username in USERS:
+                if conn in USERS[conn.username].connections:
+                    USERS[conn.username].connections.remove(conn)
+            if conn.id in CONNECTIONS:
+                del CONNECTIONS[conn.id]
             # make sure connection is closed after we garbage
             # collected it from our list
             if conn.socket:
