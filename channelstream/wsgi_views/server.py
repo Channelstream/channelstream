@@ -207,7 +207,6 @@ class ServerViews(object):
         # lets lock it just in case
         # find the right user
         user = USERS.get(connection.username)
-        subscribed_channels = []
         with lock:
             if user:
                 for channel_name in subscribe_to_channels:
@@ -216,9 +215,42 @@ class ServerViews(object):
                                           channel_configs=channel_configs)
                         CHANNELS[channel_name] = channel
                     CHANNELS[channel_name].add_connection(connection)
-            for channel in CHANNELS.itervalues():
-                if user.username in channel.connections:
-                    subscribed_channels.append(channel.name)
+
+        info_config = self.request.json_body.get('info') or {}
+        include_history = info_config.get('include_history', True)
+        include_users = info_config.get('include_users', True)
+        exclude_channels = info_config.get('exclude_channels', [])
+        current_channels = get_connection_channels(connection)
+        channels_info = self._get_channel_info(current_channels,
+                                               include_history=include_history,
+                                               include_users=include_users,
+                                               exclude_channels=exclude_channels)
+        return {"channels": current_channels,
+                "channels_info": channels_info}
+
+    @view_config(route_name='action', match_param='action=unsubscribe',
+                 renderer='json', permission='access')
+    def unsubscribe(self, *args):
+        """ call this to unsubscribe specific connection to new channels """
+        conn_id = self.request.json_body.get('conn_id',
+                                             self.request.GET.get('conn_id'))
+        connection = CONNECTIONS.get(conn_id)
+        unsubscribe_channels = self.request.json_body.get('channels')
+        if not connection:
+            self.request.response.status = 403
+            return {'error': "Unknown connection"}
+        if not unsubscribe_channels:
+            self.request.response.status = 400
+            return {'error': "No channels specified"}
+        # everything is ok so lets add new connection to channel
+        # and connection list
+        # lets lock it just in case
+        # find the right user
+        user = USERS.get(connection.username)
+        with lock:
+            if user:
+                for channel_name in unsubscribe_channels:
+                    CHANNELS[channel_name].remove_connection(connection)
 
         info_config = self.request.json_body.get('info') or {}
         include_history = info_config.get('include_history', True)

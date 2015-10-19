@@ -36,6 +36,25 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
             });
     }
 
+    $scope.unsubscribe_channel = function () {
+        var json_data = {
+            channels: ['notify'],
+            conn_id: $scope.conn_id
+        };
+        $http({
+            method: 'POST',
+            url: webapp_url + '/unsubscribe',
+            data: json_data
+        }).
+            success(function (data, status, headers, config) {
+                $scope.channels = data;
+            }).
+            error(function (data, status, headers, config) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+            });
+    }
+
     $scope.send_message = function () {
         var json_data = {
             message: $scope.message,

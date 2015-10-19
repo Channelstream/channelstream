@@ -27,6 +27,8 @@ def enable_demo(context, request):
         return True
     return False
 
+CHANNEL_CONFIGS = {"pub_chan": {"notify_presence": True},
+                   "notify": {"notify_presence": True}}
 
 class DemoViews(object):
     def __init__(self, request):
@@ -69,8 +71,8 @@ class DemoViews(object):
 
         payload = {"username": username,
                    "conn_id": str(uuid.uuid4()),
-                   "channels": channels
-                   }
+                   "channels": channels,
+                   "channel_configs": CHANNEL_CONFIGS}
         result = make_request(self.request, payload, '/connect')
         return payload
 
@@ -81,12 +83,27 @@ class DemoViews(object):
     def subscribe(self):
         """"can be used to subscribe specific connection to other channels"""
         request_data = self.request.json_body
-        channels = self.request_data['channels']
+        channels = request_data['channels']
         POSSIBLE_CHANNELS.intersection(channels)
+        payload = {"conn_id": request_data.get('conn_id', ''),
+                   "channels": request_data.get('channels', []),
+                   "channel_configs": CHANNEL_CONFIGS
+                   }
+        result = make_request(self.request, payload, '/subscribe')
+        return result['channels']
+
+    @view_config(route_name='section_action',
+                 match_param=['section=demo', 'action=unsubscribe'],
+                 renderer='json', request_method="POST",
+                 custom_predicates=[enable_demo])
+    def unsubscribe(self):
+        """"can be used to subscribe specific connection to other channels"""
+        request_data = self.request.json_body
+        channels = request_data['channels']
         payload = {"conn_id": request_data.get('conn_id', ''),
                    "channels": request_data.get('channels', [])
                    }
-        result = make_request(self.request, payload, '/subscribe')
+        result = make_request(self.request, payload, '/unsubscribe')
         return result['channels']
 
     @view_config(route_name='section_action',

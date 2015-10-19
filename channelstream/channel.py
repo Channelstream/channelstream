@@ -40,14 +40,26 @@ class Channel(object):
                     setattr(self, key, val)
 
     def add_connection(self, connection):
-        if connection.username not in self.connections:
-            self.connections[connection.username] = []
+        username = connection.username
+        if username not in self.connections:
+            self.connections[username] = []
 
-        if not self.connections[connection.username] and self.notify_presence:
-            self.send_notify_presence_info(connection.username, 'joined')
+        if not self.connections[username] and self.notify_presence:
+            self.send_notify_presence_info(username, 'joined')
 
         if connection not in self.connections[connection.username]:
             self.connections[connection.username].append(connection)
+
+    def remove_connection(self, connection):
+        username = connection.username
+        if username not in self.connections:
+            self.connections[username] = []
+
+        if not self.connections[username] and self.notify_presence:
+            self.send_notify_presence_info(username, 'parted')
+
+        self.connections[username] = filter(lambda i: i is not connection,
+                                            self.connections[username])
 
     def send_notify_presence_info(self, username, action):
         """
