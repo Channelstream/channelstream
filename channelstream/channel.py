@@ -1,16 +1,12 @@
 import copy
-import gevent
 import logging
 import uuid
 
-from . import lock
-from .connection import CONNECTIONS
-from .user import USERS
-from datetime import datetime, timedelta
+import channelstream
+
+from datetime import datetime
 
 log = logging.getLogger(__name__)
-
-CHANNELS = {}
 
 
 class Channel(object):
@@ -70,7 +66,7 @@ class Channel(object):
         connected_users = []
         if self.broadcast_presence_with_user_lists:
             for _username in self.connections.keys():
-                user_inst = USERS.get(_username)
+                user_inst = channelstream.USERS.get(_username)
                 udata = {
                     'user': user_inst.username,
                     'state': user_inst.public_state
@@ -115,39 +111,3 @@ class Channel(object):
     def __repr__(self):
         return '<Channel: %s, connections:%s>' % (
             self.name, len(self.connections))
-
-
-def gc_conns():
-    with lock:
-        start_time = datetime.utcnow()
-        threshold = start_time - timedelta(seconds=15)
-        collected_conns = []
-        # collect every ref in chanels
-        for channel in CHANNELS.itervalues():
-            for username, conns in channel.connections.items():
-                for conn in conns:
-                    if conn.last_active < threshold:
-                        channel.connections[username].remove(conn)
-                        collected_conns.append(conn)
-                if not channel.connections[username]:
-                    del channel.connections[username]
-                    channel.send_notify_presence_info(username, 'parted')
-        # remove old conns from users and conn dict
-        for conn in collected_conns:
-            if conn.username in USERS:
-                if conn in USERS[conn.username].connections:
-                    USERS[conn.username].connections.remove(conn)
-            if conn.id in CONNECTIONS:
-                del CONNECTIONS[conn.id]
-            # make sure connection is closed after we garbage
-            # collected it from our list
-            if conn.socket:
-                try:
-                    conn.socket.ws.close()
-                except Exception:
-                    raise
-        log.debug('gc_conns() time %s' % (datetime.utcnow() - start_time))
-        gevent.spawn_later(1, gc_conns)
-
-
-gevent.spawn_later(1, gc_conns)

@@ -1,5 +1,5 @@
 __author__ = 'ergo'
-
+import gevent
 from gevent import monkey
 
 monkey.patch_all()
@@ -8,14 +8,14 @@ import ConfigParser
 import collections
 import logging
 import optparse
-
-
 from .wsgi_app import make_app
 from .ws_app import ChatApplication
 from .policy_server import client_handle
 from gevent.server import StreamServer
 from geventwebsocket import WebSocketServer, Resource
 from pyramid.settings import asbool
+from channelstream.gc import gc_conns_forever, gc_users_forever
+
 
 def cli_start():
     config = {
@@ -55,45 +55,28 @@ def cli_start():
     parser.add_option("-x", "--allowed_post_ip", dest="allow_posting_from",
                       help="comma separated list of ip's that can post to server",
                       default="127.0.0.1"
-    )
+                      )
     (options, args) = parser.parse_args()
     if options.ini:
         parser = ConfigParser.ConfigParser()
         parser.read(options.ini)
+
+        non_optional_parameters = (
+            'debug', 'port', 'host', 'secret', 'admin_secret',
+            'demo_app_url', 'demo')
+        for key in non_optional_parameters:
+            try:
+                config[key] = parser.get('channelstream', key)
+            except ConfigParser.NoOptionError:
+                pass
+
         try:
-            config['debug'] = parser.getboolean('channelstream', 'debug')
-        except ConfigParser.NoOptionError as e:
-            pass
-        try:
-            config['demo'] = parser.getboolean('channelstream', 'demo')
-        except ConfigParser.NoOptionError as e:
-            pass
-        try:
-            config['port'] = parser.getint('channelstream', 'port')
-        except ConfigParser.NoOptionError as e:
-            pass
-        try:
-            config['host'] = parser.get('channelstream', 'host')
-        except ConfigParser.NoOptionError as e:
-            pass
-        try:
-            config['secret'] = parser.get('channelstream', 'secret')
-        except ConfigParser.NoOptionError as e:
-            pass
-        try:
-            config['admin_secret'] = parser.get('channelstream', 'admin_secret')
-        except ConfigParser.NoOptionError as e:
-            pass
-        try:
-            ips = [ip.strip() for ip in parser.get('channelstream',
-                                               'allow_posting_from').split(',')]
+            ips = [ip.strip() for ip in parser.get(
+                'channelstream', 'allow_posting_from').split(',')]
             config['allow_posting_from'].extend(ips)
-        except ConfigParser.NoOptionError as e:
+        except ConfigParser.NoOptionError:
             pass
-        try:
-            config['demo_app_url'] = parser.get('channelstream', 'demo_app_url')
-        except ConfigParser.NoOptionError as e:
-            pass
+
     else:
         config['debug'] = int(options.debug)
         config['port'] = int(options.port)
@@ -103,9 +86,11 @@ def cli_start():
         config['admin_secret'] = options.admin_secret
         config['allow_posting_from'].extend(
             [ip.strip() for ip in options.allow_posting_from.split(',')])
-
-    logging.basicConfig(level=logging.INFO)
+    log_level = logging.DEBUG if config['debug'] else logging.INFO
+    logging.basicConfig(level=log_level)
     print 'Starting flash policy server on port 10843'
+    gc_conns_forever()
+    gc_users_forever()
     server = StreamServer(('0.0.0.0', 10843), client_handle)
     server.start()
     print 'Serving on http://%s:%s' % (config['host'], config['port'])

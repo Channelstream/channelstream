@@ -6,8 +6,6 @@ from .ext_json import json
 
 log = logging.getLogger(__name__)
 
-CONNECTIONS = {}
-
 
 class Connection(object):
     """ Represents a browser connection"""
@@ -27,17 +25,11 @@ class Connection(object):
         """ Sends the message to the client connection """
         # handle websockets
         if self.socket:
-            if message:
-                self.socket.ws.send(json.dumps([message]))
-            else:
-                self.socket.ws.send(json.dumps([]))
+            self.socket.ws.send(json.dumps([message] if message else []))
             self.last_active = datetime.datetime.utcnow()
         elif self.queue:
             # handle long polling
-            if message:
-                self.queue.put([message])
-            else:
-                self.queue.put([])
+            self.queue.put([message] if message else [])
 
     def mark_for_gc(self):
         # set last active time for connection 1 hour in past for GC

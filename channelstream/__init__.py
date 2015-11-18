@@ -14,3 +14,6 @@ stats = {
 }
 
 lock = RLock()
+CHANNELS = {}
+USERS = {}
+CONNECTIONS = {}
