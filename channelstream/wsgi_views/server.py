@@ -409,10 +409,13 @@ class ServerViews(object):
              user.connections])
         total_connections = sum(
             [len(user.connections) for user in channelstream.USERS.itervalues()])
+        total_sys_connections = len(channelstream.CONNECTIONS.values())
         return {
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
             "total_connections": total_connections,
+            "total_sys_connections": total_sys_connections,
+            "total_channels": len(channelstream.CHANNELS.keys()),
             "total_messages": channelstream.stats['total_messages'],
             "total_unique_messages": channelstream.stats['total_unique_messages'],
             "channels": channelstream.CHANNELS,
