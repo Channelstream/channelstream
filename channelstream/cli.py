@@ -100,7 +100,7 @@ def cli_start():
         '^/*': make_app(config)
     })
     WebSocketServer(
-        (config['host'], config['port']),
+        (config['host'], int(config['port'])),
         Resource(app_dict),
         debug=False
     ).serve_forever()
