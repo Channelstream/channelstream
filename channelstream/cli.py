@@ -44,7 +44,7 @@ def cli_start():
     parser.add_option("-o", "--o", dest="host",
                       help="host ip on which the server listens to",
                       default='0.0.0.0')
-    parser.add_option("-p", "--port", dest="port",
+    parser.add_option("-p", "--port", type="int", dest="port",
                       help="port on which the server listens to",
                       default=8000)
     parser.add_option("-d", "--debug", dest="debug",
@@ -94,7 +94,7 @@ def cli_start():
     gc_users_forever()
     server = StreamServer(('0.0.0.0', 10843), client_handle)
     server.start()
-    print 'Serving on http://%s:%s' % (config['host'], config['port'])
+    print 'Serving on http://%s:%s' % (config['host'], int(config['port']))
     app_dict = collections.OrderedDict({
         '^/ws.*': ChatApplication,
         '^/*': make_app(config)
