@@ -27,6 +27,8 @@ class Channel(object):
         self.store_history = False
         self.history_size = 10
         self.history = []
+        if not channel_configs:
+            channel_configs = {}
         self.reconfigure_from_dict(channel_configs.get(self.name))
         log.info('%s created' % self)
 
