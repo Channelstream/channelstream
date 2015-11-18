@@ -1,23 +1,24 @@
 import pytest
 from pyramid import testing
-import channelstream.channel
-import channelstream.connection
-import channelstream.user
+import channelstream
+from  channelstream.channel import Channel
+from channelstream.connection import Connection
+from channelstream.user import User
 
 
 class BaseInternalsTest(object):
     def setup_method(self, method):
-        channelstream.channel.CHANNELS = {}
-        channelstream.connection.CONNECTIONS = {}
-        channelstream.user.USERS = {}
-        self.CHANNELS = channelstream.channel.CHANNELS
-        self.CONNECTIONS = channelstream.connection.CONNECTIONS
-        self.USERS = channelstream.user.USERS
+        channelstream.CHANNELS = {}
+        channelstream.CONNECTIONS = {}
+        channelstream.USERS = {}
+        self.CHANNELS = channelstream.CHANNELS
+        self.CONNECTIONS = channelstream.CONNECTIONS
+        self.USERS = channelstream.USERS
 
 
 class TestChannel(BaseInternalsTest):
     def test_create_defaults(self):
-        channel = channelstream.channel.Channel('test', long_name='long name')
+        channel = Channel('test', long_name='long name')
         assert channel.name == 'test'
         assert channel.long_name == 'long name'
         assert channel.connections == {}
@@ -36,33 +37,29 @@ class TestChannel(BaseInternalsTest):
     ])
     def test_create_set_config(self, prop, value):
         channel_configs = {'test': {prop: value}}
-        channel = channelstream.channel.Channel('test',
-                                                channel_configs=channel_configs)
+        channel = Channel('test', channel_configs=channel_configs)
+
         assert getattr(channel, prop) == value
 
     def test_create_set_config_diff_name(self):
         channel_configs = {'test2': {'notify_presence': True}}
-        channel = channelstream.channel.Channel('test',
-                                                channel_configs=channel_configs)
+        channel = Channel('test', channel_configs=channel_configs)
         assert channel.notify_presence is False
 
     def test_add_connection(self):
-        connection = channelstream.connection.Connection('test_user',
-                                                         conn_id='A')
-        channel = channelstream.channel.Channel('test')
+        connection = Connection('test_user',
+                                conn_id='A')
+        channel = Channel('test')
         channel.add_connection(connection)
         assert len(channel.connections['test_user']) == 1
         assert 'test_user' in channel.connections
         assert connection in channel.connections['test_user']
 
     def test_remove_connection(self):
-        connection = channelstream.connection.Connection('test_user',
-                                                         conn_id='A')
-        connection2 = channelstream.connection.Connection('test_user2',
-                                                          conn_id='B')
-        connection3 = channelstream.connection.Connection('test_user',
-                                                          conn_id='C')
-        channel = channelstream.channel.Channel('test')
+        connection = Connection('test_user', conn_id='A')
+        connection2 = Connection('test_user2', conn_id='B')
+        connection3 = Connection('test_user', conn_id='C')
+        channel = Channel('test')
         channel.add_connection(connection)
         channel.add_connection(connection2)
         channel.remove_connection(connection)
@@ -74,19 +71,18 @@ class TestChannel(BaseInternalsTest):
         assert len(channel.connections['test_user']) == 1
 
     def test_add_connection_w_presence(self):
-        user = channelstream.user.User('test_user')
-        channelstream.user.USERS[user.username] = user
-        connection = channelstream.connection.Connection('test_user',
-                                                         conn_id='A')
+        user = User('test_user')
+        channelstream.USERS[user.username] = user
+        connection = Connection('test_user', conn_id='A')
         user.add_connection(connection)
         config = {'test': {'notify_presence': True,
-                           'broadcast_presence_with_user_lists':True}}
-        channel = channelstream.channel.Channel(
-            'test', channel_configs=config)
+                           'broadcast_presence_with_user_lists': True}}
+        channel = Channel('test', channel_configs=config)
         channel.add_connection(connection)
         assert len(channel.connections['test_user']) == 1
         assert 'test_user' in channel.connections
         assert connection in channel.connections['test_user']
+
 
 def dummy_request():
     return testing.DummyRequest()
