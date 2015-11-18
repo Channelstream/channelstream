@@ -1,14 +1,15 @@
 import logging
 from datetime import datetime, timedelta
+
 import gevent
+
 import channelstream
-from . import lock
 
 log = logging.getLogger(__name__)
 
 
 def gc_conns():
-    with lock:
+    with channelstream.lock:
         start_time = datetime.utcnow()
         threshold = start_time - timedelta(seconds=15)
         collected_conns = []
@@ -39,13 +40,6 @@ def gc_conns():
         log.debug('gc_conns() time %s' % (datetime.utcnow() - start_time))
 
 
-def gc_conns_forever():
-    try:
-        gc_conns()
-    finally:
-        gevent.spawn_later(1, gc_conns_forever)
-
-
 def gc_users():
     with channelstream.lock:
         start_time = datetime.utcnow()
@@ -53,7 +47,7 @@ def gc_users():
         for user in channelstream.USERS.values():
             if user.last_active < threshold:
                 channelstream.USERS.pop(user.username)
-        log.info('gc_users() time %s' % (datetime.utcnow() - start_time))
+        log.debug('gc_users() time %s' % (datetime.utcnow() - start_time))
 
 
 def gc_users_forever():
@@ -61,3 +55,10 @@ def gc_users_forever():
         gc_users()
     finally:
         gevent.spawn_later(60, gc_users_forever)
+
+
+def gc_conns_forever():
+    try:
+        gc_conns()
+    finally:
+        gevent.spawn_later(1, gc_conns_forever)

@@ -1,6 +1,8 @@
-from datetime import datetime
 import urlparse
+from datetime import datetime
+
 from geventwebsocket import WebSocketApplication
+
 import channelstream
 
 

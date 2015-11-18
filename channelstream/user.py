@@ -1,8 +1,6 @@
 import logging
-import gevent
 
-from datetime import datetime, timedelta
-import channelstream
+from datetime import datetime
 
 
 log = logging.getLogger(__name__)
@@ -48,5 +46,5 @@ class User(object):
 
     @property
     def public_state(self):
-        return dict([(k, v) for k, v in self.state.items()
-                     if k in self.state_public_keys])
+        return {k: v for k, v in self.state.items()
+                if k in self.state_public_keys}

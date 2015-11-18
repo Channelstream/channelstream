@@ -1,5 +1,4 @@
 __author__ = 'ergo'
-import gevent
 from gevent import monkey
 
 monkey.patch_all()
@@ -8,13 +7,15 @@ import ConfigParser
 import collections
 import logging
 import optparse
-from .wsgi_app import make_app
-from .ws_app import ChatApplication
-from .policy_server import client_handle
 from gevent.server import StreamServer
 from geventwebsocket import WebSocketServer, Resource
 from pyramid.settings import asbool
+
 from channelstream.gc import gc_conns_forever, gc_users_forever
+from channelstream.policy_server import client_handle
+from channelstream.wsgi_app import make_app
+from channelstream.ws_app import ChatApplication
+
 
 
 def cli_start():
@@ -50,7 +51,7 @@ def cli_start():
                       help="debug",
                       default=0)
     parser.add_option("-e", "--demo", dest="demo",
-                      help="debug",
+                      help="demo enabled",
                       default=False)
     parser.add_option("-x", "--allowed_post_ip", dest="allow_posting_from",
                       help="comma separated list of ip's that can post to server",

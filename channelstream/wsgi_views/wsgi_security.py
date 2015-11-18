@@ -1,8 +1,8 @@
+from itsdangerous import TimestampSigner
 from pyramid.security import (Allow,
                               Everyone,
                               ALL_PERMISSIONS,
                               authenticated_userid)
-from itsdangerous import TimestampSigner
 
 
 class RequestBasicChannenge(Exception):

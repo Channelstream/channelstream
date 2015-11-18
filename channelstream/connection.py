@@ -1,6 +1,8 @@
 import datetime
-import gevent
 import logging
+
+import gevent
+import geventwebsocket
 
 from .ext_json import json
 
@@ -25,8 +27,11 @@ class Connection(object):
         """ Sends the message to the client connection """
         # handle websockets
         if self.socket:
-            self.socket.ws.send(json.dumps([message] if message else []))
-            self.last_active = datetime.datetime.utcnow()
+            try:
+                self.socket.ws.send(json.dumps([message] if message else []))
+                self.last_active = datetime.datetime.utcnow()
+            except geventwebsocket.exceptions.WebSocketError as exc:
+                pass
         elif self.queue:
             # handle long polling
             self.queue.put([message] if message else [])

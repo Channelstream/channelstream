@@ -54,8 +54,8 @@ def pass_message(msg, stats):
 def get_connection_channels(connection):
     found_channels = []
     for channel in channelstream.CHANNELS.itervalues():
-        if (connection.username in channel.connections and
-                    connection in channel.connections[connection.username]):
+        user_conns = channel.connections.get(connection.username) or []
+        if connection in user_conns:
             found_channels.append(channel.name)
     return found_channels
 
