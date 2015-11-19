@@ -28,12 +28,15 @@ class Connection(object):
         # handle websockets
         if self.socket:
             try:
+                # payload needs to be converted to JSON now as it gets
+                # piped to client
                 self.socket.ws.send(json.dumps([message] if message else []))
                 self.last_active = datetime.datetime.utcnow()
             except geventwebsocket.exceptions.WebSocketError:
                 self.mark_for_gc()
         elif self.queue:
             # handle long polling
+            # payload will be converted to JSON in WSGI response
             self.queue.put([message] if message else [])
 
     def mark_for_gc(self):

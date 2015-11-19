@@ -82,8 +82,8 @@ class Channel(object):
             'channel': self.name,
             'message': {'action': action}
         }
-
         self.add_message(payload, exclude_users=username)
+        return payload
 
     def add_message(self, message, pm_users=None, exclude_users=None):
         """

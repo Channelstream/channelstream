@@ -1,5 +1,9 @@
 import pytest
+from datetime import datetime, timedelta
+
+from gevent.queue import Queue, Empty
 from pyramid import testing
+
 import channelstream
 from channelstream.channel import Channel
 from channelstream.connection import Connection
@@ -11,9 +15,6 @@ class BaseInternalsTest(object):
         channelstream.CHANNELS = {}
         channelstream.CONNECTIONS = {}
         channelstream.USERS = {}
-        self.CHANNELS = channelstream.CHANNELS
-        self.CONNECTIONS = channelstream.CONNECTIONS
-        self.USERS = channelstream.USERS
 
 
 class TestChannel(BaseInternalsTest):
@@ -70,6 +71,12 @@ class TestChannel(BaseInternalsTest):
         channel.remove_connection(connection)
         assert len(channel.connections['test_user']) == 1
 
+    def test_remove_non_existant_connection(self):
+        channel = Channel('test')
+        connection = Connection('test_user', conn_id='A')
+        channel.remove_connection(connection)
+        assert len(channel.connections['test_user']) == 0
+
     def test_add_connection_w_presence(self):
         user = User('test_user')
         channelstream.USERS[user.username] = user
@@ -83,6 +90,72 @@ class TestChannel(BaseInternalsTest):
         assert 'test_user' in channel.connections
         assert connection in channel.connections['test_user']
 
+    def test_presence_message(self):
+        user = User('test_user')
+        connection = Connection('test_user', conn_id='A')
+        user.add_connection(connection)
+        channel = Channel('test')
+        channel.add_connection(connection)
+        payload = channel.send_notify_presence_info('test_user', 'join')
+        assert payload['user'] == 'test_user'
+        assert payload['message']['action'] == 'join'
+        assert payload['type'] == 'presence'
+        assert payload['channel'] == 'test'
+        assert len(payload['users']) == 0
+
+    def test_presence_message_w_users(self):
+        user = User('test_user')
+        user.state_from_dict({'key': '1', 'key2': '2'})
+        user.state_public_keys = ['key2']
+        channelstream.USERS[user.username] = user
+        connection = Connection('test_user', conn_id='A')
+        user.add_connection(connection)
+        user2 = User('test_user2')
+        user2.state_from_dict({'key': '1', 'key2': '2'})
+        channelstream.USERS[user2.username] = user2
+        connection2 = Connection('test_user2', conn_id='A')
+        user2.add_connection(connection2)
+        config = {'test': {'notify_presence': True,
+                           'broadcast_presence_with_user_lists': True}}
+        channel = Channel('test', channel_configs=config)
+        channel.add_connection(connection)
+        channel.add_connection(connection2)
+        payload = channel.send_notify_presence_info('test_user', 'join')
+        assert len(payload['users']) == 2
+        sorted_users = sorted(payload['users'], key=lambda x: x['user'])
+        assert sorted_users == [
+            {'state': {'key2': '2'}, 'user': 'test_user'},
+            {'state': {}, 'user': 'test_user2'}
+        ]
+
+
+class TestConnection(BaseInternalsTest):
+    def test_create_defaults(self):
+        now = datetime.utcnow()
+        connection = Connection('test', 'X')
+        assert connection.username == 'test'
+        assert now <= connection.last_active
+        assert connection.socket is None
+        assert connection.queue is None
+        assert connection.id == 'X'
+
+    def test_mark_for_gc(self):
+        long_time_ago = datetime.utcnow() - timedelta(days=50)
+        connection = Connection('test', 'X')
+        connection.mark_for_gc()
+        assert connection.last_active < long_time_ago
+
+    def test_message(self):
+        connection = Connection('test', 'X')
+        connection.queue = Queue()
+        connection.add_message('test')
+        assert connection.queue.get() == ['test']
+
+    def test_heartbeat(self):
+        connection = Connection('test', 'X')
+        connection.queue = Queue()
+        connection.heartbeat()
+        assert connection.queue.get() == []
 
 def dummy_request():
     return testing.DummyRequest()
@@ -100,10 +173,10 @@ class TestConnectViews(BaseViewTest):
         from .wsgi_views.server import ServerViews
         self.view_cls = ServerViews(dummy_request())
 
-    def test_connect(self):
-        result = self.view_cls.connect()
-        print result
-        assert 1 == 2
+        # def test_connect(self):
+        #     result = self.view_cls.connect()
+        #     print result
+        #     assert 1 == 2
 
 
 class TestStubState(BaseViewTest):
