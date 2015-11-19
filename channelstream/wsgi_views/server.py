@@ -182,10 +182,9 @@ class ServerViews(object):
         include_history = info_config.get('include_history', True)
         include_users = info_config.get('include_users', True)
         exclude_channels = info_config.get('exclude_channels', [])
-        channels_info = self._get_channel_info(subscribe_to_channels,
-                                               include_history=include_history,
-                                               include_users=include_users,
-                                               exclude_channels=exclude_channels)
+        channels_info = self._get_channel_info(
+            subscribe_to_channels, include_history=include_history,
+            include_users=include_users, exclude_channels=exclude_channels)
 
         return {'conn_id': connection.id, 'state': user.state,
                 'channels': subscribe_to_channels,
@@ -218,17 +217,18 @@ class ServerViews(object):
                         channel = Channel(channel_name,
                                           channel_configs=channel_configs)
                         channelstream.CHANNELS[channel_name] = channel
-                    channelstream.CHANNELS[channel_name].add_connection(connection)
+                    channelstream.CHANNELS[channel_name].add_connection(
+                        connection)
 
         info_config = self.request.json_body.get('info') or {}
         include_history = info_config.get('include_history', True)
         include_users = info_config.get('include_users', True)
         exclude_channels = info_config.get('exclude_channels', [])
         current_channels = get_connection_channels(connection)
-        channels_info = self._get_channel_info(current_channels,
-                                               include_history=include_history,
-                                               include_users=include_users,
-                                               exclude_channels=exclude_channels)
+        channels_info = self._get_channel_info(
+            current_channels, include_history=include_history,
+            include_users=include_users, exclude_channels=exclude_channels)
+
         return {"channels": current_channels,
                 "channels_info": channels_info}
 
@@ -254,17 +254,18 @@ class ServerViews(object):
         with channelstream.lock:
             if user:
                 for channel_name in unsubscribe_channels:
-                    channelstream.CHANNELS[channel_name].remove_connection(connection)
+                    channelstream.CHANNELS[channel_name].remove_connection(
+                        connection)
 
         info_config = self.request.json_body.get('info') or {}
         include_history = info_config.get('include_history', True)
         include_users = info_config.get('include_users', True)
         exclude_channels = info_config.get('exclude_channels', [])
         current_channels = get_connection_channels(connection)
-        channels_info = self._get_channel_info(current_channels,
-                                               include_history=include_history,
-                                               include_users=include_users,
-                                               exclude_channels=exclude_channels)
+        channels_info = self._get_channel_info(
+            current_channels, include_history=include_history,
+            include_users=include_users, exclude_channels=exclude_channels)
+
         return {"channels": current_channels,
                 "channels_info": channels_info}
 
@@ -280,8 +281,8 @@ class ServerViews(object):
                                           'Cache-Control, Pragma, Origin, '
                                           'Connection, Referer, Cookie')
         self.request.response.headers.add('Access-Control-Max-Age', '86400')
-        #self.request.response.headers.add('Access-Control-Allow-Credentials',
-        #                                  'true')
+        # self.request.response.headers.add('Access-Control-Allow-Credentials',
+        #                                   'true')
 
     @view_config(route_name='action', match_param='action=listen',
                  request_method="OPTIONS", renderer='string')
@@ -312,13 +313,13 @@ class ServerViews(object):
             try:
                 messages.extend(connection.queue.get(
                     timeout=config['wake_connections_after']))
-            except Empty as e:
+            except Empty:
                 pass
             # get more messages if enqueued takes up total 0.25s
             while True:
                 try:
                     messages.extend(connection.queue.get(timeout=0.25))
-                except Empty as e:
+                except Empty:
                     break
             cb = self.request.params.get('callback')
             if cb:
@@ -408,7 +409,8 @@ class ServerViews(object):
             [user for user in channelstream.USERS.itervalues() if
              user.connections])
         total_connections = sum(
-            [len(user.connections) for user in channelstream.USERS.itervalues()])
+            [len(user.connections)
+             for user in channelstream.USERS.itervalues()])
         total_sys_connections = len(channelstream.CONNECTIONS.values())
         return {
             "remembered_user_count": remembered_user_count,
@@ -417,7 +419,8 @@ class ServerViews(object):
             "total_sys_connections": total_sys_connections,
             "total_channels": len(channelstream.CHANNELS.keys()),
             "total_messages": channelstream.stats['total_messages'],
-            "total_unique_messages": channelstream.stats['total_unique_messages'],
+            "total_unique_messages": channelstream.stats[
+                'total_unique_messages'],
             "channels": channelstream.CHANNELS,
             "users": channelstream.USERS, "uptime": uptime
         }

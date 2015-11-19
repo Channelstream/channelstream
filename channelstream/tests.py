@@ -1,7 +1,7 @@
 import pytest
 from pyramid import testing
 import channelstream
-from  channelstream.channel import Channel
+from channelstream.channel import Channel
 from channelstream.connection import Connection
 from channelstream.user import User
 

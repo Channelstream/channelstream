@@ -17,7 +17,6 @@ from channelstream.wsgi_app import make_app
 from channelstream.ws_app import ChatApplication
 
 
-
 def cli_start():
     config = {
         'secret': '',
@@ -54,7 +53,8 @@ def cli_start():
                       help="demo enabled",
                       default=False)
     parser.add_option("-x", "--allowed_post_ip", dest="allow_posting_from",
-                      help="comma separated list of ip's that can post to server",
+                      help="comma separated list of ip's "
+                           "that can post to server",
                       default="127.0.0.1"
                       )
     (options, args) = parser.parse_args()

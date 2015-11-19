@@ -1,7 +1,6 @@
 import json
 import random
 import uuid
-
 import requests
 from pyramid.view import view_config
 from itsdangerous import TimestampSigner
@@ -27,13 +26,16 @@ def enable_demo(context, request):
         return True
     return False
 
+
 CHANNEL_CONFIGS = {"pub_chan": {"notify_presence": True},
                    "notify": {"notify_presence": True}}
+
 
 class DemoViews(object):
     def __init__(self, request):
         self.request = request
-        self.request.response.headers.add('Cache-Control', 'no-cache, no-store')
+        self.request.response.headers.add('Cache-Control',
+                                          'no-cache, no-store')
 
     @view_config(route_name='section_action', renderer='string',
                  request_method="OPTIONS", custom_predicates=[enable_demo])
@@ -49,7 +51,8 @@ class DemoViews(object):
                                           'Cache-Control, Pragma, Origin, '
                                           'Connection, Referer, Cookie')
         self.request.response.headers.add('Access-Control-Max-Age', '86400')
-        # self.request.response.headers.add('Access-Control-Allow-Credentials', 'true')
+        # self.request.response.headers.add('Access-Control-Allow-Credentials',
+        # 'true')
         return {}
 
     @view_config(route_name='demo', renderer='templates/demo.jinja2',
@@ -73,7 +76,7 @@ class DemoViews(object):
                    "conn_id": str(uuid.uuid4()),
                    "channels": channels,
                    "channel_configs": CHANNEL_CONFIGS}
-        result = make_request(self.request, payload, '/connect')
+        make_request(self.request, payload, '/connect')
         return payload
 
     @view_config(route_name='section_action',
@@ -99,7 +102,6 @@ class DemoViews(object):
     def unsubscribe(self):
         """"can be used to subscribe specific connection to other channels"""
         request_data = self.request.json_body
-        channels = request_data['channels']
         payload = {"conn_id": request_data.get('conn_id', ''),
                    "channels": request_data.get('channels', [])
                    }
@@ -128,19 +130,20 @@ class DemoViews(object):
                  custom_predicates=[enable_demo])
     def channel_config(self):
         """configure channel defaults"""
-        return "DISABLED"
-        payload = [('pub_chan', {
-            "notify_presence": True,
-            "store_history": True,
-            "history_size": 20
-        }),
-                   ('pub_chan2', {
-                       "notify_presence": True,
-                       "salvageable": True,
-                       "store_history": True,
-                       "history_size": 30
-                   })
-                   ]
+
+        payload = [
+            ('pub_chan', {
+                "notify_presence": True,
+                "store_history": True,
+                "history_size": 20
+            }),
+            ('pub_chan2', {
+                "notify_presence": True,
+                "salvageable": True,
+                "store_history": True,
+                "history_size": 30
+            })
+        ]
         url = 'http://127.0.0.1:%s/channel_config' % self.server_port
         response = requests.post(url, data=json.dumps(payload),
                                  headers=self.secret_headers).json()

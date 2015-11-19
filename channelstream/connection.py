@@ -30,22 +30,22 @@ class Connection(object):
             try:
                 self.socket.ws.send(json.dumps([message] if message else []))
                 self.last_active = datetime.datetime.utcnow()
-            except geventwebsocket.exceptions.WebSocketError as exc:
-                pass
+            except geventwebsocket.exceptions.WebSocketError:
+                self.mark_for_gc()
         elif self.queue:
             # handle long polling
             self.queue.put([message] if message else [])
 
     def mark_for_gc(self):
         # set last active time for connection 1 hour in past for GC
-        self.last_active -= datetime.timedelta(minutes=60)
+        self.last_active -= datetime.timedelta(days=60)
 
     def heartbeat(self):
         if self.socket or self.queue:
             try:
                 self.add_message()
                 gevent.spawn_later(5, self.heartbeat)
-            except Exception as e:
+            except Exception:
                 self.mark_for_gc()
                 if self.socket:
                     self.socket.ws.close()

@@ -1,12 +1,11 @@
 from setuptools import setup, find_packages
 
-
 setup(name='channelstream',
       version='0.4',
       description='Websocket server supporting channels/users communication',
       classifiers=[
           'Intended Audience :: Developers'
-          ],
+      ],
       author='Marcin Lulek',
       author_email='info@webreactor.eu',
       license='BSD',
@@ -20,8 +19,8 @@ setup(name='channelstream',
           'pyramid_jinja2',
           'itsdangerous'
       ],
-    entry_points = {
-        'console_scripts': [
-            'channelstream = channelstream.cli:cli_start',
-        ],
-        })
+      entry_points={
+          'console_scripts': [
+              'channelstream = channelstream.cli:cli_start',
+          ],
+      })
