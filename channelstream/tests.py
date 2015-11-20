@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from gevent.queue import Queue, Empty
 from pyramid import testing
 import channelstream
+import channelstream.gc
 from channelstream.channel import Channel
 from channelstream.connection import Connection
 from channelstream.user import User
@@ -187,6 +188,123 @@ class TestConnection(BaseInternalsTest):
         connection.heartbeat()
         assert connection.queue.get() == []
 
+
+class TestUser(BaseInternalsTest):
+    def test_create_defaults(self):
+        user = User('test_user')
+        user.state_from_dict({'key': '1', 'key2': '2'})
+        user.state_public_keys = ['key2']
+        assert repr(user) == '<User:test_user, connections:0>'
+        assert sorted(user.state.items()) == sorted({'key': '1',
+                                                     'key2': '2'}.items())
+        assert user.public_state == {'key2': '2'}
+
+    def test_messages(self):
+        user = User('test_user')
+        connection = Connection('test_user', conn_id='A')
+        connection.queue = Queue()
+        connection2 = Connection('test_user', conn_id='B')
+        connection2.queue = Queue()
+        user.add_connection(connection)
+        user.add_connection(connection2)
+        user.add_message({'type': 'message'})
+        assert len(user.connections) == 2
+        assert len(user.connections[0].queue.get()) == 1
+        assert len(user.connections[1].queue.get()) == 1
+
+
+class TestGC(BaseInternalsTest):
+    def test_gc_connections_active(self):
+        channel = Channel('test')
+        channelstream.CHANNELS[channel.name] = channel
+        channel2 = Channel('test2')
+        channelstream.CHANNELS[channel2.name] = channel2
+        user = User('test_user')
+        channelstream.USERS[user.username] = user
+        user2 = User('test_user2')
+        channelstream.USERS[user2.username] = user2
+        connection = Connection('test_user', '1')
+        channelstream.CONNECTIONS[connection.id] = connection
+        connection2 = Connection('test_user', '2')
+        channelstream.CONNECTIONS[connection2.id] = connection2
+        connection3 = Connection('test_user2', '3')
+        channelstream.CONNECTIONS[connection3.id] = connection3
+        connection4 = Connection('test_user2', '4')
+        channelstream.CONNECTIONS[connection4.id] = connection4
+        user.add_connection(connection)
+        user.add_connection(connection2)
+        channel.add_connection(connection)
+        channel.add_connection(connection2)
+        user2.add_connection(connection3)
+        user2.add_connection(connection4)
+        channel2.add_connection(connection3)
+        channel2.add_connection(connection4)
+        channelstream.gc.gc_conns()
+        conns = channelstream.CHANNELS['test'].connections['test_user']
+        assert len(conns) == 2
+        assert len(channelstream.CONNECTIONS.items()) == 4
+        conns = channelstream.CHANNELS['test2'].connections['test_user2']
+        assert len(conns) == 2
+        assert len(user.connections) == 2
+        assert len(user2.connections) == 2
+        assert sorted(channel.connections.keys()) == ['test_user']
+        assert sorted(channel2.connections.keys()) == ['test_user2']
+
+    def test_gc_connections_collecting(self):
+        channel = Channel('test')
+        channelstream.CHANNELS[channel.name] = channel
+        channel2 = Channel('test2')
+        channelstream.CHANNELS[channel2.name] = channel2
+        user = User('test_user')
+        channelstream.USERS[user.username] = user
+        user2 = User('test_user2')
+        channelstream.USERS[user2.username] = user2
+        connection = Connection('test_user', '1')
+        channelstream.CONNECTIONS[connection.id] = connection
+        connection2 = Connection('test_user', '2')
+        connection2.mark_for_gc()
+        channelstream.CONNECTIONS[connection2.id] = connection2
+        connection3 = Connection('test_user2', '3')
+        connection3.mark_for_gc()
+        channelstream.CONNECTIONS[connection3.id] = connection3
+        connection4 = Connection('test_user2', '4')
+        channelstream.CONNECTIONS[connection4.id] = connection4
+        user.add_connection(connection)
+        user.add_connection(connection2)
+        channel.add_connection(connection)
+        channel.add_connection(connection2)
+        user2.add_connection(connection3)
+        user2.add_connection(connection4)
+        channel2.add_connection(connection3)
+        channel2.add_connection(connection4)
+        channelstream.gc.gc_conns()
+        assert len(channelstream.CONNECTIONS.items()) == 2
+        conns = channelstream.CHANNELS['test'].connections['test_user']
+        assert len(conns) == 1
+        assert conns == [connection]
+        conns = channelstream.CHANNELS['test2'].connections['test_user2']
+        assert len(conns) == 1
+        assert conns == [connection4]
+        assert len(user.connections) == 1
+        assert len(user2.connections) == 1
+        connection.mark_for_gc()
+        connection4.mark_for_gc()
+        channelstream.gc.gc_conns()
+        assert 'test_user' not in channelstream.CHANNELS['test'].connections
+        assert 'test_user2' not in channelstream.CHANNELS['test2'].connections
+        assert len(channelstream.CHANNELS['test'].connections.items()) == 0
+        assert len(channelstream.CHANNELS['test2'].connections.items()) == 0
+
+    def test_users_active(self):
+        user = User('test_user')
+        channelstream.USERS[user.username] = user
+        user2 = User('test_user2')
+        channelstream.USERS[user2.username] = user2
+        channelstream.gc.gc_users()
+        assert len(channelstream.USERS.items()) == 2
+        user.last_active -= timedelta(days=2)
+        channelstream.gc.gc_users()
+        assert len(channelstream.USERS.items()) == 1
 
 def dummy_request():
     return testing.DummyRequest()

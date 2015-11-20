@@ -14,6 +14,7 @@ def gc_conns():
         threshold = start_time - timedelta(seconds=15)
         collected_conns = []
         # collect every ref in chanels
+        # remove connections from channels
         for channel in channelstream.CHANNELS.itervalues():
             for username, conns in channel.connections.items():
                 for conn in conns:
@@ -21,7 +22,7 @@ def gc_conns():
                         channel.connections[username].remove(conn)
                         collected_conns.append(conn)
                 channel.after_parted(username)
-        # remove old conns from users and conn dict
+        # remove old conns from users and connection dictionaries
         for conn in collected_conns:
             if conn.username in channelstream.USERS:
                 if conn in channelstream.USERS[conn.username].connections:
