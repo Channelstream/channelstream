@@ -235,7 +235,7 @@ class ServerViews(object):
     @view_config(route_name='action', match_param='action=unsubscribe',
                  renderer='json', permission='access')
     def unsubscribe(self, *args):
-        """ call this to unsubscribe specific connection to new channels """
+        """ call this to unsubscribe specific connection from channels """
         conn_id = self.request.json_body.get('conn_id',
                                              self.request.GET.get('conn_id'))
         connection = channelstream.CONNECTIONS.get(conn_id)

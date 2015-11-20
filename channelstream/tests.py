@@ -1,9 +1,7 @@
 import pytest
 from datetime import datetime, timedelta
-
 from gevent.queue import Queue, Empty
 from pyramid import testing
-
 import channelstream
 from channelstream.channel import Channel
 from channelstream.connection import Connection
@@ -30,6 +28,10 @@ class TestChannel(BaseInternalsTest):
         assert channel.history_size == 10
         assert channel.history == []
 
+    def test_repr(self):
+        channel = Channel('test', long_name='long name')
+        assert repr(channel) == '<Channel: test, connections:0>'
+
     @pytest.mark.parametrize('prop, value', [
         ('notify_presence', True),
         ('store_history', 6),
@@ -55,6 +57,7 @@ class TestChannel(BaseInternalsTest):
         assert len(channel.connections['test_user']) == 1
         assert 'test_user' in channel.connections
         assert connection in channel.connections['test_user']
+        assert repr(channel) == '<Channel: test, connections:1>'
 
     def test_remove_connection(self):
         connection = Connection('test_user', conn_id='A')
@@ -64,7 +67,7 @@ class TestChannel(BaseInternalsTest):
         channel.add_connection(connection)
         channel.add_connection(connection2)
         channel.remove_connection(connection)
-        assert len(channel.connections['test_user']) == 0
+        assert 'test_user' not in channel.connections
         assert len(channel.connections['test_user2']) == 1
         channel.add_connection(connection)
         channel.add_connection(connection3)
@@ -75,7 +78,18 @@ class TestChannel(BaseInternalsTest):
         channel = Channel('test')
         connection = Connection('test_user', conn_id='A')
         channel.remove_connection(connection)
-        assert len(channel.connections['test_user']) == 0
+        assert 'test_user' not in channel.connections
+
+    def test_remove_connection_w_presence(self):
+        user = User('test_user')
+        channelstream.USERS[user.username] = user
+        connection = Connection('test_user', conn_id='A')
+        user.add_connection(connection)
+        config = {'test': {'notify_presence': True,
+                           'broadcast_presence_with_user_lists': True}}
+        channel = Channel('test', channel_configs=config)
+        channel.add_connection(connection)
+        channel.remove_connection(connection)
 
     def test_add_connection_w_presence(self):
         user = User('test_user')
@@ -128,6 +142,22 @@ class TestChannel(BaseInternalsTest):
             {'state': {}, 'user': 'test_user2'}
         ]
 
+    def test_history(self):
+        config = {'test': {'store_history': True,
+                           'history_size': 3}}
+        channel = Channel('test', long_name='long name', channel_configs=config)
+        channel.add_message({'message': 'test1', 'type': 'message'})
+        channel.add_message({'message': 'test2', 'type': 'message'})
+        channel.add_message({'message': 'test3', 'type': 'message'})
+        channel.add_message({'message': 'test4', 'type': 'message'})
+
+        assert len(channel.history) == 3
+        assert channel.history == [
+            {'channel': 'test', 'message': 'test2', 'type': 'message'},
+            {'channel': 'test', 'message': 'test3', 'type': 'message'},
+            {'channel': 'test', 'message': 'test4', 'type': 'message'}
+        ]
+
 
 class TestConnection(BaseInternalsTest):
     def test_create_defaults(self):
@@ -148,14 +178,15 @@ class TestConnection(BaseInternalsTest):
     def test_message(self):
         connection = Connection('test', 'X')
         connection.queue = Queue()
-        connection.add_message('test')
-        assert connection.queue.get() == ['test']
+        connection.add_message({'message': 'test'})
+        assert connection.queue.get() == [{'message': 'test'}]
 
     def test_heartbeat(self):
         connection = Connection('test', 'X')
         connection.queue = Queue()
         connection.heartbeat()
         assert connection.queue.get() == []
+
 
 def dummy_request():
     return testing.DummyRequest()

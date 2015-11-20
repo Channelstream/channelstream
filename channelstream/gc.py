@@ -20,9 +20,7 @@ def gc_conns():
                     if conn.last_active < threshold:
                         channel.connections[username].remove(conn)
                         collected_conns.append(conn)
-                if not channel.connections[username]:
-                    del channel.connections[username]
-                    channel.send_notify_presence_info(username, 'parted')
+                channel.after_parted(username)
         # remove old conns from users and conn dict
         for conn in collected_conns:
             if conn.username in channelstream.USERS:

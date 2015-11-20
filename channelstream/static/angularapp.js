@@ -138,6 +138,7 @@ channelstreamApp.controller('chatCtl', function ($scope, $http) {
         $http({method: 'POST', url: webapp_url + '/connect', data: json_data}).
             success(function (data, status, headers, config) {
                 $scope.conn_id = data.conn_id;
+                $scope.user.username = data.username;
                 connect(use_websocket);
             }).
             error(function (data, status, headers, config) {

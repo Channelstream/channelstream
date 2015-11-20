@@ -52,15 +52,30 @@ class Channel(object):
         if username not in self.connections:
             self.connections[username] = []
 
-        if not self.connections[username] and self.notify_presence:
-            self.send_notify_presence_info(username, 'parted')
+        if connection in self.connections[username]:
+            self.connections[username].remove(connection)
 
-        self.connections[username] = filter(lambda i: i is not connection,
-                                            self.connections[username])
+        self.after_parted(username)
+
+    def after_parted(self, username):
+        """
+        Sends parted message if necessary and removed username from
+        connections if empty
+
+        :param username:
+        :return:
+        """
+        if not self.connections[username]:
+            del self.connections[username]
+            if self.notify_presence:
+                self.send_notify_presence_info(username, 'parted')
 
     def send_notify_presence_info(self, username, action):
         """
         Sends a message to other connected parties about a presence change
+        :param username:
+        :param action:
+        :return:
         """
         connected_users = []
         if self.broadcast_presence_with_user_lists:
