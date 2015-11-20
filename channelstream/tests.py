@@ -306,26 +306,56 @@ class TestGC(BaseInternalsTest):
         channelstream.gc.gc_users()
         assert len(channelstream.USERS.items()) == 1
 
-def dummy_request():
-    return testing.DummyRequest()
-
 
 class BaseViewTest(BaseInternalsTest):
     def setup(self):
+        # from pyramid.request import Request
+        # request = Request.blank('/', base_url='http://foo.com')
         self.config = testing.setUp(settings={})
         self.settings = self.config.get_settings()
 
+    def dummy_request(self):
+        return testing.DummyRequest()
+
 
 class TestConnectViews(BaseViewTest):
-    def setup(self):
+    def test_connect_bad_json(self):
         super(TestConnectViews, self).setup()
         from .wsgi_views.server import ServerViews
-        self.view_cls = ServerViews(dummy_request())
+        request = self.dummy_request()
+        request.json_body = {}
+        self.view_cls = ServerViews(request)
+        result = self.view_cls.connect()
+        assert result == {'error': 'No username specified'}
 
-        # def test_connect(self):
-        #     result = self.view_cls.connect()
-        #     print result
-        #     assert 1 == 2
+    def test_connect_good_json(self):
+        super(TestConnectViews, self).setup()
+        from .wsgi_views.server import ServerViews
+        request = self.dummy_request()
+        request.json_body = {'username': 'username',
+                             'conn_id': 'X',
+                             'fresh_user_state': {'key': 'foo'},
+                             'user_state': {'bar': 'baz'},
+                             'state_public_keys': 'bar',
+                             'channels': ['a', 'aB'],
+                             'channel_configs': {'a': {'store_history': True,
+                                                       'history_size': 2}}}
+        self.view_cls = ServerViews(request)
+        result = self.view_cls.connect()
+        assert result['channels'] == ['a', 'aB']
+        assert result['state'] == {'bar': 'baz', 'key': 'foo'}
+        assert result['conn_id'] == 'X'
+        channels_info = result['channels_info']['channels']
+        assert len(channels_info.keys()) == 2
+        assert result['channels_info']['unique_users'] == 1
+        assert channels_info['a']['total_users'] == 1
+        assert channels_info['a']['total_connections'] == 1
+        assert channels_info['a']['users'] == [{'connections': [],
+                                                'user': 'username'}]
+        assert channels_info['a']['history'] == []
+        assert result['channels_info']['users'] == [
+            {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'username'}
+        ]
 
 
 class TestStubState(BaseViewTest):
