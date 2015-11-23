@@ -319,16 +319,16 @@ class BaseViewTest(BaseInternalsTest):
 
 
 class TestConnectViews(BaseViewTest):
-    def test_connect_bad_json(self):
+    def test_bad_json(self):
         super(TestConnectViews, self).setup()
         from .wsgi_views.server import ServerViews
         request = self.dummy_request()
         request.json_body = {}
-        self.view_cls = ServerViews(request)
-        result = self.view_cls.connect()
+        view_cls = ServerViews(request)
+        result = view_cls.connect()
         assert result == {'error': 'No username specified'}
 
-    def test_connect_good_json(self):
+    def test_good_json(self):
         super(TestConnectViews, self).setup()
         from .wsgi_views.server import ServerViews
         request = self.dummy_request()
@@ -340,8 +340,12 @@ class TestConnectViews(BaseViewTest):
                              'channels': ['a', 'aB'],
                              'channel_configs': {'a': {'store_history': True,
                                                        'history_size': 2}}}
-        self.view_cls = ServerViews(request)
-        result = self.view_cls.connect()
+        view_cls = ServerViews(request)
+        assert channelstream.CHANNELS == {}
+        result = view_cls.connect()
+        assert len(channelstream.CHANNELS.keys()) == 2
+        assert 'username' in channelstream.USERS
+        assert 'X' in channelstream.CONNECTIONS
         assert result['channels'] == ['a', 'aB']
         assert result['state'] == {'bar': 'baz', 'key': 'foo'}
         assert result['conn_id'] == 'X'
@@ -358,30 +362,115 @@ class TestConnectViews(BaseViewTest):
         ]
 
 
-class TestStubState(BaseViewTest):
-    def test_subscribe(self):
-        pass
+class TestSubscribeViews(BaseViewTest):
+    def test_bad_json(self):
+        super(TestSubscribeViews, self).setup()
+        from .wsgi_views.server import ServerViews
+        request = self.dummy_request()
+        request.json_body = {}
+        view_cls = ServerViews(request)
+        result = view_cls.subscribe()
+        assert result == {'error': 'Unknown connection'}
 
-    def test_unsubscribe(self):
-        pass
+    def test_good_json(self):
+        super(TestSubscribeViews, self).setup()
+        from .wsgi_views.server import ServerViews
+        request = self.dummy_request()
+        request.json_body = {'username': 'test',
+                             'conn_id': 'x',
+                             'fresh_user_state': {'key': 'foo'},
+                             'user_state': {'bar': 'baz'},
+                             'state_public_keys': 'bar',
+                             'channels': ['a', 'aB'],
+                             'channel_configs': {'a': {'store_history': True,
+                                                       'history_size': 2}}}
+        view_cls = ServerViews(request)
+        view_cls.connect()
+        request.json_body = {"conn_id": 'x',
+                             "channels": ['b'],
+                             "channel_configs": {"a": {"notify_presence": True},
+                                                 "b": {"notify_presence": True}}
+                             }
+        view_cls = ServerViews(request)
+        result = view_cls.subscribe()
+        assert result['channels'] == ['a', 'aB', 'b']
+        assert result['channels_info']['users'] == [
+            {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test'}]
+        assert result['channels_info']['unique_users'] == 1
+        assert 'a' in result['channels_info']['channels']
+        assert 'b' in result['channels_info']['channels']
+        assert result['channels_info']['channels']['a'][
+                   'total_connections'] == 1
+        assert result['channels_info']['channels']['a']['total_users'] == 1
+        assert result['channels_info']['channels']['a']['history'] == []
+        assert result['channels_info']['channels']['a']['users'] == [
+            {'connections': [], 'user': 'test'}
+        ]
 
-    def test__add_CORS(self):
-        pass
 
-    def test_handle_CORS(self):
-        pass
+class TestInfoView(BaseViewTest):
+    def test_empty_json(self):
+        super(TestInfoView, self).setup()
+        from .wsgi_views.server import ServerViews
+        request = self.dummy_request()
+        request.json_body = {}
+        view_cls = ServerViews(request)
+        result = view_cls.info()
+        assert result['channels'] == {}
+        assert result['unique_users'] == 0
+        assert result['users'] == []
 
-    def test_message(self):
-        pass
-
-    def test_disconnect(self):
-        pass
-
-    def test_channel_config(self):
-        pass
-
-    def test_admin(self):
-        pass
-
-    def test_info(self):
-        pass
+    def test_subscribed_json(self):
+        super(TestInfoView, self).setup()
+        from .wsgi_views.server import ServerViews
+        request = self.dummy_request()
+        request.json_body = {'username': 'test1',
+                             'conn_id': 'x',
+                             'fresh_user_state': {'key': 'foo'},
+                             'user_state': {'bar': 'baz'},
+                             'state_public_keys': 'bar',
+                             'channels': ['a', 'aB'],
+                             'channel_configs': {'a': {'store_history': True,
+                                                       'history_size': 2}}}
+        view_cls = ServerViews(request)
+        view_cls.connect()
+        request = self.dummy_request()
+        request.json_body = {'username': 'test2',
+                             'conn_id': 'y',
+                             'fresh_user_state': {'key': 'foo1'},
+                             'user_state': {'bar': 'baz1'},
+                             'state_public_keys': 'key',
+                             'channels': ['a', 'c'],
+                             'channel_configs': {'c': {'store_history': True,
+                                                       'history_size': 2}}}
+        view_cls = ServerViews(request)
+        view_cls.connect()
+        result = view_cls.info()
+        print result
+        assert sorted(('a', 'aB', 'c')) == sorted(result['channels'].keys())
+        assert result['users']
+        assert result['channels']['a']['users'] == [
+            {'connections': ['x'], 'user': 'test1'},
+            {'connections': ['y'], 'user': 'test2'}
+        ]
+        assert result['channels']['a']['total_users'] == 2
+        assert result['channels']['a']['total_connections'] == 2
+        assert result['channels']['c']['users'] == [
+            {'connections': ['y'], 'user': 'test2'}
+        ]
+        assert result['channels']['c']['total_users'] == 1
+        assert result['channels']['c']['total_connections'] == 1
+        assert result['channels']['aB']['users'] == [
+            {'connections': ['x'], 'user': 'test1'}
+        ]
+        assert result['users'] == [
+            {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test1'},
+            {'state': {'bar': 'baz1', 'key': 'foo1'}, 'user': 'test2'}
+        ]
+        request = self.dummy_request()
+        request.body = 'NOTEMPTY'
+        request.json_body = {'info': {'channels': ['a']}}
+        view_cls = ServerViews(request)
+        result = view_cls.info()
+        assert 'a' in result['channels']
+        assert 'aB' not in result['channels']
