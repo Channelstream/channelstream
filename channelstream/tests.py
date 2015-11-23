@@ -393,7 +393,7 @@ class TestSubscribeViews(BaseViewTest):
                              }
         view_cls = ServerViews(request)
         result = view_cls.subscribe()
-        assert result['channels'] == ['a', 'aB', 'b']
+        assert sorted(result['channels']) == sorted(['a', 'aB', 'b'])
         assert result['channels_info']['users'] == [
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test'}]
         assert result['channels_info']['unique_users'] == 1
@@ -449,10 +449,10 @@ class TestInfoView(BaseViewTest):
         print result
         assert sorted(('a', 'aB', 'c')) == sorted(result['channels'].keys())
         assert result['users']
-        assert result['channels']['a']['users'] == [
+        assert sorted(result['channels']['a']['users']) == sorted([
             {'connections': ['x'], 'user': 'test1'},
             {'connections': ['y'], 'user': 'test2'}
-        ]
+        ])
         assert result['channels']['a']['total_users'] == 2
         assert result['channels']['a']['total_connections'] == 2
         assert result['channels']['c']['users'] == [
@@ -463,10 +463,10 @@ class TestInfoView(BaseViewTest):
         assert result['channels']['aB']['users'] == [
             {'connections': ['x'], 'user': 'test1'}
         ]
-        assert result['users'] == [
+        assert sorted(result['users']) == sorted([
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test1'},
             {'state': {'bar': 'baz1', 'key': 'foo1'}, 'user': 'test2'}
-        ]
+        ])
         request = self.dummy_request()
         request.body = 'NOTEMPTY'
         request.json_body = {'info': {'channels': ['a']}}
