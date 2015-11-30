@@ -1,19 +1,16 @@
 import logging
-import gevent
 import uuid
-
 from datetime import datetime
+import gevent
 from gevent.queue import Queue, Empty
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget
-
 import channelstream
 from channelstream.user import User
 from channelstream.connection import Connection
 from channelstream.channel import Channel
 from ..ext_json import json
-
 
 log = logging.getLogger(__name__)
 
@@ -127,6 +124,17 @@ class ServerViews(object):
         log.info('info time: %s' % (datetime.utcnow() - start_time))
         return json_data
 
+    def get_common_info(self, channels, info_config):
+        include_history = info_config.get('include_history', True)
+        include_users = info_config.get('include_users', True)
+        exclude_channels = info_config.get('exclude_channels', [])
+        include_connections = info_config.get('include_connections', False)
+        channels_info = self._get_channel_info(
+            channels, include_history=include_history,
+            include_connections=include_connections,
+            include_users=include_users, exclude_channels=exclude_channels)
+        return channels_info
+
     @view_config(route_name='action', match_param='action=connect',
                  renderer='json', permission='access')
     def connect(self):
@@ -136,14 +144,14 @@ class ServerViews(object):
         with user id, and we tell which channels the user is allowed to
         subscribe to
         """
-        username = self.request.json_body.get('username')
-        fresh_user_state = self.request.json_body.get('fresh_user_state', {})
-        update_user_state = self.request.json_body.get('user_state', {})
-        channel_configs = self.request.json_body.get('channel_configs', {})
-        state_public_keys = self.request.json_body.get('state_public_keys',
-                                                       None)
-        conn_id = self.request.json_body.get('conn_id')
-        subscribe_to_channels = self.request.json_body.get('channels')
+        json_body = self.request.json_body
+        username = json_body.get('username')
+        fresh_user_state = json_body.get('fresh_user_state', {})
+        update_user_state = json_body.get('user_state', {})
+        channel_configs = json_body.get('channel_configs', {})
+        state_public_keys = json_body.get('state_public_keys', None)
+        conn_id = json_body.get('conn_id')
+        subscribe_to_channels = json_body.get('channels')
         if username is None:
             self.request.response.status = 400
             return {'error': "No username specified"}
@@ -178,14 +186,9 @@ class ServerViews(object):
             log.info('connecting %s with uuid %s' % (username, connection.id))
 
         # get info config for channel information
-        info_config = self.request.json_body.get('info') or {}
-        include_history = info_config.get('include_history', True)
-        include_users = info_config.get('include_users', True)
-        exclude_channels = info_config.get('exclude_channels', [])
-        channels_info = self._get_channel_info(
-            subscribe_to_channels, include_history=include_history,
-            include_users=include_users, exclude_channels=exclude_channels)
-
+        info_config = json_body.get('info') or {}
+        channels_info = self.get_common_info(subscribe_to_channels,
+                                             info_config)
         return {'conn_id': connection.id, 'state': user.state,
                 'channels': subscribe_to_channels,
                 'channels_info': channels_info}
@@ -194,11 +197,11 @@ class ServerViews(object):
                  renderer='json', permission='access')
     def subscribe(self, *args):
         """ call this to subscribe specific connection to new channels """
-        conn_id = self.request.json_body.get('conn_id',
-                                             self.request.GET.get('conn_id'))
+        json_body = self.request.json_body
+        conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
         connection = channelstream.CONNECTIONS.get(conn_id)
-        subscribe_to_channels = self.request.json_body.get('channels')
-        channel_configs = self.request.json_body.get('channel_configs', {})
+        subscribe_to_channels = json_body.get('channels')
+        channel_configs = json_body.get('channel_configs', {})
         if not connection:
             self.request.response.status = 403
             return {'error': "Unknown connection"}
@@ -220,15 +223,10 @@ class ServerViews(object):
                     channelstream.CHANNELS[channel_name].add_connection(
                         connection)
 
-        info_config = self.request.json_body.get('info') or {}
-        include_history = info_config.get('include_history', True)
-        include_users = info_config.get('include_users', True)
-        exclude_channels = info_config.get('exclude_channels', [])
+        # get info config for channel information
         current_channels = get_connection_channels(connection)
-        channels_info = self._get_channel_info(
-            current_channels, include_history=include_history,
-            include_users=include_users, exclude_channels=exclude_channels)
-
+        info_config = json_body.get('info') or {}
+        channels_info = self.get_common_info(current_channels, info_config)
         return {"channels": current_channels,
                 "channels_info": channels_info}
 
@@ -236,10 +234,10 @@ class ServerViews(object):
                  renderer='json', permission='access')
     def unsubscribe(self, *args):
         """ call this to unsubscribe specific connection from channels """
-        conn_id = self.request.json_body.get('conn_id',
-                                             self.request.GET.get('conn_id'))
+        json_body = self.request.json_body
+        conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
         connection = channelstream.CONNECTIONS.get(conn_id)
-        unsubscribe_channels = self.request.json_body.get('channels')
+        unsubscribe_channels = json_body.get('channels')
         if not connection:
             self.request.response.status = 403
             return {'error': "Unknown connection"}
@@ -257,14 +255,10 @@ class ServerViews(object):
                     channelstream.CHANNELS[channel_name].remove_connection(
                         connection)
 
-        info_config = self.request.json_body.get('info') or {}
-        include_history = info_config.get('include_history', True)
-        include_users = info_config.get('include_users', True)
-        exclude_channels = info_config.get('exclude_channels', [])
+        # get info config for channel information
         current_channels = get_connection_channels(connection)
-        channels_info = self._get_channel_info(
-            current_channels, include_history=include_history,
-            include_users=include_users, exclude_channels=exclude_channels)
+        info_config = json_body.get('info') or {}
+        channels_info = self.get_common_info(current_channels, info_config)
 
         return {"channels": current_channels,
                 "channels_info": channels_info}
@@ -334,10 +328,10 @@ class ServerViews(object):
                  renderer='json', permission='access')
     def user_state(self):
         """ set the status of specific user """
-        username = self.request.json_body.get('user')
-        user_state = self.request.json_body.get('user_state')
-        state_public_keys = self.request.json_body.get('state_public_keys',
-                                                       None)
+        json_body = self.request.json_body
+        username = json_body.get('user')
+        user_state = json_body.get('user_state')
+        state_public_keys = json_body.get('state_public_keys', None)
         if not username:
             self.request.response.status = 400
             return {'error': "No username specified"}
@@ -363,8 +357,8 @@ class ServerViews(object):
     @view_config(route_name='action', match_param='action=disconnect',
                  renderer='json', permission='access')
     def disconnect(self):
-        conn_id = self.request.json_body.get('conn_id',
-                                             self.request.GET.get('conn_id'))
+        json_body = self.request.json_body
+        conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
         conn = channelstream.CONNECTIONS.get(conn_id)
         if conn is not None:
             conn.mark_for_gc()
@@ -373,21 +367,21 @@ class ServerViews(object):
                  renderer='json', permission='access')
     def channel_config(self):
         """ call this to reconfigure channels """
-        channel_configs = self.request.json_body
-        if not channel_configs:
+        json_body = self.request.json_body
+        if not json_body:
             self.request.response.status = 400
             return {'error': "No channels specified"}
 
         with channelstream.lock:
-            for channel_name, config in channel_configs.items():
+            for channel_name, config in json_body.items():
                 if not channelstream.CHANNELS.get(channel_name):
                     channel = Channel(channel_name,
-                                      channel_configs=channel_configs)
+                                      channel_configs=json_body)
                     channelstream.CHANNELS[channel_name] = channel
                 else:
                     channel = channelstream.CHANNELS[channel_name]
-                    channel.reconfigure_from_dict(channel_configs)
-        channels_info = self._get_channel_info(channel_configs.keys(),
+                    channel.reconfigure_from_dict(json_body)
+        channels_info = self._get_channel_info(json_body.keys(),
                                                include_history=False,
                                                include_users=False)
         return channels_info
@@ -406,10 +400,9 @@ class ServerViews(object):
         remembered_user_count = len(
             [user for user in channelstream.USERS.iteritems()])
         unique_user_count = len(
-            [user for user in channelstream.USERS.itervalues() if
-             user.connections])
-        total_connections = sum(
-            [len(user.connections)
+            [user for user in channelstream.USERS.itervalues()
+             if user.connections])
+        total_connections = sum([len(user.connections)
              for user in channelstream.USERS.itervalues()])
         total_sys_connections = len(channelstream.CONNECTIONS.values())
         return {
@@ -430,18 +423,18 @@ class ServerViews(object):
     def info(self):
         if not self.request.body:
             req_channels = channelstream.CHANNELS.keys()
-            include_history = True
-            include_users = True
-            exclude_channels = []
+            info_config = {
+                'include_history': True,
+                'include_users': True,
+                'exclude_channels': [],
+                'include_connections': True
+            }
         else:
+            json_body = self.request.json_body
             # get info config for channel information
-            info_config = self.request.json_body.get('info') or {}
-            include_history = info_config.get('include_history', True)
+            info_config = json_body.get('info') or {}
             req_channels = info_config.get('channels', None)
-            include_users = info_config.get('include_users', True)
-            exclude_channels = info_config.get('exclude_channels', [])
-        return self._get_channel_info(req_channels,
-                                      include_history=include_history,
-                                      include_connections=True,
-                                      include_users=include_users,
-                                      exclude_channels=exclude_channels)
+            info_config['include_connections'] = info_config.get(
+                'include_connections', True)
+        channels_info = self.get_common_info(req_channels, info_config)
+        return channels_info

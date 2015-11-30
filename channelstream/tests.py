@@ -9,14 +9,15 @@ from channelstream.connection import Connection
 from channelstream.user import User
 
 
-class BaseInternalsTest(object):
-    def setup_method(self, method):
-        channelstream.CHANNELS = {}
-        channelstream.CONNECTIONS = {}
-        channelstream.USERS = {}
+@pytest.fixture
+def cleanup_globals():
+    channelstream.CHANNELS = {}
+    channelstream.CONNECTIONS = {}
+    channelstream.USERS = {}
 
 
-class TestChannel(BaseInternalsTest):
+@pytest.mark.usefixtures("cleanup_globals")
+class TestChannel(object):
     def test_create_defaults(self):
         channel = Channel('test', long_name='long name')
         assert channel.name == 'test'
@@ -146,7 +147,8 @@ class TestChannel(BaseInternalsTest):
     def test_history(self):
         config = {'test': {'store_history': True,
                            'history_size': 3}}
-        channel = Channel('test', long_name='long name', channel_configs=config)
+        channel = Channel('test', long_name='long name',
+                          channel_configs=config)
         channel.add_message({'message': 'test1', 'type': 'message'})
         channel.add_message({'message': 'test2', 'type': 'message'})
         channel.add_message({'message': 'test3', 'type': 'message'})
@@ -160,7 +162,8 @@ class TestChannel(BaseInternalsTest):
         ]
 
 
-class TestConnection(BaseInternalsTest):
+@pytest.mark.usefixtures("cleanup_globals")
+class TestConnection(object):
     def test_create_defaults(self):
         now = datetime.utcnow()
         connection = Connection('test', 'X')
@@ -189,7 +192,7 @@ class TestConnection(BaseInternalsTest):
         assert connection.queue.get() == []
 
 
-class TestUser(BaseInternalsTest):
+class TestUser(object):
     def test_create_defaults(self):
         user = User('test_user')
         user.state_from_dict({'key': '1', 'key2': '2'})
@@ -213,7 +216,8 @@ class TestUser(BaseInternalsTest):
         assert len(user.connections[1].queue.get()) == 1
 
 
-class TestGC(BaseInternalsTest):
+@pytest.mark.usefixtures("cleanup_globals")
+class TestGC(object):
     def test_gc_connections_active(self):
         channel = Channel('test')
         channelstream.CHANNELS[channel.name] = channel
@@ -307,40 +311,41 @@ class TestGC(BaseInternalsTest):
         assert len(channelstream.USERS.items()) == 1
 
 
-class BaseViewTest(BaseInternalsTest):
-    def setup(self):
-        # from pyramid.request import Request
-        # request = Request.blank('/', base_url='http://foo.com')
-        self.config = testing.setUp(settings={})
-        self.settings = self.config.get_settings()
-
-    def dummy_request(self):
-        return testing.DummyRequest()
+@pytest.fixture
+def pyramid_config():
+    # from pyramid.request import Request
+    # request = Request.blank('/', base_url='http://foo.com')
+    config = testing.setUp(settings={})
+    settings = config.get_settings()
+    return config, settings
 
 
-class TestConnectViews(BaseViewTest):
-    def test_bad_json(self):
-        super(TestConnectViews, self).setup()
-        from .wsgi_views.server import ServerViews
-        request = self.dummy_request()
-        request.json_body = {}
-        view_cls = ServerViews(request)
+@pytest.fixture
+def dummy_request():
+    return testing.DummyRequest()
+
+
+@pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
+class TestConnectViews(object):
+    def test_bad_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {}
+        view_cls = ServerViews(dummy_request)
         result = view_cls.connect()
         assert result == {'error': 'No username specified'}
 
-    def test_good_json(self):
-        super(TestConnectViews, self).setup()
-        from .wsgi_views.server import ServerViews
-        request = self.dummy_request()
-        request.json_body = {'username': 'username',
-                             'conn_id': 'X',
-                             'fresh_user_state': {'key': 'foo'},
-                             'user_state': {'bar': 'baz'},
-                             'state_public_keys': 'bar',
-                             'channels': ['a', 'aB'],
-                             'channel_configs': {'a': {'store_history': True,
-                                                       'history_size': 2}}}
-        view_cls = ServerViews(request)
+    def test_good_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {'username': 'username',
+                                   'conn_id': 'X',
+                                   'fresh_user_state': {'key': 'foo'},
+                                   'user_state': {'bar': 'baz'},
+                                   'state_public_keys': 'bar',
+                                   'channels': ['a', 'aB'],
+                                   'channel_configs': {
+                                       'a': {'store_history': True,
+                                             'history_size': 2}}}
+        view_cls = ServerViews(dummy_request)
         assert channelstream.CHANNELS == {}
         result = view_cls.connect()
         assert len(channelstream.CHANNELS.keys()) == 2
@@ -362,36 +367,35 @@ class TestConnectViews(BaseViewTest):
         ]
 
 
-class TestSubscribeViews(BaseViewTest):
-    def test_bad_json(self):
-        super(TestSubscribeViews, self).setup()
-        from .wsgi_views.server import ServerViews
-        request = self.dummy_request()
-        request.json_body = {}
-        view_cls = ServerViews(request)
+@pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
+class TestSubscribeViews(object):
+    def test_bad_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {}
+        view_cls = ServerViews(dummy_request)
         result = view_cls.subscribe()
         assert result == {'error': 'Unknown connection'}
 
-    def test_good_json(self):
-        super(TestSubscribeViews, self).setup()
-        from .wsgi_views.server import ServerViews
-        request = self.dummy_request()
-        request.json_body = {'username': 'test',
-                             'conn_id': 'x',
-                             'fresh_user_state': {'key': 'foo'},
-                             'user_state': {'bar': 'baz'},
-                             'state_public_keys': 'bar',
-                             'channels': ['a', 'aB'],
-                             'channel_configs': {'a': {'store_history': True,
-                                                       'history_size': 2}}}
-        view_cls = ServerViews(request)
+    def test_good_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {'username': 'test',
+                                   'conn_id': 'x',
+                                   'fresh_user_state': {'key': 'foo'},
+                                   'user_state': {'bar': 'baz'},
+                                   'state_public_keys': 'bar',
+                                   'channels': ['a', 'aB'],
+                                   'channel_configs': {
+                                       'a': {'store_history': True,
+                                             'history_size': 2}}}
+        view_cls = ServerViews(dummy_request)
         view_cls.connect()
-        request.json_body = {"conn_id": 'x',
-                             "channels": ['b'],
-                             "channel_configs": {"a": {"notify_presence": True},
-                                                 "b": {"notify_presence": True}}
-                             }
-        view_cls = ServerViews(request)
+        dummy_request.json_body = {"conn_id": 'x',
+                                   "channels": ['b'],
+                                   "channel_configs": {
+                                       "a": {"notify_presence": True},
+                                       "b": {"notify_presence": True}}
+                                   }
+        view_cls = ServerViews(dummy_request)
         result = view_cls.subscribe()
         assert sorted(result['channels']) == sorted(['a', 'aB', 'b'])
         assert result['channels_info']['users'] == [
@@ -408,42 +412,40 @@ class TestSubscribeViews(BaseViewTest):
         ]
 
 
-class TestInfoView(BaseViewTest):
-    def test_empty_json(self):
-        super(TestInfoView, self).setup()
-        from .wsgi_views.server import ServerViews
-        request = self.dummy_request()
-        request.json_body = {}
-        view_cls = ServerViews(request)
+@pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
+class TestInfoView(object):
+    def test_empty_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {}
+        view_cls = ServerViews(dummy_request)
         result = view_cls.info()
         assert result['channels'] == {}
         assert result['unique_users'] == 0
         assert result['users'] == []
 
-    def test_subscribed_json(self):
-        super(TestInfoView, self).setup()
-        from .wsgi_views.server import ServerViews
-        request = self.dummy_request()
-        request.json_body = {'username': 'test1',
-                             'conn_id': 'x',
-                             'fresh_user_state': {'key': 'foo'},
-                             'user_state': {'bar': 'baz'},
-                             'state_public_keys': 'bar',
-                             'channels': ['a', 'aB'],
-                             'channel_configs': {'a': {'store_history': True,
-                                                       'history_size': 2}}}
-        view_cls = ServerViews(request)
+    def test_subscribed_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {'username': 'test1',
+                                   'conn_id': 'x',
+                                   'fresh_user_state': {'key': 'foo'},
+                                   'user_state': {'bar': 'baz'},
+                                   'state_public_keys': 'bar',
+                                   'channels': ['a', 'aB'],
+                                   'channel_configs': {
+                                       'a': {'store_history': True,
+                                             'history_size': 2}}}
+        view_cls = ServerViews(dummy_request)
         view_cls.connect()
-        request = self.dummy_request()
-        request.json_body = {'username': 'test2',
-                             'conn_id': 'y',
-                             'fresh_user_state': {'key': 'foo1'},
-                             'user_state': {'bar': 'baz1'},
-                             'state_public_keys': 'key',
-                             'channels': ['a', 'c'],
-                             'channel_configs': {'c': {'store_history': True,
-                                                       'history_size': 2}}}
-        view_cls = ServerViews(request)
+        dummy_request.json_body = {'username': 'test2',
+                                   'conn_id': 'y',
+                                   'fresh_user_state': {'key': 'foo1'},
+                                   'user_state': {'bar': 'baz1'},
+                                   'state_public_keys': 'key',
+                                   'channels': ['a', 'c'],
+                                   'channel_configs': {
+                                       'c': {'store_history': True,
+                                             'history_size': 2}}}
+        view_cls = ServerViews(dummy_request)
         view_cls.connect()
         result = view_cls.info()
         print result
@@ -467,10 +469,9 @@ class TestInfoView(BaseViewTest):
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test1'},
             {'state': {'bar': 'baz1', 'key': 'foo1'}, 'user': 'test2'}
         ])
-        request = self.dummy_request()
-        request.body = 'NOTEMPTY'
-        request.json_body = {'info': {'channels': ['a']}}
-        view_cls = ServerViews(request)
+        dummy_request.body = 'NOTEMPTY'
+        dummy_request.json_body = {'info': {'channels': ['a']}}
+        view_cls = ServerViews(dummy_request)
         result = view_cls.info()
         assert 'a' in result['channels']
         assert 'aB' not in result['channels']
