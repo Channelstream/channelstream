@@ -81,18 +81,24 @@ def cli_start():
             pass
 
     else:
-        config['debug'] = int(args.debug)
-        config['port'] = int(args.port)
+        config['debug'] = args.debug
+        config['port'] = args.port
         config['demo'] = asbool(args.demo)
         config['host'] = args.host
         config['secret'] = args.secret
         config['admin_secret'] = args.admin_secret
         config['allow_posting_from'].extend(
             [ip.strip() for ip in args.allow_posting_from.split(',')])
+
+    # convert types
+    config['debug'] = int(config['debug'])
+    config['port'] = int(config['port'])
+    config['demo'] = asbool(args.demo)
+
     log_level = logging.DEBUG if config['debug'] else logging.INFO
     logging.basicConfig(level=log_level)
 
-    url = 'http://{}:{}'.format(config['host'], int(config['port']))
+    url = 'http://{}:{}'.format(config['host'], config['port'])
 
     if config['demo']:
         log.info('Demo enabled, visit {}/demo'.format(url))
@@ -108,7 +114,7 @@ def cli_start():
         '^/*': make_app(config)
     })
     WebSocketServer(
-        (config['host'], int(config['port'])),
+        (config['host'], config['port']),
         Resource(app_dict),
         debug=False
     ).serve_forever()
