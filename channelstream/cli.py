@@ -100,15 +100,15 @@ def cli_start():
 
     url = 'http://{}:{}'.format(config['host'], config['port'])
 
-    if config['demo']:
-        log.info('Demo enabled, visit {}/demo'.format(url))
-
     log.info('Starting flash policy server on port 10843')
     gc_conns_forever()
     gc_users_forever()
     server = StreamServer(('0.0.0.0', 10843), client_handle)
     server.start()
     log.info('Serving on {}'.format(url))
+    log.info('Admin interface available on {}/admin'.format(url))
+    if config['demo']:
+        log.info('Demo enabled, visit {}/demo'.format(url))
     app_dict = collections.OrderedDict({
         '^/ws.*': ChatApplication,
         '^/*': make_app(config)
