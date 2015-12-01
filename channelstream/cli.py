@@ -32,7 +32,8 @@ def cli_start():
         'debug': False
     }
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-?", "--help", action="help")
     parser.add_argument("-i", "--ini", dest="ini",
                         help="config file location",
                         default=None)
@@ -42,7 +43,7 @@ def cli_start():
     parser.add_argument("-a", "--admin_secret", dest="admin_secret",
                         help="secret used to secure your admin_panel",
                         default='admin_secret')
-    parser.add_argument("-o", "--o", dest="host",
+    parser.add_argument("-host", "--host", dest="host",
                         help="host ip on which the server listens to",
                         default='0.0.0.0')
     parser.add_argument("-p", "--port", type=int, dest="port",
