@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='channelstream',
-      version='0.4.1',
+      version='0.4.2',
       description='Websocket server supporting channels/users communication',
       classifiers=[
           'Intended Audience :: Developers'
