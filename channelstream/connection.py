@@ -1,9 +1,10 @@
-import datetime
 import logging
+from datetime import datetime, timedelta
 
 import gevent
 import geventwebsocket
 
+import channelstream
 from .ext_json import json
 
 log = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ class Connection(object):
 
     def __init__(self, username, conn_id):
         self.username = username  # hold user id/name of connection
-        self.last_active = datetime.datetime.utcnow()
+        self.last_active = datetime.utcnow()
         self.socket = None
         self.queue = None
         self.id = conn_id
@@ -31,7 +32,9 @@ class Connection(object):
                 # payload needs to be converted to JSON now as it gets
                 # piped to client
                 self.socket.ws.send(json.dumps([message] if message else []))
-                self.last_active = datetime.datetime.utcnow()
+                now = datetime.utcnow()
+                self.last_active = now
+                channelstream.USERS[self.username].last_active = now
             except geventwebsocket.exceptions.WebSocketError:
                 self.mark_for_gc()
         elif self.queue:
@@ -41,7 +44,7 @@ class Connection(object):
 
     def mark_for_gc(self):
         # set last active time for connection 1 hour in past for GC
-        self.last_active -= datetime.timedelta(days=60)
+        self.last_active -= timedelta(days=60)
 
     def heartbeat(self):
         if self.socket or self.queue:
