@@ -17,7 +17,8 @@ setup(name='channelstream',
           'gevent-websocket>=0.9.3',
           'pyramid',
           'pyramid_jinja2',
-          'itsdangerous'
+          'itsdangerous',
+          'requests'
       ],
       entry_points={
           'console_scripts': [
