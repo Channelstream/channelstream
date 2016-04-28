@@ -1,7 +1,9 @@
 import logging
+
 from datetime import datetime, timedelta
 
 import gevent
+import six
 
 import channelstream
 
@@ -15,7 +17,7 @@ def gc_conns():
         collected_conns = []
         # collect every ref in chanels
         # remove connections from channels
-        for channel in channelstream.CHANNELS.itervalues():
+        for channel in six.itervalues(channelstream.CHANNELS):
             for username, conns in channel.connections.items():
                 for conn in conns:
                     if conn.last_active < threshold:

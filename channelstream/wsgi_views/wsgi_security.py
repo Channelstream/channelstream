@@ -21,7 +21,8 @@ class APIFactory(object):
         if req_secret:
             signer = TimestampSigner(config['secret'])
             unsigned = signer.unsign(req_secret)
-            assert request.path == unsigned
+            if request.path != unsigned:
+                return
         else:
             return
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]

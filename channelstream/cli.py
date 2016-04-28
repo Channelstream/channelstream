@@ -2,7 +2,7 @@ from gevent import monkey
 
 monkey.patch_all()
 
-import ConfigParser
+from six.moves import configparser
 import collections
 import logging
 import argparse
@@ -62,7 +62,7 @@ def cli_start():
                         )
     args = parser.parse_args()
     if args.ini:
-        parser = ConfigParser.ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(args.ini)
 
         non_optional_parameters = (
@@ -71,14 +71,14 @@ def cli_start():
         for key in non_optional_parameters:
             try:
                 config[key] = parser.get('channelstream', key)
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 pass
 
         try:
             ips = [ip.strip() for ip in parser.get(
                 'channelstream', 'allow_posting_from').split(',')]
             config['allow_posting_from'].extend(ips)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
 
     else:

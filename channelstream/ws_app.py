@@ -1,4 +1,4 @@
-import urlparse
+from six.moves.urllib.parse import parse_qs
 from datetime import datetime
 
 from geventwebsocket import WebSocketApplication
@@ -8,7 +8,7 @@ import channelstream
 
 class ChatApplication(WebSocketApplication):
     def on_open(self):
-        self.qs = urlparse.parse_qs(self.ws.environ['QUERY_STRING'])
+        self.qs = parse_qs(self.ws.environ['QUERY_STRING'])
         self.conn_id = self.qs['conn_id'][0]
         if self.conn_id not in channelstream.CONNECTIONS:
             # close connection instantly if user played with id

@@ -1,5 +1,6 @@
 import copy
 import logging
+import six
 import uuid
 
 from datetime import datetime
@@ -114,7 +115,7 @@ class Channel(object):
         message.update({'channel': self.name})
         # message everyone subscribed except excluded
         total_sent = 0
-        for user, conns in self.connections.iteritems():
+        for user, conns in six.iteritems(self.connections):
             if not exclude_users or user not in exclude_users:
                 for connection in conns:
                     if not pm_users or connection.user in pm_users:

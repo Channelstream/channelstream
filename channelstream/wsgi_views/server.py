@@ -2,6 +2,7 @@ import logging
 import uuid
 from datetime import datetime
 import gevent
+import six
 from gevent.queue import Queue, Empty
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPUnauthorized
@@ -50,7 +51,7 @@ def pass_message(msg, stats):
 
 def get_connection_channels(connection):
     found_channels = []
-    for channel in channelstream.CHANNELS.itervalues():
+    for channel in six.itervalues(channelstream.CHANNELS):
         user_conns = channel.connections.get(connection.username) or []
         if connection in user_conns:
             found_channels.append(channel.name)
@@ -88,7 +89,7 @@ class ServerViews(object):
 
         # select everything for empty list
         if not req_channels:
-            channel_instances = channelstream.CHANNELS.itervalues()
+            channel_instances = six.itervalues(channelstream.CHANNELS)
         else:
             channel_instances = [channelstream.CHANNELS[c]
                                  for c in req_channels]
@@ -398,12 +399,12 @@ class ServerViews(object):
     def admin(self):
         uptime = datetime.utcnow() - channelstream.stats['started_on']
         remembered_user_count = len(
-            [user for user in channelstream.USERS.iteritems()])
+            [user for user in six.iteritems(channelstream.USERS)])
         unique_user_count = len(
-            [user for user in channelstream.USERS.itervalues()
+            [user for user in six.itervalues(channelstream.USERS)
              if user.connections])
         total_connections = sum([len(user.connections)
-             for user in channelstream.USERS.itervalues()])
+             for user in six.itervalues(channelstream.USERS)])
         total_sys_connections = len(channelstream.CONNECTIONS.values())
         return {
             "remembered_user_count": remembered_user_count,
