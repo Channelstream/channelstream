@@ -1,3 +1,4 @@
+import six
 from itsdangerous import TimestampSigner
 from pyramid.security import (Allow,
                               Everyone,
@@ -5,7 +6,7 @@ from pyramid.security import (Allow,
                               authenticated_userid)
 
 
-class RequestBasicChannenge(Exception):
+class RequestBasicChallenge(Exception):
     pass
 
 
@@ -16,11 +17,14 @@ class APIFactory(object):
         req_url_secret = request.params.get('secret')
         req_secret = request.headers.get('x-channelstream-secret',
                                          req_url_secret)
+
         if request.environ['REMOTE_ADDR'] not in config['allow_posting_from']:
             return
         if req_secret:
             signer = TimestampSigner(config['secret'])
             unsigned = signer.unsign(req_secret)
+            if not six.PY2:
+                unsigned = unsigned.decode('utf8')
             if request.path != unsigned:
                 return
         else:
@@ -33,5 +37,5 @@ class BasicAuthFactory(object):
         self.__acl__ = []
         user = authenticated_userid(request)
         if user != 'admin':
-            raise RequestBasicChannenge()
+            raise RequestBasicChallenge()
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]

@@ -1,3 +1,7 @@
+from gevent import monkey
+
+monkey.patch_all()
+
 import pytest
 from datetime import datetime, timedelta
 from gevent.queue import Queue, Empty
@@ -448,13 +452,16 @@ class TestInfoView(object):
         view_cls = ServerViews(dummy_request)
         view_cls.connect()
         result = view_cls.info()
-        print result
         assert sorted(('a', 'aB', 'c')) == sorted(result['channels'].keys())
         assert result['users']
-        assert sorted(result['channels']['a']['users']) == sorted([
+        compA = sorted(result['channels']['a']['users'],
+                       key=lambda x: x['user'])
+        compB = sorted([
             {'connections': ['x'], 'user': 'test1'},
-            {'connections': ['y'], 'user': 'test2'}
-        ])
+            {'connections': ['y'], 'user': 'test2'}],
+            key=lambda x: x['user'])
+        print(compA, compB)
+        assert compA == compB
         assert result['channels']['a']['total_users'] == 2
         assert result['channels']['a']['total_connections'] == 2
         assert result['channels']['c']['users'] == [
@@ -465,10 +472,14 @@ class TestInfoView(object):
         assert result['channels']['aB']['users'] == [
             {'connections': ['x'], 'user': 'test1'}
         ]
-        assert sorted(result['users']) == sorted([
+        compA = sorted(result['users'],
+                       key=lambda x: x['user'])
+        compB = sorted([
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test1'},
-            {'state': {'bar': 'baz1', 'key': 'foo1'}, 'user': 'test2'}
-        ])
+            {'state': {'bar': 'baz1', 'key': 'foo1'}, 'user': 'test2'}],
+            key=lambda x: x['user'])
+        print(compA, compB)
+        assert compA == compB
         dummy_request.body = 'NOTEMPTY'
         dummy_request.json_body = {'info': {'channels': ['a']}}
         view_cls = ServerViews(dummy_request)

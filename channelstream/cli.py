@@ -3,21 +3,36 @@ from gevent import monkey
 monkey.patch_all()
 
 from six.moves import configparser
-import collections
 import logging
 import argparse
 
 from gevent.server import StreamServer
-from geventwebsocket import WebSocketServer, Resource
 from pyramid.settings import asbool
 from channelstream.gc import gc_conns_forever, gc_users_forever
 from channelstream.policy_server import client_handle
-from channelstream.wsgi_app import make_app
-from channelstream.ws_app import ChatApplication
+import channelstream.wsgi_app as pyramid_app
+from channelstream.ws_app import ChatApplicationSocket
 
+from ws4py.server.geventserver import WebSocketWSGIApplication, \
+    WebSocketWSGIHandler, WSGIServer
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+
+
+class RoutingApplication(object):
+    def __init__(self, config):
+        self.ws_app = WebSocketWSGIApplication(
+            handler_cls=ChatApplicationSocket)
+        self.wsgi_app = pyramid_app.make_app(config)
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == '/ws':
+            environ['ws4py.app'] = self
+            return self.ws_app(environ, start_response)
+
+        return self.wsgi_app(environ, start_response)
+
 
 def cli_start():
     config = {
@@ -110,12 +125,7 @@ def cli_start():
     log.info('Admin interface available on {}/admin'.format(url))
     if config['demo']:
         log.info('Demo enabled, visit {}/demo'.format(url))
-    app_dict = collections.OrderedDict({
-        '^/ws.*': ChatApplication,
-        '^/*': make_app(config)
-    })
-    WebSocketServer(
-        (config['host'], config['port']),
-        Resource(app_dict),
-        debug=False
-    ).serve_forever()
+
+    server = WSGIServer((args.host, args.port),
+                        RoutingApplication(config))
+    server.serve_forever()

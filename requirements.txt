@@ -1,5 +1,5 @@
 gevent>=1.1
-gevent-websocket>=0.9.3
+ws4py
 pyramid
 pyramid_jinja2
 itsdangerous

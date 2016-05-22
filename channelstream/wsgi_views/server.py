@@ -388,7 +388,7 @@ class ServerViews(object):
         return channels_info
 
     @view_config(
-        context='channelstream.wsgi_views.wsgi_security:RequestBasicChannenge')
+        context='channelstream.wsgi_views.wsgi_security:RequestBasicChallenge')
     def admin_challenge(self):
         response = HTTPUnauthorized()
         response.headers.update(forget(self.request))

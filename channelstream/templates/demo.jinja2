@@ -19,7 +19,7 @@
     <hr/>
     <div class="messages">
         {% raw %}
-        <div class="message" ng-repeat="message in stream">
+        <div class="message" ng-repeat="message in stream track by $index">
             [<span
                 class="channel {{ message.channel }}">{{ message.channel }}</span>]
             <strong>{{ message.user }}</strong>: {{ message.message }}

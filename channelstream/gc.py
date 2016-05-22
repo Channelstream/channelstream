@@ -18,7 +18,7 @@ def gc_conns():
         # collect every ref in chanels
         # remove connections from channels
         for channel in six.itervalues(channelstream.CHANNELS):
-            for username, conns in channel.connections.items():
+            for username, conns in list(channel.connections.items()):
                 for conn in conns:
                     if conn.last_active < threshold:
                         channel.connections[username].remove(conn)
@@ -35,7 +35,7 @@ def gc_conns():
             # collected it from our list
             if conn.socket:
                 try:
-                    conn.socket.ws.close()
+                    conn.socket.close()
                 except Exception:
                     raise
         log.debug('gc_conns() time %s' % (datetime.utcnow() - start_time))
@@ -45,7 +45,7 @@ def gc_users():
     with channelstream.lock:
         start_time = datetime.utcnow()
         threshold = datetime.utcnow() - timedelta(days=1)
-        for user in channelstream.USERS.values():
+        for user in list(six.itervalues(channelstream.USERS)):
             if user.last_active < threshold:
                 channelstream.USERS.pop(user.username)
         log.debug('gc_users() time %s' % (datetime.utcnow() - start_time))

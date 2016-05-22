@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 
 import gevent
-import geventwebsocket
 
 import channelstream
 from .ext_json import json
@@ -27,15 +26,17 @@ class Connection(object):
     def add_message(self, message=None):
         """ Sends the message to the client connection """
         # handle websockets
-        if self.socket:
+        if self.socket and self.socket.terminated:
+            self.mark_for_gc()
+        elif self.socket and not self.socket.terminated:
             try:
                 # payload needs to be converted to JSON now as it gets
                 # piped to client
-                self.socket.ws.send(json.dumps([message] if message else []))
+                self.socket.send(json.dumps([message] if message else []))
                 now = datetime.utcnow()
                 self.last_active = now
                 channelstream.USERS[self.username].last_active = now
-            except geventwebsocket.exceptions.WebSocketError:
+            except Exception:
                 self.mark_for_gc()
         elif self.queue:
             # handle long polling
@@ -54,4 +55,4 @@ class Connection(object):
             except Exception:
                 self.mark_for_gc()
                 if self.socket:
-                    self.socket.ws.close()
+                    self.socket.close()

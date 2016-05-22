@@ -1,23 +1,23 @@
 from six.moves.urllib.parse import parse_qs
 from datetime import datetime
 
-from geventwebsocket import WebSocketApplication
+from ws4py.websocket import WebSocket
 
 import channelstream
 
 
-class ChatApplication(WebSocketApplication):
-    def on_open(self):
-        self.qs = parse_qs(self.ws.environ['QUERY_STRING'])
+class ChatApplicationSocket(WebSocket):
+    def opened(self):
+        self.qs = parse_qs(self.environ['QUERY_STRING'])
         self.conn_id = self.qs['conn_id'][0]
         if self.conn_id not in channelstream.CONNECTIONS:
             # close connection instantly if user played with id
-            self.ws.close()
+            self.close()
         else:
             # attach a socket to connection
             channelstream.CONNECTIONS[self.conn_id].socket = self
 
-    def on_message(self, message):
+    def received_message(self, m):
         # this is to allow client heartbeats
         now = datetime.utcnow()
         if self.conn_id in channelstream.CONNECTIONS:
@@ -27,9 +27,9 @@ class ChatApplication(WebSocketApplication):
             if user:
                 user.last_active = now
 
-    def on_close(self, reason):
+    def closed(self, code, reason=""):
+        self.environ.pop('ws4py.app')
         found_conn = self.conn_id in channelstream.CONNECTIONS
         if hasattr(self, 'conn_id') and found_conn:
             connection = channelstream.CONNECTIONS[self.conn_id]
-            # set activity date in past to salvage
-            connection.last_active = datetime(1980, 1, 1)
+            connection.mark_for_gc()

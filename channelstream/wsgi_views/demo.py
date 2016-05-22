@@ -2,6 +2,7 @@ import json
 import random
 import uuid
 import requests
+import six
 from pyramid.view import view_config
 from itsdangerous import TimestampSigner
 
@@ -12,13 +13,15 @@ def make_request(request, payload, endpoint):
     server_port = request.registry.settings['port']
     signer = TimestampSigner(request.registry.settings['secret'])
     sig_for_server = signer.sign(endpoint)
+    if not six.PY2:
+        sig_for_server = sig_for_server.decode('utf8')
     secret_headers = {'x-channelstream-secret': sig_for_server,
                       'x-channelstream-endpoint': endpoint,
                       'Content-Type': 'application/json'}
     url = 'http://127.0.0.1:%s%s' % (server_port, endpoint)
     response = requests.post(url, data=json.dumps(payload),
-                             headers=secret_headers).json()
-    return response
+                             headers=secret_headers)
+    return response.json()
 
 
 def enable_demo(context, request):
