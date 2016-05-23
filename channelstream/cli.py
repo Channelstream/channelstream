@@ -126,6 +126,6 @@ def cli_start():
     if config['demo']:
         log.info('Demo enabled, visit {}/demo'.format(url))
 
-    server = WSGIServer((args.host, args.port),
+    server = WSGIServer((config['host'], config['port']),
                         RoutingApplication(config))
     server.serve_forever()
