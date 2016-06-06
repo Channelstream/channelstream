@@ -1,7 +1,7 @@
 channelstream
 =============
 
-This is **experimental code** based on gevent-websocket.
+This is a websocket-based communication server for python.
 
 Basic usage::
 
