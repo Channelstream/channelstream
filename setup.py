@@ -14,7 +14,7 @@ def parse_req(req):
 requires = [_f for _f in map(parse_req, REQUIREMENTS) if _f]
 
 setup(name='channelstream',
-      version='0.5.0',
+      version='0.5.1',
       description='Websocket server supporting channels/users communication',
       classifiers=[
           'Intended Audience :: Developers'

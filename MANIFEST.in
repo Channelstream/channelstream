@@ -1,2 +1,2 @@
-include *.jinja2 *.js *.css
-recursive-include channelstream *.jinja2 *.js *.css
+include *.jinja2 *.js *.css *.txt *.ini *.rst
+recursive-include channelstream *.jinja2 *.js *.css  *.txt *.ini *.rst

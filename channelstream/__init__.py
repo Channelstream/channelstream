@@ -4,7 +4,7 @@ from gevent.lock import RLock
 __version__ = {
     'major': 0,
     'minor': 5,
-    'patch': 0
+    'patch': 1
 }
 
 stats = {
