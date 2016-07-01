@@ -5,7 +5,7 @@ This is a websocket-based communication server for python.
 
 Basic usage::
 
-    YOUR_PYTHON_ENV/bin/channelstream - filename.ini
+    YOUR_PYTHON_ENV/bin/channelstream -i filename.ini
 
 
 You can also see simple pyramid/angularjs demo included, open your browser and point it to following url::
