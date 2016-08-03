@@ -99,7 +99,7 @@ class Channel(object):
             'channel': self.name,
             'message': {'action': action}
         }
-        self.add_message(payload, exclude_users=username)
+        self.add_message(payload, exclude_users=[username])
         return payload
 
     def add_message(self, message, pm_users=None, exclude_users=None):
@@ -108,6 +108,7 @@ class Channel(object):
         """
         message = copy.deepcopy(message)
         pm_users = pm_users or []
+        exclude_users = exclude_users or []
         self.last_active = datetime.utcnow()
         if self.store_history and message['type'] == 'message':
             self.history.append(message)

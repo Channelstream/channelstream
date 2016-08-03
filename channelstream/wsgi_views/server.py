@@ -35,11 +35,13 @@ def pass_message(msg, stats):
     pm_users = msg.get('pm_users', [])
     total_sent = 0
     stats['total_unique_messages'] += 1
+    exclude_users = msg.get('exclude_users') or []
     if msg.get('channel'):
         channel_inst = channelstream.CHANNELS.get(msg['channel'])
         if channel_inst:
             total_sent += channel_inst.add_message(message,
-                                                   pm_users=pm_users)
+                                                   pm_users=pm_users,
+                                                   exclude_users=exclude_users)
     elif pm_users:
         # if pm then iterate over all users and notify about new message!
         for username in pm_users:
