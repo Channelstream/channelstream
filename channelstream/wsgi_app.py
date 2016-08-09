@@ -30,6 +30,7 @@ def make_app(server_config):
     json_renderer.add_adapter(datetime.datetime, datetime_adapter)
     config.add_renderer('json', json_renderer)
     config.add_static_view('static', path='channelstream:static/')
+    config.add_request_method('channelstream.utils.handle_cors', 'handle_cors')
     config.include('pyramid_jinja2')
     config.include('channelstream.wsgi_views')
     config.scan('channelstream.wsgi_views')
