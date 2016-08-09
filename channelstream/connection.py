@@ -56,3 +56,6 @@ class Connection(object):
                 self.mark_for_gc()
                 if self.socket:
                     self.socket.close()
+
+    def __json__(self):
+        return self.id
