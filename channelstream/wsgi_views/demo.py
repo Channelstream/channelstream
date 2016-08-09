@@ -30,8 +30,10 @@ def enable_demo(context, request):
     return False
 
 
-CHANNEL_CONFIGS = {"pub_chan": {"notify_presence": True},
-                   "notify": {"notify_presence": True}}
+CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True, 
+                                'store_history': True,
+                                'broadcast_presence_with_user_lists': True},
+                   'notify': {'notify_presence': True}}
 
 
 class DemoViews(object):
@@ -39,24 +41,7 @@ class DemoViews(object):
         self.request = request
         self.request.response.headers.add('Cache-Control',
                                           'no-cache, no-store')
-
-    @view_config(route_name='section_action', renderer='string',
-                 request_method="OPTIONS", custom_predicates=[enable_demo])
-    def handle_CORS(self):
-        self.request.response.headers.add('Access-Control-Allow-Origin', '*')
-        self.request.response.headers.add('XDomainRequestAllowed', '1')
-        self.request.response.headers.add('Access-Control-Allow-Methods',
-                                          'GET, POST, OPTIONS, PUT')
-        self.request.response.headers.add('Access-Control-Allow-Headers',
-                                          'Content-Type, Depth, User-Agent, '
-                                          'X-File-Size, X-Requested-With, '
-                                          'If-Modified-Since, X-File-Name, '
-                                          'Cache-Control, Pragma, Origin, '
-                                          'Connection, Referer, Cookie')
-        self.request.response.headers.add('Access-Control-Max-Age', '86400')
-        # self.request.response.headers.add('Access-Control-Allow-Credentials',
-        # 'true')
-        return {}
+        self.request.handle_cors()
 
     @view_config(route_name='demo', renderer='templates/demo.jinja2',
                  custom_predicates=[enable_demo])
@@ -151,3 +136,11 @@ class DemoViews(object):
         response = requests.post(url, data=json.dumps(payload),
                                  headers=self.secret_headers).json()
         return response
+
+    @view_config(route_name='section_action',
+                 match_param=['section=demo', 'action=info'],
+                 renderer='json',
+                 custom_predicates=[enable_demo])
+    def info(self):
+        """configure channel defaults"""
+        return make_request(self.request, {}, '/info')

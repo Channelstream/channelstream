@@ -3,13 +3,22 @@
 import logging
 
 
+from channelstream.ext_json import json
+from pyramid.renderers import JSON
+
 log = logging.getLogger(__name__)
+
+json_renderer = JSON(serializer=json.dumps, indent=4)
 
 
 def includeme(config):
+    config.add_renderer('json', json_renderer)
     config.add_route('index', '/')
     config.add_route('demo', '/demo')
     config.add_route('admin', '/admin',
+                     factory='channelstream.wsgi_views.'
+                             'wsgi_security:BasicAuthFactory')
+    config.add_route('admin_json', '/admin.json',
                      factory='channelstream.wsgi_views.'
                              'wsgi_security:BasicAuthFactory')
     config.add_route('action', '/{action}')

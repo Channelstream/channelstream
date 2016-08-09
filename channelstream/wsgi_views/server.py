@@ -87,7 +87,7 @@ class ServerViews(object):
                      "unique_users": len(channelstream.USERS),
                      "users": []}
 
-        users_to_list = []
+        users_to_list = set()
 
         # select everything for empty list
         if not req_channels:
@@ -100,25 +100,13 @@ class ServerViews(object):
             if channel_inst.name in exclude_channels:
                 continue
 
-            json_data["channels"][channel_inst.name] = {'history': []}
-            chan_info = json_data["channels"][channel_inst.name]
-            if include_history:
-                chan_info['history'] = channel_inst.history
-            chan_info['total_users'] = len(channel_inst.connections)
-            chan_info['total_connections'] = sum(
-                [len(conns) for conns in channel_inst.connections.values()])
-            chan_info['users'] = []
-            for username in channel_inst.connections.keys():
-                user_inst = channelstream.USERS.get(username)
-                if include_users and user_inst.username not in users_to_list:
-                    users_to_list.append(user_inst.username)
-                udata = {'user': user_inst.username,
-                         "connections": []}
-                if include_connections:
-                    udata['connections'] = [conn.id for conn in
-                                            channel_inst.connections[username]]
-                chan_info['users'].append(udata)
-            chan_info['last_active'] = channel_inst.last_active
+            channel_info = channel_inst.get_info(
+                include_history=include_history,
+                include_connections=include_connections,
+                include_users=include_users
+            )
+            json_data["channels"][channel_inst.name] = channel_info
+            users_to_list.update([x['user'] for x in channel_info['users']])
 
         for username in users_to_list:
             json_data['users'].append(
@@ -266,31 +254,16 @@ class ServerViews(object):
         return {"channels": current_channels,
                 "channels_info": channels_info}
 
-    def _add_CORS(self):
-        self.request.response.headers.add('Access-Control-Allow-Origin', '*')
-        self.request.response.headers.add('XDomainRequestAllowed', '1')
-        self.request.response.headers.add('Access-Control-Allow-Methods',
-                                          'GET, POST, OPTIONS, PUT')
-        self.request.response.headers.add('Access-Control-Allow-Headers',
-                                          'Content-Type, Depth, User-Agent, '
-                                          'X-File-Size, X-Requested-With, '
-                                          'If-Modified-Since, X-File-Name, '
-                                          'Cache-Control, Pragma, Origin, '
-                                          'Connection, Referer, Cookie')
-        self.request.response.headers.add('Access-Control-Max-Age', '86400')
-        # self.request.response.headers.add('Access-Control-Allow-Credentials',
-        #                                   'true')
-
     @view_config(route_name='action', match_param='action=listen',
                  request_method="OPTIONS", renderer='string')
     def handle_CORS(self):
-        self._add_CORS()
+        self.request.handle_cors()
         return ''
 
     @view_config(route_name='action', match_param='action=listen',
                  renderer='string')
     def listen(self):
-        self._add_CORS()
+        self.request.handle_cors()
         config = self.request.registry.settings
         self.conn_id = self.request.params.get('conn_id')
         connection = channelstream.CONNECTIONS.get(self.conn_id)
@@ -398,8 +371,10 @@ class ServerViews(object):
 
     @view_config(route_name='admin',
                  renderer='templates/admin.jinja2', permission='access')
+    @view_config(route_name='admin_json',
+                 renderer='json', permission='access')
     def admin(self):
-        uptime = datetime.utcnow() - channelstream.stats['started_on']
+        uptime = str(datetime.utcnow() - channelstream.stats['started_on'])
         remembered_user_count = len(
             [user for user in six.iteritems(channelstream.USERS)])
         unique_user_count = len(
