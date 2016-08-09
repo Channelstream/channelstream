@@ -46,6 +46,7 @@ class DemoViews(object):
     @view_config(route_name='demo', renderer='templates/demo.jinja2',
                  custom_predicates=[enable_demo])
     def demo(self):
+        """Render demo page"""
         random_name = 'anon_%s' % random.randint(1, 999999)
         return {'username': random_name}
 
@@ -88,7 +89,7 @@ class DemoViews(object):
                  renderer='json', request_method="POST",
                  custom_predicates=[enable_demo])
     def unsubscribe(self):
-        """"can be used to subscribe specific connection to other channels"""
+        """"can be used to unsubscribe specific connection to other channels"""
         request_data = self.request.json_body
         payload = {"conn_id": request_data.get('conn_id', ''),
                    "channels": request_data.get('channels', [])
@@ -142,5 +143,5 @@ class DemoViews(object):
                  renderer='json',
                  custom_predicates=[enable_demo])
     def info(self):
-        """configure channel defaults"""
+        """gets information for the "admin" demo page"""
         return make_request(self.request, {}, '/info')
