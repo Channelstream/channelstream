@@ -125,6 +125,7 @@ def cli_start():
     log.info('Admin interface available on {}/admin'.format(url))
     if config['demo']:
         log.info('Demo enabled, visit {}/demo'.format(url))
+        log.warning('NEVER run the demo in production')
 
     server = WSGIServer((config['host'], config['port']),
                         RoutingApplication(config))
