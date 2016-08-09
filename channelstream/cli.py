@@ -55,6 +55,8 @@ def cli_start():
     parser.add_argument("-s", "--secret", dest="secret",
                         help="secret used to secure your requests",
                         default='secret')
+    parser.add_argument("-u", "--admin_username", dest="admin_user",
+                        help="Administrator username", default='admin')
     parser.add_argument("-a", "--admin_secret", dest="admin_secret",
                         help="secret used to secure your admin_panel",
                         default='admin_secret')
@@ -79,7 +81,7 @@ def cli_start():
     if args.ini:
         parser = configparser.ConfigParser()
         parser.read(args.ini)
-
+        config['admin_user'] = parser.get('admin_user', 'admin')
         non_optional_parameters = (
             'debug', 'port', 'host', 'secret', 'admin_secret',
             'demo_app_url', 'demo')
@@ -102,6 +104,7 @@ def cli_start():
         config['demo'] = asbool(args.demo)
         config['host'] = args.host
         config['secret'] = args.secret
+        config['admin_user'] = args.admin_user
         config['admin_secret'] = args.admin_secret
         config['allow_posting_from'].extend(
             [ip.strip() for ip in args.allow_posting_from.split(',')])

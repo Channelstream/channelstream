@@ -17,8 +17,9 @@ def make_app(server_config):
     config = Configurator(settings=server_config, root_factory=APIFactory)
 
     def check_function(username, password, request):
-        if password == server_config['admin_secret']:
-            return 'admin'
+        if (password == server_config['admin_secret'] and
+                username == server_config['admin_user']):
+            return ('admin', username)
         return None
 
     authn_policy = BasicAuthAuthenticationPolicy(check_function,

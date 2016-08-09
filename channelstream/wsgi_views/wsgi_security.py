@@ -36,6 +36,6 @@ class BasicAuthFactory(object):
     def __init__(self, request):
         self.__acl__ = []
         user = authenticated_userid(request)
-        if user != 'admin':
+        if not user:
             raise RequestBasicChallenge()
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]
