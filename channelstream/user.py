@@ -48,3 +48,6 @@ class User(object):
     def public_state(self):
         return {k: v for k, v in self.state.items()
                 if k in self.state_public_keys}
+
+    def __json__(self, request=None):
+        return {'state': self.public_state, 'user': self.username}
