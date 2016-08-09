@@ -83,8 +83,15 @@ class ServerViews(object):
             exclude_channels = []
         start_time = datetime.utcnow()
 
+        remembered_user_count = len(
+            [user for user in six.iteritems(channelstream.USERS)])
+        unique_user_count = len(
+            [user for user in six.itervalues(channelstream.USERS)
+             if user.connections])
+
         json_data = {"channels": {},
-                     "unique_users": len(channelstream.USERS),
+                     "unique_users": unique_user_count,
+                     "remembered_user_count": remembered_user_count,
                      "users": []}
 
         users_to_list = set()
