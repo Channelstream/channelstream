@@ -5,11 +5,13 @@ import requests
 import six
 from pyramid.view import view_config
 from itsdangerous import TimestampSigner
+from requests.auth import HTTPBasicAuth
+
 
 POSSIBLE_CHANNELS = set(['pub_chan', 'pub_chan2', 'notify'])
 
 
-def make_request(request, payload, endpoint):
+def make_request(request, payload, endpoint, auth=None):
     server_port = request.registry.settings['port']
     signer = TimestampSigner(request.registry.settings['secret'])
     sig_for_server = signer.sign(endpoint)
@@ -20,7 +22,8 @@ def make_request(request, payload, endpoint):
                       'Content-Type': 'application/json'}
     url = 'http://127.0.0.1:%s%s' % (server_port, endpoint)
     response = requests.post(url, data=json.dumps(payload),
-                             headers=secret_headers)
+                             headers=secret_headers,
+                             auth=auth)
     return response.json()
 
 
@@ -144,4 +147,7 @@ class DemoViews(object):
                  custom_predicates=[enable_demo])
     def info(self):
         """gets information for the "admin" demo page"""
-        return make_request(self.request, {}, '/info')
+        admin = self.request.registry.settings['admin_user']
+        admin_secret = self.request.registry.settings['admin_secret']
+        basic_auth = HTTPBasicAuth(admin, admin_secret)
+        return make_request(self.request, {}, '/admin.json', auth=basic_auth)
