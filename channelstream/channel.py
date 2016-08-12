@@ -130,9 +130,19 @@ class Channel(object):
 
     def get_info(self, include_history=True, include_connections=False,
                  include_users=False):
+        settings = {
+            'notify_presence': self.notify_presence,
+            'broadcast_presence_with_user_lists':
+                self.broadcast_presence_with_user_lists,
+            'salvageable': self.salvageable,
+            'store_history': self.store_history,
+            'history_size': self.history_size
+        }
+
         chan_info = {
             'name': self.name,
             'long_name': self.long_name,
+            'settings': settings,
             'history': self.history if include_history else [],
             'last_active': self.last_active,
             'total_connections': sum(
