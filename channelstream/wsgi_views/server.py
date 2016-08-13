@@ -381,7 +381,8 @@ class ServerViews(object):
     @view_config(route_name='admin_json',
                  renderer='json', permission='access')
     def admin(self):
-        uptime = str(datetime.utcnow() - channelstream.stats['started_on'])
+        uptime = datetime.utcnow() - channelstream.stats['started_on']
+        uptime = str(uptime).split('.')[0]
         remembered_user_count = len(
             [user for user in six.iteritems(channelstream.USERS)])
         unique_user_count = len(
