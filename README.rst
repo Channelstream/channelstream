@@ -178,6 +178,17 @@ expects a json request in form of::
     "state_public_keys": ["avatar", "bar"]
     }
 
+Listening endpoints
+-------------------
+
+for websockets:
+
+    /ws?conn_id=CONNID
+
+for long polling:
+
+    /listen?conn_id=CONNID
+
 
 Responses to js client
 ----------------------
