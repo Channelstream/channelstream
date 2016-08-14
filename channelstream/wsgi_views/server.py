@@ -63,6 +63,7 @@ def get_connection_channels(connection):
 class ServerViews(object):
     def __init__(self, request):
         self.request = request
+        self.request.handle_cors()
 
     def _get_channel_info(self, req_channels=None, include_history=True,
                           include_connections=False, include_users=False,
@@ -262,15 +263,8 @@ class ServerViews(object):
                 "channels_info": channels_info}
 
     @view_config(route_name='action', match_param='action=listen',
-                 request_method="OPTIONS", renderer='string')
-    def handle_CORS(self):
-        self.request.handle_cors()
-        return ''
-
-    @view_config(route_name='action', match_param='action=listen',
                  renderer='string')
     def listen(self):
-        self.request.handle_cors()
         config = self.request.registry.settings
         self.conn_id = self.request.params.get('conn_id')
         connection = channelstream.CONNECTIONS.get(self.conn_id)

@@ -42,9 +42,9 @@ CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True,
 class DemoViews(object):
     def __init__(self, request):
         self.request = request
+        self.request.handle_cors()
         self.request.response.headers.add('Cache-Control',
                                           'no-cache, no-store')
-        self.request.handle_cors()
 
     @view_config(route_name='demo', renderer='templates/demo.jinja2',
                  custom_predicates=[enable_demo])
