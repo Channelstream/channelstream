@@ -1,5 +1,14 @@
 def handle_cors(request):
-    request.response.headers.add('Access-Control-Allow-Origin', '*')
+    settings = request.registry.settings
+    if not settings['allow_cors']:
+        request.response.headers.add('Access-Control-Allow-Origin', '*')
+    else:
+        origin = request.headers.get('Origin') or '<>'
+        for domain in settings['allow_cors']:
+            if domain in origin:
+                request.response.headers.add('Access-Control-Allow-Origin', '*')
+                break
+
     request.response.headers.add('XDomainRequestAllowed', '1')
     request.response.headers.add('Access-Control-Allow-Methods',
                                  'GET, POST, OPTIONS, PUT')
