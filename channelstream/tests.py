@@ -3,6 +3,7 @@ from gevent import monkey
 monkey.patch_all()
 
 import pytest
+import mock
 from datetime import datetime, timedelta
 from gevent.queue import Queue, Empty
 from pyramid import testing
@@ -326,7 +327,9 @@ def pyramid_config():
 
 @pytest.fixture
 def dummy_request():
-    return testing.DummyRequest()
+    app_request = testing.DummyRequest()
+    app_request.handle_cors = mock.Mock()
+    return app_request
 
 
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
