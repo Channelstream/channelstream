@@ -60,7 +60,8 @@ class DemoViews(object):
     def connect(self):
         """handle authorization of users trying to connect"""
         channels = self.request.json_body['channels']
-        POSSIBLE_CHANNELS.intersection(channels)
+        if channels:
+            POSSIBLE_CHANNELS.intersection(channels)
         random_name = 'anon_%s' % random.randint(1, 999999)
         username = self.request.json_body.get('username', random_name)
 

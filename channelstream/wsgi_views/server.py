@@ -150,13 +150,10 @@ class ServerViews(object):
         channel_configs = json_body.get('channel_configs', {})
         state_public_keys = json_body.get('state_public_keys', None)
         conn_id = json_body.get('conn_id')
-        subscribe_to_channels = json_body.get('channels')
+        channels = json_body.get('channels') or []
         if username is None:
             self.request.response.status = 400
             return {'error': "No username specified"}
-        if not subscribe_to_channels:
-            self.request.response.status = 400
-            return {'error': "No channels specified"}
 
         # everything is ok so lets add new connection to
         # channel and connection list
@@ -175,7 +172,7 @@ class ServerViews(object):
             if connection.id not in channelstream.CONNECTIONS:
                 channelstream.CONNECTIONS[connection.id] = connection
             user.add_connection(connection)
-            for channel_name in subscribe_to_channels:
+            for channel_name in channels:
                 # user gets assigned to a channel
                 if channel_name not in channelstream.CHANNELS:
                     channel = Channel(channel_name,
@@ -186,10 +183,10 @@ class ServerViews(object):
 
         # get info config for channel information
         info_config = json_body.get('info') or {}
-        channels_info = self.get_common_info(subscribe_to_channels,
+        channels_info = self.get_common_info(channels,
                                              info_config)
         return {'conn_id': connection.id, 'state': user.state,
-                'channels': subscribe_to_channels,
+                'channels': channels,
                 'channels_info': channels_info}
 
     @view_config(route_name='action', match_param='action=subscribe',
@@ -199,12 +196,12 @@ class ServerViews(object):
         json_body = self.request.json_body
         conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
         connection = channelstream.CONNECTIONS.get(conn_id)
-        subscribe_to_channels = json_body.get('channels')
+        channels = json_body.get('channels')
         channel_configs = json_body.get('channel_configs', {})
         if not connection:
             self.request.response.status = 403
             return {'error': "Unknown connection"}
-        if not subscribe_to_channels:
+        if not channels:
             self.request.response.status = 400
             return {'error': "No channels specified"}
         # everything is ok so lets add new connection to channel
@@ -214,7 +211,7 @@ class ServerViews(object):
         user = channelstream.USERS.get(connection.username)
         with channelstream.lock:
             if user:
-                for channel_name in subscribe_to_channels:
+                for channel_name in channels:
                     if channel_name not in channelstream.CHANNELS:
                         channel = Channel(channel_name,
                                           channel_configs=channel_configs)
