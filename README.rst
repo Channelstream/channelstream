@@ -43,7 +43,7 @@ To send information client interacts only with your normal www application.
 Your app handled authentication and processing messages from client, then passed
 them as signed message to channelstream server for broadcast.
 
-socketio client -> webapp -> REST call to socket server -> broadcast to other client
+websocket client -> webapp (security and transformation happens here) -> REST call to socket server -> broadcast to other clients
 
 This model is easy to implement, secure, easy to scale and allows all kind of
 languages/apps/work queues to interact with socket server.
@@ -68,7 +68,7 @@ The function accepts endpoint in form of '/messages' if you want to send a messa
 Data format and endpoints
 =========================
 
-/connect?secret=YOURSECRET
+/connect
 --------------------------
 
 expects a json request in form of::
@@ -106,7 +106,7 @@ Keys used in `channel_configs` to describe channel behavior (and their defaults)
 * history_size = 10
 
 
-/info?secret=YOURSECRET
+/info
 --------------------------
 
 expects a json request in form of::
@@ -136,7 +136,7 @@ expects a json request in form of::
 marks specific connection to be garbage collected
 
 
-/message?secret=YOURSECRET
+/message
 --------------------------
 
 expects a json request in form of list of messages::
@@ -156,7 +156,7 @@ If only pm_users is present a private message is sent to all connections that ar
 owned by pm_users.  
 
 
-/subscribe?secret=YOURSECRET
+/subscribe
 ----------------------------
 
 expects a json request in form of::
@@ -166,8 +166,17 @@ expects a json request in form of::
     "channel_configs": {"CHAN_NAME1": {"notify_presence": true, "history_size": 50}}, # channel_configs key is optional
     "conn_id": "CONNECTION_ID"}
 
+/unsubscribe
+----------------------------
 
-/user_state?secret=YOURSECRET
+expects a json request in form of::
+
+    {
+    "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
+    "conn_id": "CONNECTION_ID"}
+
+
+/user_state
 ----------------------------
 
 expects a json request in form of::

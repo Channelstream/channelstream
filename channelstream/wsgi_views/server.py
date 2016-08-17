@@ -243,16 +243,16 @@ class ServerViews(object):
         if not unsubscribe_channels:
             self.request.response.status = 400
             return {'error': "No channels specified"}
-        # everything is ok so lets add new connection to channel
-        # and connection list
+        # everything is ok so lets remove connections from the channels
         # lets lock it just in case
         # find the right user
         user = channelstream.USERS.get(connection.username)
         with channelstream.lock:
             if user:
                 for channel_name in unsubscribe_channels:
-                    channelstream.CHANNELS[channel_name].remove_connection(
-                        connection)
+                    if channel_name in channelstream.CHANNELS:
+                        channelstream.CHANNELS[channel_name].remove_connection(
+                            connection)
 
         # get info config for channel information
         current_channels = get_connection_channels(connection)
