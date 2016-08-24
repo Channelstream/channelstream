@@ -119,7 +119,7 @@ class Channel(object):
         for user, conns in six.iteritems(self.connections):
             if not exclude_users or user not in exclude_users:
                 for connection in conns:
-                    if not pm_users or connection.user in pm_users:
+                    if not pm_users or connection.username in pm_users:
                         connection.add_message(message)
                         total_sent += 1
         return total_sent
