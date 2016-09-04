@@ -363,7 +363,6 @@ class TestConnectViews(object):
         assert result['conn_id'] == 'X'
         channels_info = result['channels_info']['channels']
         assert len(channels_info.keys()) == 2
-        assert result['channels_info']['unique_users'] == 1
         assert channels_info['a']['total_users'] == 1
         assert channels_info['a']['total_connections'] == 1
         assert channels_info['a']['users'] == [{'connections': [],
@@ -407,7 +406,6 @@ class TestSubscribeViews(object):
         assert sorted(result['channels']) == sorted(['a', 'aB', 'b'])
         assert result['channels_info']['users'] == [
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test'}]
-        assert result['channels_info']['unique_users'] == 1
         assert 'a' in result['channels_info']['channels']
         assert 'b' in result['channels_info']['channels']
         assert result['channels_info']['channels']['a'][
@@ -476,7 +474,6 @@ class TestInfoView(object):
         view_cls = ServerViews(dummy_request)
         result = view_cls.info()
         assert result['channels'] == {}
-        assert result['unique_users'] == 0
         assert result['users'] == []
 
     def test_subscribed_json(self, dummy_request):
