@@ -201,6 +201,7 @@ class ServerViews(object):
         # lets lock it just in case
         # find the right user
         user = channelstream.USERS.get(connection.username)
+        subscribed_to = []
         with channelstream.lock:
             if user:
                 for channel_name in channels:
@@ -208,8 +209,10 @@ class ServerViews(object):
                         channel = Channel(channel_name,
                                           channel_configs=channel_configs)
                         channelstream.CHANNELS[channel_name] = channel
-                    channelstream.CHANNELS[channel_name].add_connection(
+                    is_found = channelstream.CHANNELS[channel_name].add_connection(
                         connection)
+                    if is_found:
+                        subscribed_to.append(channel_name)
 
         # get info config for channel information
         current_channels = get_connection_channels(connection)
@@ -219,7 +222,8 @@ class ServerViews(object):
         else:
             channels_info = {}
         return {"channels": current_channels,
-                "channels_info": channels_info}
+                "channels_info": channels_info,
+                "subscribed_to": sorted(subscribed_to)}
 
     @view_config(route_name='action', match_param='action=unsubscribe',
                  renderer='json', permission='access')
@@ -239,12 +243,16 @@ class ServerViews(object):
         # lets lock it just in case
         # find the right user
         user = channelstream.USERS.get(connection.username)
+        unsubscribed_from = []
         with channelstream.lock:
             if user:
                 for channel_name in unsubscribe_channels:
                     if channel_name in channelstream.CHANNELS:
-                        channelstream.CHANNELS[channel_name].remove_connection(
+                        is_found = channelstream.CHANNELS[channel_name].remove_connection(
                             connection)
+                        if is_found:
+                            unsubscribed_from.append(channel_name)
+
 
         # get info config for channel information
         current_channels = get_connection_channels(connection)
@@ -255,7 +263,7 @@ class ServerViews(object):
             channels_info = {}
         return {"channels": current_channels,
                 "channels_info": channels_info,
-                "unsubscribed_from": unsubscribe_channels}
+                "unsubscribed_from": sorted(unsubscribe_channels)}
 
     @view_config(route_name='action', match_param='action=listen',
                  renderer='string')

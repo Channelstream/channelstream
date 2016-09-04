@@ -48,16 +48,21 @@ class Channel(object):
 
         if connection not in self.connections[connection.username]:
             self.connections[connection.username].append(connection)
+            return True
+        return False
 
     def remove_connection(self, connection):
+        was_found = False
         username = connection.username
         if username not in self.connections:
             self.connections[username] = []
 
         if connection in self.connections[username]:
             self.connections[username].remove(connection)
+            was_found = True
 
         self.after_parted(username)
+        return was_found
 
     def after_parted(self, username):
         """
