@@ -102,7 +102,7 @@ class DemoViews(object):
                    "channels": request_data.get('channels', [])
                    }
         result = make_request(self.request, payload, '/unsubscribe')
-        return result['channels']
+        return result
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=message'],
