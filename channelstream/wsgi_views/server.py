@@ -257,7 +257,8 @@ class ServerViews(object):
         channels_info = self.get_common_info(current_channels, info_config)
 
         return {"channels": current_channels,
-                "channels_info": channels_info}
+                "channels_info": channels_info,
+                "unsubscribed_from": unsubscribe_channels}
 
     @view_config(route_name='action', match_param='action=listen',
                  renderer='string')
