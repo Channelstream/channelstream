@@ -57,7 +57,7 @@ def get_connection_channels(connection):
         user_conns = channel.connections.get(connection.username) or []
         if connection in user_conns:
             found_channels.append(channel.name)
-    return found_channels
+    return sorted(found_channels)
 
 
 class ServerViews(object):
@@ -142,7 +142,7 @@ class ServerViews(object):
         channel_configs = json_body.get('channel_configs', {})
         state_public_keys = json_body.get('state_public_keys', None)
         conn_id = json_body.get('conn_id')
-        channels = json_body.get('channels') or []
+        channels = sorted(json_body.get('channels') or [])
         if username is None:
             self.request.response.status = 400
             return {'error': "No username specified"}
@@ -228,7 +228,7 @@ class ServerViews(object):
         json_body = self.request.json_body
         conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
         connection = channelstream.CONNECTIONS.get(conn_id)
-        unsubscribe_channels = json_body.get('channels')
+        unsubscribe_channels = sorted(json_body.get('channels') or [])
         if not connection:
             self.request.response.status = 403
             return {'error': "Unknown connection"}
