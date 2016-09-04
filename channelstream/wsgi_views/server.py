@@ -292,9 +292,13 @@ class ServerViews(object):
                     break
             cb = self.request.params.get('callback')
             if cb:
-                yield cb + '(' + json.dumps(messages) + ')'
+                resp = cb + '(' + json.dumps(messages) + ')'
             else:
-                yield json.dumps(messages)
+                resp = json.dumps(messages)
+            if six.PY2:
+                yield resp
+            else:
+                yield resp.encode('utf8')
 
         self.request.response.app_iter = yield_response()
         return self.request.response
