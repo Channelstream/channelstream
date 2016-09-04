@@ -7,7 +7,6 @@ from pyramid.view import view_config
 from itsdangerous import TimestampSigner
 from requests.auth import HTTPBasicAuth
 
-
 POSSIBLE_CHANNELS = set(['pub_chan', 'pub_chan2', 'notify'])
 
 
@@ -33,7 +32,7 @@ def enable_demo(context, request):
     return False
 
 
-CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True, 
+CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True,
                                 'store_history': True,
                                 'broadcast_presence_with_user_lists': True},
                    'notify': {'notify_presence': True}}
@@ -64,13 +63,17 @@ class DemoViews(object):
             POSSIBLE_CHANNELS.intersection(channels)
         random_name = 'anon_%s' % random.randint(1, 999999)
         username = self.request.json_body.get('username', random_name)
-
+        state = self.request.json_body.get('state', {})
         payload = {"username": username,
                    "conn_id": str(uuid.uuid4()),
                    "channels": channels,
+                   "fresh_user_state": {"email": None, "status": None,
+                                        "bar": 1},
+                   "user_state": state,
+                   "state_public_keys": ["email", 'status', "bar"],
                    "channel_configs": CHANNEL_CONFIGS}
-        make_request(self.request, payload, '/connect')
-        return payload
+        result = make_request(self.request, payload, '/connect')
+        return result
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=subscribe'],
@@ -86,7 +89,7 @@ class DemoViews(object):
                    "channel_configs": CHANNEL_CONFIGS
                    }
         result = make_request(self.request, payload, '/subscribe')
-        return result['channels']
+        return result
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=unsubscribe'],
