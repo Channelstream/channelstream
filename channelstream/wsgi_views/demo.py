@@ -23,7 +23,7 @@ def make_request(request, payload, endpoint, auth=None):
     response = requests.post(url, data=json.dumps(payload),
                              headers=secret_headers,
                              auth=auth)
-    return response.json()
+    return response
 
 
 def enable_demo(context, request):
@@ -73,7 +73,8 @@ class DemoViews(object):
                    "state_public_keys": ["email", 'status', "bar"],
                    "channel_configs": CHANNEL_CONFIGS}
         result = make_request(self.request, payload, '/connect')
-        return result
+        self.request.response.status = result.status_code
+        return result.json()
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=subscribe'],
@@ -89,7 +90,8 @@ class DemoViews(object):
                    "channel_configs": CHANNEL_CONFIGS
                    }
         result = make_request(self.request, payload, '/subscribe')
-        return result
+        self.request.response.status = result.status_code
+        return result.json()
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=unsubscribe'],
@@ -102,7 +104,8 @@ class DemoViews(object):
                    "channels": request_data.get('channels', [])
                    }
         result = make_request(self.request, payload, '/unsubscribe')
-        return result
+        self.request.response.status = result.status_code
+        return result.json()
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=message'],
@@ -118,7 +121,8 @@ class DemoViews(object):
             'message': request_data.get('message')
         }
         result = make_request(self.request, [payload], '/message')
-        return result
+        self.request.response.status = result.status_code
+        return result.json()
 
     @view_config(route_name='section_action',
                  match_param=['section=demo', 'action=channel_config'],
@@ -154,4 +158,6 @@ class DemoViews(object):
         admin = self.request.registry.settings['admin_user']
         admin_secret = self.request.registry.settings['admin_secret']
         basic_auth = HTTPBasicAuth(admin, admin_secret)
-        return make_request(self.request, {}, '/admin.json', auth=basic_auth)
+        result = make_request(self.request, {}, '/admin.json', auth=basic_auth)
+        self.request.response.status = result.status_code
+        return result.json()
