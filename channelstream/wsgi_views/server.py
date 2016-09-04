@@ -84,15 +84,7 @@ class ServerViews(object):
             exclude_channels = []
         start_time = datetime.utcnow()
 
-        remembered_user_count = len(
-            [user for user in six.iteritems(channelstream.USERS)])
-        unique_user_count = len(
-            [user for user in six.itervalues(channelstream.USERS)
-             if user.connections])
-
         json_data = {"channels": {},
-                     "unique_users": unique_user_count,
-                     "remembered_user_count": remembered_user_count,
                      "users": []}
 
         users_to_list = set()
@@ -222,7 +214,10 @@ class ServerViews(object):
         # get info config for channel information
         current_channels = get_connection_channels(connection)
         info_config = json_body.get('info') or {}
-        channels_info = self.get_common_info(current_channels, info_config)
+        if current_channels:
+            channels_info = self.get_common_info(current_channels, info_config)
+        else:
+            channels_info = {}
         return {"channels": current_channels,
                 "channels_info": channels_info}
 
@@ -254,8 +249,10 @@ class ServerViews(object):
         # get info config for channel information
         current_channels = get_connection_channels(connection)
         info_config = json_body.get('info') or {}
-        channels_info = self.get_common_info(current_channels, info_config)
-
+        if current_channels:
+            channels_info = self.get_common_info(current_channels, info_config)
+        else:
+            channels_info = {}
         return {"channels": current_channels,
                 "channels_info": channels_info,
                 "unsubscribed_from": unsubscribe_channels}
