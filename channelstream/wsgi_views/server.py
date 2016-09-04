@@ -6,7 +6,7 @@ import six
 from gevent.queue import Queue, Empty
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPUnauthorized
-from pyramid.security import forget
+from pyramid.security import forget, NO_PERMISSION_REQUIRED
 import channelstream
 from channelstream.user import User
 from channelstream.connection import Connection
@@ -334,13 +334,18 @@ class ServerViews(object):
             gevent.spawn(pass_message, msg, channelstream.stats)
 
     @view_config(route_name='action', match_param='action=disconnect',
-                 renderer='json', permission='access')
+                 renderer='json', permission=NO_PERMISSION_REQUIRED)
     def disconnect(self):
         json_body = self.request.json_body
-        conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
+        if json_body:
+            conn_id = json_body.get('conn_id')
+        else:
+            conn_id = self.request.params.get('conn_id')
+
         conn = channelstream.CONNECTIONS.get(conn_id)
         if conn is not None:
             conn.mark_for_gc()
+        return ''
 
     @view_config(route_name='action', match_param='action=channel_config',
                  renderer='json', permission='access')
