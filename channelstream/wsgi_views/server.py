@@ -337,6 +337,7 @@ class ServerViews(object):
             if not msg.get('channel') and not msg.get('pm_users', []):
                 continue
             gevent.spawn(pass_message, msg, channelstream.stats)
+        return True
 
     @view_config(route_name='action', match_param='action=disconnect',
                  renderer='json', permission=NO_PERMISSION_REQUIRED)
@@ -350,7 +351,7 @@ class ServerViews(object):
         conn = channelstream.CONNECTIONS.get(conn_id)
         if conn is not None:
             conn.mark_for_gc()
-        return ''
+        return True
 
     @view_config(route_name='action', match_param='action=channel_config',
                  renderer='json', permission='access')
