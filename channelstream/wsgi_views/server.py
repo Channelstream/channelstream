@@ -399,7 +399,6 @@ class ServerViews(object):
         unique_user_count = len(active_users)
         total_connections = sum([len(user.connections)
                                  for user in active_users])
-        total_sys_connections = len(channelstream.CONNECTIONS.values())
         channels_info = self.get_common_info([], {
             'include_history': True,
             'include_users': True,
@@ -410,7 +409,6 @@ class ServerViews(object):
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
             "total_connections": total_connections,
-            "total_sys_connections": total_sys_connections,
             "total_channels": len(channelstream.CHANNELS.keys()),
             "total_messages": channelstream.stats['total_messages'],
             "total_unique_messages": channelstream.stats[
