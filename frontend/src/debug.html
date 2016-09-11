@@ -1,0 +1,30 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<dom-module id="app-debug">
+    <template>
+        <style>
+            pre{
+                padding: 5px;
+                border: 1px solid;
+            }
+        </style>
+        <pre>[[output]]</pre>
+    </template>
+    <script>
+        Polymer({
+            is: 'app-debug',
+            properties: {
+                data: {
+                    type: Object
+                }
+            },
+            observers: [
+                '_dumpOut(data.*)'
+            ],
+
+            _dumpOut: function () {
+                this.output = JSON.stringify(this.data, null, 4);
+            }
+        });
+
+    </script>
+</dom-module>

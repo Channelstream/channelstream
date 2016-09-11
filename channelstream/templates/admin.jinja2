@@ -2,67 +2,74 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Dumb admin ;-)</title>
+    <title>Channelstream Admin</title>
+    <base href="{{ request.route_url('index') }}"/>
+    <script>
+        // Setup Polymer options
+        window.Polymer = {
+            dom: 'shadow',
+            lazyRegister: true
+        };
+        // Load webcomponentsjs polyfill if browser does not support native Web Components
+        (function () {
+            'use strict';
+            var onload = function () {
+                // For native Imports, manually fire WebComponentsReady so user code
+                // can use the same code path for native and polyfill'd imports.
+                if (!window.HTMLImports) {
+                    document.dispatchEvent(
+                        new CustomEvent('WebComponentsReady', {bubbles: true})
+                    );
+                }
+            };
+            var webComponentsSupported = (
+                'registerElement' in document
+                && 'import' in document.createElement('link')
+                && 'content' in document.createElement('template')
+            );
+            if (!webComponentsSupported) {
+                var script = document.createElement('script');
+                script.async = true;
+                script.src = 'static/webcomponents-lite.min.js';
+                script.onload = onload;
+                document.head.appendChild(script);
+            } else {
+                onload();
+            }
+        })();
+    </script>
+
+    <link rel="import"
+          href="static/channelstream-admin/channelstream-admin.html">
+
 </head>
 <body>
 
-<h2>Unique users remembered: {{ remembered_user_count }}</h2>
+<style>
+    body {
+        padding: 0;
+        margin: 0;
+        font-family: sans-serif;
+    }
 
-<h2>Unique users connected: {{ unique_user_count }}</h2>
+    h1 {
+        margin: 0;
+        padding: 20px;
+        background-color: #3f51b5;
+        color: #ffffff;
+    }
 
-<h2>Total connections: {{ total_connections }}</h2>
+    .container{
+        padding: 20px;
+    }
 
-<h2>Total sys connections: {{ total_sys_connections }}</h2>
+</style>
 
-<h2>Total channels: {{ total_channels }}</h2>
+<h1>Channelstream Admin</h1>
 
-<h2>Uptime: {{ uptime }}</h2>
-
-<h2>Messages since start: {{ total_unique_messages }}</h2>
-
-<h2>All frames sent: {{ total_messages }}</h2>
-
-<h2>Channels</h2>
-<ul>
-    {% for channel in channels.values() %}
-        <li><strong>{{ channel.name }}</strong>
-            - {{ channel.connections |length }} users subscribed<br/>
-            <h4>Config</h4>
-            <ul>
-                <li><strong>Name</strong> --> {{ channel.name }}</li>
-                <li><strong>Long Name</strong> --> {{ channel.long_name }}</li>
-                <li><strong>notify_presence</strong> --> {{ channel.notify_presence }}</li>
-                <li><strong>Salvageable</strong> --> {{ channel.salvageable }}
-                </li>
-                <li><strong>Store History</strong>
-                    --> {{ channel.store_history }}</li>
-                <li><strong>History Size</strong> --> {{ channel.history_size }}
-                </li>
-            </ul>
-
-            <h4>Connections</h4>
-            <ul>
-                {% for user, conns in channel.connections.items() |sort %}
-                    <li><strong>{{ user }}</strong> : {{ conns|length }}
-                        connections
-                    </li>
-                {% endfor %}
-            </ul>
-        </li>
-        <br/>
-    {% endfor %}
-</ul>
-
-<h2>Users</h2>
-<ul>
-    {% for user in users.values() %}
-    <li><strong>{{ user.username }} - last active {{user.last_active}} - {{user.connections|length}} connections</strong>
-        <div>
-            <pre>{{user.state}}</pre>
-        </div>
-    </li>
-    {% endfor %}
-</ul>
-
+<div class="container">
+<channelstream-admin
+    url-admin-json="{{ request.route_url('admin_json') }}"></channelstream-admin>
+</div>
 </body>
 </html>
