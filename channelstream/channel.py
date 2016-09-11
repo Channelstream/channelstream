@@ -104,6 +104,8 @@ class Channel(object):
             'channel': self.name,
             'message': {'action': action}
         }
+        if action == 'joined':
+            payload['state'] = channelstream.USERS[username].public_state
         self.add_message(payload, exclude_users=[username])
         return payload
 
