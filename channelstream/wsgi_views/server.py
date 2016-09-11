@@ -74,7 +74,7 @@ class ServerViews(object):
         :param: include_history (bool) will include message history
                 for the channel
         :param: include_connections (bool) will include connection list
-                for the channel
+                for users
         :param: include_users (bool) will include user list for the channel
         :param: exclude_channels (bool) will exclude specific channels
                 from info list (handy to exclude global broadcast)
@@ -102,11 +102,10 @@ class ServerViews(object):
 
             channel_info = channel_inst.get_info(
                 include_history=include_history,
-                include_connections=include_connections,
                 include_users=include_users
             )
             json_data["channels"][channel_inst.name] = channel_info
-            users_to_list.update([x['user'] for x in channel_info['users']])
+            users_to_list.update(channel_info['users'])
 
         for username in users_to_list:
             json_data['users'].append(
@@ -209,7 +208,8 @@ class ServerViews(object):
                         channel = Channel(channel_name,
                                           channel_configs=channel_configs)
                         channelstream.CHANNELS[channel_name] = channel
-                    is_found = channelstream.CHANNELS[channel_name].add_connection(
+                    is_found = channelstream.CHANNELS[
+                        channel_name].add_connection(
                         connection)
                     if is_found:
                         subscribed_to.append(channel_name)
@@ -248,11 +248,10 @@ class ServerViews(object):
             if user:
                 for channel_name in unsubscribe_channels:
                     if channel_name in channelstream.CHANNELS:
-                        is_found = channelstream.CHANNELS[channel_name].remove_connection(
-                            connection)
+                        is_found = channelstream.CHANNELS[
+                            channel_name].remove_connection(connection)
                         if is_found:
                             unsubscribed_from.append(channel_name)
-
 
         # get info config for channel information
         current_channels = get_connection_channels(connection)
@@ -385,19 +384,28 @@ class ServerViews(object):
 
     @view_config(route_name='admin',
                  renderer='templates/admin.jinja2', permission='access')
+    def admin(self):
+        return {}
+
     @view_config(route_name='admin_json',
                  renderer='json', permission='access')
-    def admin(self):
+    def admin_json(self):
         uptime = datetime.utcnow() - channelstream.stats['started_on']
         uptime = str(uptime).split('.')[0]
         remembered_user_count = len(
             [user for user in six.iteritems(channelstream.USERS)])
-        unique_user_count = len(
-            [user for user in six.itervalues(channelstream.USERS)
-             if user.connections])
+        active_users = [user for user in six.itervalues(channelstream.USERS)
+                        if user.connections]
+        unique_user_count = len(active_users)
         total_connections = sum([len(user.connections)
-             for user in six.itervalues(channelstream.USERS)])
+                                 for user in active_users])
         total_sys_connections = len(channelstream.CONNECTIONS.values())
+        channels_info = self.get_common_info([], {
+            'include_history': True,
+            'include_users': True,
+            'exclude_channels': [],
+            'include_connections': True
+        })
         return {
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
@@ -407,8 +415,10 @@ class ServerViews(object):
             "total_messages": channelstream.stats['total_messages'],
             "total_unique_messages": channelstream.stats[
                 'total_unique_messages'],
-            "channels": channelstream.CHANNELS,
-            "users": channelstream.USERS, "uptime": uptime
+            "channels": channels_info['channels'],
+            "users": [user.get_info(include_connections=True)
+                      for user in active_users],
+            "uptime": uptime
         }
 
     @view_config(route_name='action', match_param='action=info',

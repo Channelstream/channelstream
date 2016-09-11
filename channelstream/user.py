@@ -2,7 +2,6 @@ import logging
 
 from datetime import datetime
 
-
 log = logging.getLogger(__name__)
 
 
@@ -49,5 +48,12 @@ class User(object):
         return {k: v for k, v in self.state.items()
                 if k in self.state_public_keys}
 
+    def get_info(self, include_connections=False):
+        info = {'state': self.public_state,
+                'user': self.username}
+        if include_connections:
+            info['connections'] = [c.id for c in self.connections]
+        return info
+
     def __json__(self, request=None):
-        return {'state': self.public_state, 'user': self.username}
+        return self.get_info()

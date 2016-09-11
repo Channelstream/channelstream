@@ -133,8 +133,7 @@ class Channel(object):
         return '<Channel: %s, connections:%s>' % (
             self.name, len(self.connections))
 
-    def get_info(self, include_history=True, include_connections=False,
-                 include_users=False):
+    def get_info(self, include_history=True, include_users=False):
         settings = {
             'notify_presence': self.notify_presence,
             'broadcast_presence_with_user_lists':
@@ -152,20 +151,15 @@ class Channel(object):
             'last_active': self.last_active,
             'total_connections': sum(
                 [len(conns) for conns in self.connections.values()]),
-            'total_users': len(self.connections),
+            'total_users': 0,
             'users': []}
-
-        users_to_list = []
 
         for username in self.connections.keys():
             user_inst = channelstream.USERS.get(username)
-            if include_users and user_inst.username not in users_to_list:
-                users_to_list.append(user_inst.username)
-            udata = {'user': user_inst.username, "connections": []}
-            if include_connections:
-                udata['connections'] = [
-                    conn.id for conn in self.connections[username]]
-            chan_info['users'].append(udata)
+            if include_users and user_inst.username not in chan_info['users']:
+                chan_info['users'].append(user_inst.username)
+        chan_info['users'] = sorted(chan_info['users'])
+        chan_info['total_users'] = len(chan_info['users'])
         return chan_info
 
     def __json__(self, request=None):

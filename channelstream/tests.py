@@ -365,8 +365,7 @@ class TestConnectViews(object):
         assert len(channels_info.keys()) == 2
         assert channels_info['a']['total_users'] == 1
         assert channels_info['a']['total_connections'] == 1
-        assert channels_info['a']['users'] == [{'connections': [],
-                                                'user': 'username'}]
+        assert channels_info['a']['users'] == ['username']
         assert channels_info['a']['history'] == []
         assert result['channels_info']['users'] == [
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'username'}
@@ -412,9 +411,7 @@ class TestSubscribeViews(object):
                    'total_connections'] == 1
         assert result['channels_info']['channels']['a']['total_users'] == 1
         assert result['channels_info']['channels']['a']['history'] == []
-        assert result['channels_info']['channels']['a']['users'] == [
-            {'connections': [], 'user': 'test'}
-        ]
+        assert result['channels_info']['channels']['a']['users'] == ['test']
 
 
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
@@ -503,31 +500,21 @@ class TestInfoView(object):
         result = view_cls.info()
         assert sorted(('a', 'aB', 'c')) == sorted(result['channels'].keys())
         assert result['users']
-        compA = sorted(result['channels']['a']['users'],
-                       key=lambda x: x['user'])
-        compB = sorted([
-            {'connections': ['x'], 'user': 'test1'},
-            {'connections': ['y'], 'user': 'test2'}],
-            key=lambda x: x['user'])
-        print(compA, compB)
+        compA = sorted(result['channels']['a']['users'])
+        compB = sorted(['test1', 'test2'])
         assert compA == compB
         assert result['channels']['a']['total_users'] == 2
         assert result['channels']['a']['total_connections'] == 2
-        assert result['channels']['c']['users'] == [
-            {'connections': ['y'], 'user': 'test2'}
-        ]
+        assert result['channels']['c']['users'] == ['test2']
         assert result['channels']['c']['total_users'] == 1
         assert result['channels']['c']['total_connections'] == 1
-        assert result['channels']['aB']['users'] == [
-            {'connections': ['x'], 'user': 'test1'}
-        ]
+        assert result['channels']['aB']['users'] == ['test1']
         compA = sorted(result['users'],
                        key=lambda x: x['user'])
         compB = sorted([
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'test1'},
             {'state': {'bar': 'baz1', 'key': 'foo1'}, 'user': 'test2'}],
             key=lambda x: x['user'])
-        print(compA, compB)
         assert compA == compB
         dummy_request.body = 'NOTEMPTY'
         dummy_request.json_body = {'info': {'channels': ['a']}}
