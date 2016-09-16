@@ -1,0 +1,16 @@
+<link rel="import" href="../../../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="chat-channel-picker">
+    <template>
+        <template is="dom-repeat" items="[[connectedChannels]]">
+            <paper-button raised on-tap="subscribeToChannel" channel="[[item.channel]]">
+                <iron-icon icon="[[_computedConnectIcon(item.connected)]]"></iron-icon>
+                [[_computedConnectLabel(item.connected, item.channel)]]
+            </paper-button>
+        </template>
+    </template>
+
+    <script src="chat-channel-picker.js"></script>
+</dom-module>

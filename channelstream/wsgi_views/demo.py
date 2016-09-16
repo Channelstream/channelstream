@@ -158,6 +158,6 @@ class DemoViews(object):
         admin = self.request.registry.settings['admin_user']
         admin_secret = self.request.registry.settings['admin_secret']
         basic_auth = HTTPBasicAuth(admin, admin_secret)
-        result = make_request(self.request, {}, '/admin.json', auth=basic_auth)
+        result = make_request(self.request, {}, '/admin/admin.json', auth=basic_auth)
         self.request.response.status = result.status_code
         return result.json()

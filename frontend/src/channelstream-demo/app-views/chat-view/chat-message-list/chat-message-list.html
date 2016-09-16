@@ -1,0 +1,27 @@
+<link rel="import" href="../../../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../../../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../../../../../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../chat-message/chat-message.html">
+
+<dom-module id="chat-message-list">
+    <template>
+        <style>
+            iron-list {
+                height: 500px;
+                width: 100%;
+            }
+        </style>
+        <iron-list items="[[messages]]" as="message" class="chat-list">
+            <template>
+                <chat-message
+                    user="[[message.user]]"
+                    timestamp="[[message.timestamp]]"
+                    message="[[message.message]]"
+                    channel="[[message.channel]]"
+                    type="[[message.type]]"></chat-message>
+            </template>
+        </iron-list>
+    </template>
+
+    <script src="chat-message-list.js"></script>
+</dom-module>

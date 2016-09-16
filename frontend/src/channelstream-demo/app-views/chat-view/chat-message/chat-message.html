@@ -1,0 +1,39 @@
+<link rel="import" href="../../../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../../../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../../../../../bower_components/iron-image/iron-image.html">
+<link rel="import" href="../../../chat-avatar/chat-avatar.html">
+
+<dom-module id="chat-message">
+    <template>
+        <style>
+            chat-avatar {
+                float: left;
+                margin-right: 15px;
+                border-radius: 25px;
+                border: 3px solid #eeeeee;
+                overflow: hidden;
+                width: 40px;
+                height: 40px;
+                --chat-avatar-mixin: {
+                    width: 40px;
+                    height: 40px;
+                }
+            }
+
+            .message.presence, .timestamp {
+                color: dimgrey;
+            }
+
+            :host {
+                padding: 5px;
+            }
+
+        </style>
+        <chat-avatar username="[[user]]" email="[[message.email]]"></chat-avatar>
+        <div class$="message {{type}}">
+            <div>[[[channel]]] <strong>[[user]]</strong></div>
+            <div><span class="timestamp">[[_shortTime(timestamp)]]</span>: [[message.text]]</div>
+        </div>
+    </template>
+    <script src="chat-message.js"></script>
+</dom-module>

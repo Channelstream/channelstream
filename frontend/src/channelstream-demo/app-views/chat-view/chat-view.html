@@ -1,0 +1,82 @@
+<link rel="import" href="../../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="../../../../bower_components/iron-form/iron-form.html">
+<link rel="import" href="../../../../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
+<link rel="import" href="chat-message-list/chat-message-list.html">
+<link rel="import" href="chat-channel-picker/chat-channel-picker.html">
+<link rel="import" href="chat-user-list/chat-user-list.html">
+
+<dom-module id="chat-view">
+    <template>
+        <style include="iron-flex iron-flex-alignment">
+            chat-user-list {
+                width: 250px;
+                margin-left: 30px;
+            }
+
+            chat-message-list {
+                @apply(--layout-flex);
+            }
+
+            #message-input {
+                display: inline-block;
+                min-width: 50%;
+            }
+
+            paper-tabs {
+                --paper-tabs-selection-bar-color: #000000;
+                display: inline-flex;
+            }
+        </style>
+
+        <paper-dialog id="loginDialog" modal>
+            <p>Log in to post messages</p>
+
+            <form is="iron-form" id="login-form" method="post" on-iron-form-presubmit="formPresubmit">
+                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed="changeUser"></iron-a11y-keys>
+                <paper-input value="{{loginUsername}}" label="User Name" min-length="1" auto-validate required></paper-input>
+                <paper-input value="{{loginEmail}}" label="Email" min-length="1" auto-validate required></paper-input>
+            </form>
+
+
+            <div class="buttons">
+                <paper-button on-tap="changeUser" autofocus>Confirm credentials</paper-button>
+            </div>
+        </paper-dialog>
+
+
+        <paper-tabs selected="{{selectedChannel}}" attr-for-selected="name">
+            <template is="dom-repeat" items="[[channels]]">
+                <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
+            </template>
+        </paper-tabs>
+
+        <div class="layout horizontal">
+            <chat-message-list messages="[[visibleChannelMessages]]"></chat-message-list>
+            <chat-user-list users="[[visibleChannelUsers]]" users-states="[[usersStates]]"></chat-user-list>
+        </div>
+
+        <form is="iron-form" id="message-form" on-iron-form-presubmit="formPresubmit" method="post">
+            <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed="sendMessage"></iron-a11y-keys>
+            <paper-input id="message-input" name="message" label="Your message" value="{{message}}"></paper-input>
+            <paper-icon-button icon="icons:send" on-tap="sendMessage"></paper-icon-button>
+            <br/>
+            <template is="dom-if" if="[[isAnonymous(user.username)]]">
+                <paper-button on-tap="openDialog" raised>
+                    <iron-icon icon="social:person-outline"></iron-icon>
+                    Change username
+                </paper-button>
+            </template>
+            <chat-channel-picker channels="{{channels}}" possible-channels="[[possibleChannels]]"></chat-channel-picker>
+        </form>
+
+    </template>
+    <script src="chat-view.js"></script>
+</dom-module>

@@ -1,0 +1,67 @@
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../bower_components/iron-signals/iron-signals.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../../bower_components/app-route/app-route.html">
+
+<link rel="import" href="../../debug.html">
+<link rel="import" href="../channelstream-connection/channelstream-connection.html">
+<link rel="import" href="../app-views/admin-view/admin-view.html">
+<link rel="import" href="../app-views/chat-view/chat-view.html">
+
+<dom-module id="channelstream-chat-demo">
+    <template>
+        <style>
+            .pad-content {
+                padding: 20px;
+            }
+        </style>
+        <channelstream-connection
+            id="channelstream-connection"
+            username="{{user.username}}"
+            channels="{{channels}}"
+            on-channelstream-listen-message="receivedMessage"
+            on-channelstream-connected="handleConnected"
+            on-channelstream-subscribed="handleSubscribed"
+            on-channelstream-unsubscribed="handleUnsubscribed"
+            on-channelstream-channels-changed="handleChannelsChange">
+        </channelstream-connection>
+        <iron-signals on-iron-signal-send-message="sendMessage"></iron-signals>
+        <iron-signals on-iron-signal-channelpicker-subscribe="channelUnsubscribe"></iron-signals>
+        <iron-signals on-iron-signal-channelpicker-unsubscribe="channelSubscribe"></iron-signals>
+
+        <app-location route="{{route}}"></app-location>
+        <app-route
+            route="{{route}}"
+            pattern="/demo/:page"
+            data="{{routeData}}"
+            tail="{{tail}}">
+        </app-route>
+
+        <paper-toolbar>
+            <span class="title">Channelstream Demo - Hello {{user.username}}</span>
+
+            <paper-tabs selected="{{page}}" attr-for-selected="name">
+                <paper-tab name="chat">Chat</paper-tab>
+                <paper-tab name="admin">Admin Stats</paper-tab>
+            </paper-tabs>
+        </paper-toolbar>
+
+        <iron-pages id="ironPages" selected="{{page}}" attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
+            <chat-view name="chat"
+                       user="{{user}}"
+                       channels-states="{{channelsStates}}"
+                       users-states="{{usersStates}}"
+                       user-state="{{userState}}"
+                       channels="{{channels}}"
+                       possible-channels="[[possibleChannels]]">
+
+            </chat-view>
+            <admin-view name="admin"></admin-view>
+        </iron-pages>
+    </template>
+
+    <script src="channelstream-chat-demo.js"></script>
+</dom-module>

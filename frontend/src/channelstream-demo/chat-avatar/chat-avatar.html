@@ -1,0 +1,18 @@
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../bower_components/iron-image/iron-image.html">
+
+<dom-module id="chat-avatar">
+    <template>
+        <style>
+            iron-image {
+                width: 50px;
+                height: 50px;
+                background-color: #ffffff;
+                @apply(--chat-avatar-mixin);
+            }
+        </style>
+        <iron-image sizing="contain" src="[[_getAvatar(username, email)]]" preload fade></iron-image>
+    </template>
+    <script src="gravatarjs.js"></script>
+    <script src="chat-avatar.js"></script>
+</dom-module>

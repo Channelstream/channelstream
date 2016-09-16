@@ -1,0 +1,154 @@
+<link rel="import" href="../../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../../../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../../../../bower_components/paper-badge/paper-badge.html">
+<link rel="import" href="../../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../../../bower_components/paper-tooltip/paper-tooltip.html">
+
+<dom-module id="admin-view">
+    <template>
+
+        <style>
+            .transparent {
+                opacity: 0;
+            }
+
+            #admin-page-progress {
+                width: 100%;
+                --paper-progress-indeterminate-cycle-duration: 3s;
+                margin-bottom: 15px;
+                transition-duration: 500ms;
+            }
+
+            .server-stat {
+                padding: 0 15px 0 0;
+                margin: 0 25px 25px 0;
+                display: inline-block;
+                position: relative;
+            }
+
+            .server-stat > paper-badge {
+                --paper-badge-margin-bottom: -20px;
+            }
+
+            paper-card {
+                width: 100%;
+
+            }
+
+            :host paper-material {
+                padding: 25px;
+            }
+
+            paper-button iron-icon {
+                margin-right: 10px;
+            }
+
+            ul {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+            }
+
+            .users-holder {
+                padding-top: 20px
+            }
+
+            .history-holder {
+                padding-top: 20px
+            }
+
+        </style>
+        <iron-ajax
+            id="ajax-admin-info"
+            handle-as="json"
+            loading="{{loadingAdmin}}"
+            last-response="{{adminResponse}}"
+            on-response="setChannels"
+            debounce-duration="300"></iron-ajax>
+
+        <paper-progress id="admin-page-progress" indeterminate class="transparent"></paper-progress>
+
+        <div class="server-stat">
+            Uptime [[adminResponse.uptime]]
+        </div>
+        <div class="server-stat">
+            Unique users remembered
+            <paper-badge label="[[adminResponse.remembered_user_count]]"></paper-badge>
+        </div>
+        <div class="server-stat">
+            Unique users connected
+            <paper-badge label="[[adminResponse.unique_user_count]]"></paper-badge>
+        </div>
+        <div class="server-stat">
+            Total connections
+            <paper-badge label="[[adminResponse.total_connections]]"></paper-badge>
+        </div>
+
+        <div class="server-stat">
+            Total channels
+            <paper-badge label="[[adminResponse.total_channels]]"></paper-badge>
+        </div>
+
+        <div class="server-stat">
+            Messages since start
+            <paper-badge label="[[adminResponse.total_unique_messages]]"></paper-badge>
+        </div>
+
+        <div class="server-stat">
+            All frames sent
+            <paper-badge label="[[adminResponse.total_messages]]"></paper-badge>
+        </div>
+
+
+        <template is="dom-repeat" items="[[channels]]">
+            <paper-card heading="channel: [[item.name]]">
+                <div class="card-content">
+                    <ul>
+                        <li><strong>Long name</strong>: [[item.long_name]]</li>
+                        <li><strong>last active</strong>: [[item.last_active]]</li>
+                        <li><strong>Total connections</strong>: [[item.total_connections]]</li>
+                        <li><strong>Total users</strong>: [[item.total_users]]</li>
+                    </ul>
+
+                    <iron-collapse class$="channel-history-[[index]]">
+                        <div class="history-holder">
+                            <strong>History:</strong>
+                            <template is="dom-repeat" items="[[item.history]]">
+                                <div>[[item.user]]: <app-debug data="[[item.message]]"></app-debug></div>
+                            </template>
+                        </div>
+                    </iron-collapse>
+
+                    <iron-collapse class$="channel-users-[[index]]">
+                        <div class="users-holder">
+                            <strong>Connected users:</strong>
+                            <template is="dom-repeat" items="[[item.users]]">
+                                <div>[[item]]</div>
+                            </template>
+                        </div>
+                    </iron-collapse>
+
+                </div>
+                <div class="card-actions">
+            <span>
+            <paper-button toggles raised on-tap="toggleHistory" index="[[index]]">
+                <iron-icon icon="icons:history"></iron-icon>History</paper-button>
+            <paper-tooltip position="top" animation-delay="0">Shows this channels history</paper-tooltip>
+            </span>
+                    <span>
+            <paper-button toggles raised on-tap="toggleUsers" index="[[index]]">
+                <iron-icon icon="social:people-outline"></iron-icon>Users</paper-button>
+            <paper-tooltip position="top" animation-delay="0">Shows currently connected users</paper-tooltip>
+            </span>
+                </div>
+            </paper-card>
+        </template>
+
+    </template>
+    <script src="admin-view.js"></script>
+</dom-module>
