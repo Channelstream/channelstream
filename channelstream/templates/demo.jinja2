@@ -36,6 +36,17 @@
             } else {
                 onload();
             }
+
+            function clearObj(obj) {
+                for (var k in Object.keys(obj)) {
+                    obj[k] = null;
+                }
+            }
+            function unloadPolymer() {
+                clearObj(CustomElements.registry);
+            }
+            window.onbeforeunload = unloadPolymer;
+
         })();
 
         var AppConf = {
