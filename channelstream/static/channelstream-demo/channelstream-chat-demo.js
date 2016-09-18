@@ -22437,7 +22437,6 @@ Polymer({
         // create a new key for channel
         if (typeof this.messages[message.channel] === 'undefined') {
             this.messages[message.channel] = [];
-            this.notifyPath(['messages', message.channel]);
         }
 
         // push message
@@ -22454,6 +22453,9 @@ Polymer({
             };
             this.push(['messages', message.channel], message);
         }
+    },
+    loadHistory: function (messageList, channel) {
+        this.set(['messages', channel], messageList);
     },
 
     isAnonymous: function (username) {
@@ -22648,22 +22650,29 @@ Polymer({
     },
 
     handleConnected: function (event) {
-        console.log('x', event.detail)
-        this.set('userState', event.detail.state);
-        this.set('channelsStates', event.detail.channels_info.channels);
-        this.set('channels', event.detail.channels);
-        this.updateUserStates(event.detail.channels_info);
+        var data = event.detail;
+        var chatView = this.$$('chat-view');
+        this.set('userState', data.state);
+        this.set('channelsStates', data.channels_info.channels);
+        this.set('channels', data.channels);
+        this.updateUserStates(data.channels_info);
+        for (var i = 0; i < data.channels.length; i++) {
+            var key = data.channels[i];
+            chatView.loadHistory(data.channels_info.channels[key].history, key);
+        }
     },
     handleSubscribed: function (event) {
         console.log('handleSubscribed');
+        var chatView = this.$$('chat-view');
         var channelInfo = event.detail.channels_info;
-        var channelKeys = event.detail.channels;
+        var channelKeys = event.detail.subscribed_to;
+        this.set('channels', event.detail.channels);
+        this.updateUserStates(channelInfo);
         for (var i = 0; i < channelKeys.length; i++) {
             var key = channelKeys[i];
             this.set(['channelsStates', key], channelInfo.channels[key]);
+            chatView.loadHistory(channelInfo.channels[key].history, key);
         }
-        this.set('channels', event.detail.channels);
-        this.updateUserStates(channelInfo);
     },
 
     handleUnsubscribed: function (event) {

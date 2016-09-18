@@ -63,7 +63,6 @@ Polymer({
         // create a new key for channel
         if (typeof this.messages[message.channel] === 'undefined') {
             this.messages[message.channel] = [];
-            this.notifyPath(['messages', message.channel]);
         }
 
         // push message
@@ -80,6 +79,9 @@ Polymer({
             };
             this.push(['messages', message.channel], message);
         }
+    },
+    loadHistory: function (messageList, channel) {
+        this.set(['messages', channel], messageList);
     },
 
     isAnonymous: function (username) {

@@ -35,7 +35,8 @@ def enable_demo(context, request):
 CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True,
                                 'store_history': True,
                                 'broadcast_presence_with_user_lists': True},
-                   'notify': {'notify_presence': True}}
+                   'notify': {'store_history': True,
+                              'notify_presence': True}}
 
 
 class DemoViews(object):
