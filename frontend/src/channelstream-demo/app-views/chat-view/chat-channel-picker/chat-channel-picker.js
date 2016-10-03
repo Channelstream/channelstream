@@ -13,18 +13,10 @@ Polymer({
         }
     },
     subscribeToChannel: function (event) {
-        var app = document.getElementsByTagName('channelstream-chat-demo')[0];
-        var connection = app.getConnection();
-        var channel = event.currentTarget.get('channel');
-        var index = this.get('channels').indexOf(channel);
-        if (index !== -1) {
-            var toUnsubscribe = connection.calculateUnsubscribe([channel]);
-            connection.unsubscribe(toUnsubscribe);
-        }
-        else {
-            var toSubscribe = connection.calculateSubscribe([channel]);
-            connection.subscribe(toSubscribe);
-        }
+        this.fire('iron-signal', {
+            name: 'channelpicker-subscribe',
+            data: {channel: event.currentTarget.get('channel')}
+        });
     },
     /** pregenerate list of channel states for easier looping */
     _generateConnectedChannels: function () {

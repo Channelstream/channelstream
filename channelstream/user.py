@@ -2,6 +2,9 @@ import logging
 
 from datetime import datetime
 
+import six
+import channelstream
+
 log = logging.getLogger(__name__)
 
 
@@ -41,7 +44,12 @@ class User(object):
 
     def state_from_dict(self, state_dict):
         if isinstance(state_dict, dict):
-            self.state.update(state_dict)
+            changed = []
+            for k, v in six.iteritems(state_dict):
+                if self.state.get(k) != v:
+                    self.state[k] = v
+                    changed.append({'key': k, 'value': v})
+        return changed
 
     @property
     def public_state(self):
@@ -54,6 +62,13 @@ class User(object):
         if include_connections:
             info['connections'] = [c.id for c in self.connections]
         return info
+
+    def get_channels(self):
+        channels = []
+        for channel in six.itervalues(channelstream.CHANNELS):
+            if channel.connections.get(self.username):
+                channels.append(channel)
+        return channels
 
     def __json__(self, request=None):
         return self.get_info()

@@ -166,6 +166,46 @@ class TestChannel(object):
             {'channel': 'test', 'message': 'test4', 'type': 'message'}
         ]
 
+    def test_user_state(self):
+        user = User('test_user')
+        changed = user.state_from_dict({'key': '1', 'key2': '2'})
+        user.state_public_keys = ['key2']
+        connection = Connection('test_user', conn_id='A')
+        user.add_connection(connection)
+        channel = Channel('test')
+        channel.add_connection(connection)
+        payload = channel.send_user_state(user, changed)
+        assert payload['user'] == 'test_user'
+        assert payload['message']['state'] == {'key2': '2'}
+        assert payload['message']['changed'] == [{'key': 'key2', 'value': '2'}]
+        assert payload['type'] == 'user_state_change'
+        assert payload['channel'] == 'test'
+
+    def test_user_single_assignment(self):
+        user = User('test_user')
+        connection = Connection('test_user', conn_id='A')
+        user.add_connection(connection)
+        channel = Channel('test')
+        channel.add_connection(connection)
+        [channel] == user.get_channels()
+
+    def test_user_multi_assignment(self):
+        user = User('test_user')
+        connection = Connection('test_user', conn_id='A')
+        connection2 = Connection('test_user', conn_id='A2')
+        connection3 = Connection('test_user', conn_id='A3')
+        user.add_connection(connection)
+        user.add_connection(connection2)
+        user.add_connection(connection3)
+        channel = Channel('test')
+        channel2 = Channel('test2')
+        channelstream.CHANNELS[channel.name] = channel
+        channelstream.CHANNELS[channel2.name] = channel2
+        channel.add_connection(connection)
+        channel.add_connection(connection2)
+        channel2.add_connection(connection3)
+        assert ['test', 'test2'] == sorted([c.name for c in user.get_channels()])
+
 
 @pytest.mark.usefixtures("cleanup_globals")
 class TestConnection(object):
@@ -371,6 +411,47 @@ class TestConnectViews(object):
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'username'}
         ]
 
+@pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
+class TestUserStateViews(object):
+    def test_bad_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {}
+        view_cls = ServerViews(dummy_request)
+        result = view_cls.user_state()
+        assert result == {'error': 'No username specified'}
+
+    def test_not_found_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {'user': 'blabla'}
+        view_cls = ServerViews(dummy_request)
+        result = view_cls.user_state()
+        assert result == {'error': 'User not found'}
+
+    def test_good_json(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {'username': 'test',
+                                   'conn_id': 'x',
+                                   'fresh_user_state': {'key': 'foo'},
+                                   'user_state': {'bar': 'baz'},
+                                   'state_public_keys': 'bar',
+                                   'channels': ['a', 'aB'],
+                                   'channel_configs': {
+                                       'a': {'store_history': True,
+                                             'history_size': 2}}}
+        view_cls = ServerViews(dummy_request)
+        view_cls.connect()
+        dummy_request.json_body = {
+            "user": 'test',
+            "user_state": {"bar": 2, 'private': 'im_private'},
+            "state_public_keys": ["avatar", "bar"]
+        }
+        view_cls = ServerViews(dummy_request)
+        result = view_cls.user_state()
+        sorted_keys = sorted(['bar', 'key', 'private'])
+        assert sorted_keys == sorted(result['user_state'].keys())
+        assert result['user_state']['private'] == 'im_private'
+        sorted_changed = sorted([x['key'] for x in result['changed_state']])
+        assert sorted_changed == sorted(['bar', 'private'])
 
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
 class TestSubscribeViews(object):
@@ -462,6 +543,7 @@ class TestUnsubscribeViews(object):
         view_cls = ServerViews(dummy_request)
         result = view_cls.unsubscribe()
         assert sorted(result['channels']) == sorted(['a', 'aB', 'aC'])
+
 
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
 class TestInfoView(object):

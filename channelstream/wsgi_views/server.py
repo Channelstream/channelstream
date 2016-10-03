@@ -320,13 +320,23 @@ class ServerViews(object):
             return {'error': "No username specified"}
 
         user_inst = channelstream.USERS.get(username)
-        if user_inst:
-            user_inst.state_from_dict(user_state)
-            if state_public_keys is not None:
-                user_inst.state_public_keys = state_public_keys
-            # mark active
-            user_inst.last_active = datetime.utcnow()
-        return user_inst.state
+        if not user_inst:
+            self.request.response.status = 404
+            return {'error': "User not found"}
+        if state_public_keys is not None:
+            user_inst.state_public_keys = state_public_keys
+        changed = user_inst.state_from_dict(user_state)
+        # mark active
+        user_inst.last_active = datetime.utcnow()
+        if changed:
+            channels = user_inst.get_channels()
+            for channel in [c for c in channels if c.notify_state]:
+                channel.send_user_state(user_inst, changed)
+        return {
+            'user_state': user_inst.state,
+            'changed_state': changed,
+            'public_keys': user_inst.state_public_keys
+        }
 
     @view_config(route_name='action', match_param='action=message',
                  renderer='json', permission='access')

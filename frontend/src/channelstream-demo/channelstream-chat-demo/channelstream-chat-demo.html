@@ -29,8 +29,8 @@
             on-channelstream-channels-changed="handleChannelsChange">
         </channelstream-connection>
         <iron-signals on-iron-signal-send-message="sendMessage"></iron-signals>
-        <iron-signals on-iron-signal-channelpicker-subscribe="channelUnsubscribe"></iron-signals>
-        <iron-signals on-iron-signal-channelpicker-unsubscribe="channelSubscribe"></iron-signals>
+        <iron-signals on-iron-signal-change-status="changeStatus"></iron-signals>
+        <iron-signals on-iron-signal-channelpicker-subscribe="subscribeToChannel"></iron-signals>
 
         <app-location route="{{route}}"></app-location>
         <app-route

@@ -81,7 +81,11 @@ Polymer({
     },
     /** sends the message via channelstream conn manageer */
     sendMessage: function (event) {
-        this.$$('channelstream-connection').message(event.detail);
+        this.getConnection().message(event.detail);
+    },
+    changeStatus: function(event){
+        var stateUpdates = event.detail;
+        this.getConnection().updateUserState({user_state:stateUpdates});
     },
 
     /** kicks off the connection */
@@ -95,6 +99,7 @@ Polymer({
         channelstreamConnection.messageUrl = AppConf.messageUrl;
         channelstreamConnection.longPollUrl = AppConf.longPollUrl;
         channelstreamConnection.websocketUrl = AppConf.websocketUrl;
+        channelstreamConnection.userStateUrl = AppConf.userStateUrl;
 
         // add a mutator for demo purposes - modify the request
         // to inject some state vars to connection json
@@ -142,6 +147,21 @@ Polymer({
             chatView.loadHistory(data.channels_info.channels[key].history, key);
         }
     },
+
+    subscribeToChannel: function (event) {
+        var connection = this.getConnection();
+        var channel = event.detail.channel;
+        var index = this.get('channels').indexOf(channel);
+        if (index !== -1) {
+            var toUnsubscribe = connection.calculateUnsubscribe([channel]);
+            connection.unsubscribe(toUnsubscribe);
+        }
+        else {
+            var toSubscribe = connection.calculateSubscribe([channel]);
+            connection.subscribe(toSubscribe);
+        }
+    },
+
     handleSubscribed: function (event) {
         console.log('handleSubscribed');
         var chatView = this.$$('chat-view');

@@ -12,25 +12,26 @@
 <link rel="import" href="chat-message-list/chat-message-list.html">
 <link rel="import" href="chat-channel-picker/chat-channel-picker.html">
 <link rel="import" href="chat-user-list/chat-user-list.html">
+<link rel="import" href="chat-status-selector/chat-status-selector.html">
 
 <dom-module id="chat-view">
     <template>
         <style include="iron-flex iron-flex-alignment">
-            chat-user-list {
+            :host .right-column {
                 width: 250px;
                 margin-left: 30px;
             }
 
-            chat-message-list {
+            :host .left-column {
                 @apply(--layout-flex);
             }
 
-            #message-input {
+            :host #message-input {
                 display: inline-block;
                 min-width: 50%;
             }
 
-            paper-tabs {
+            :host paper-tabs {
                 --paper-tabs-selection-bar-color: #000000;
                 display: inline-flex;
             }
@@ -51,16 +52,21 @@
             </div>
         </paper-dialog>
 
-
-        <paper-tabs selected="{{selectedChannel}}" attr-for-selected="name">
-            <template is="dom-repeat" items="[[channels]]">
-                <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
-            </template>
-        </paper-tabs>
-
         <div class="layout horizontal">
-            <chat-message-list messages="[[visibleChannelMessages]]"></chat-message-list>
-            <chat-user-list users="[[visibleChannelUsers]]" users-states="[[usersStates]]"></chat-user-list>
+            <div class="left-column">
+                <paper-tabs selected="{{selectedChannel}}" attr-for-selected="name">
+                    <template is="dom-repeat" items="[[channels]]">
+                        <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
+                    </template>
+                </paper-tabs>
+                <chat-message-list messages="[[visibleChannelMessages]]"></chat-message-list>
+            </div>
+            <div class="right-column">
+                <chat-status-selector></chat-status-selector>
+                <chat-user-list users="[[visibleChannelUsers]]" users-states="[[usersStates]]"></chat-user-list>
+            </div>
+
+
         </div>
 
         <form is="iron-form" id="message-form" on-iron-form-presubmit="formPresubmit" method="post">

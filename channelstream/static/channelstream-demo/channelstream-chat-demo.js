@@ -14168,6 +14168,19 @@ Polymer({
      */
 
     /**
+     * Fired when `setUserState()` succeeds.
+     *
+     * @event channelstream-set-user-state
+     */
+
+    /**
+     * Fired when `setUserState()` fails.
+     *
+     * @event channelstream-set-user-state-error
+     */
+
+
+    /**
      * Fired when listening connection receives a message.
      *
      * @event channelstream-listen-message
@@ -14239,6 +14252,11 @@ Polymer({
         },
         /** URL used in `unsubscribe()`. */
         unsubscribeUrl: {
+            type: String,
+            value: ''
+        },
+        /** URL used in `updateUserState()`. */
+        userStateUrl: {
             type: String,
             value: ''
         },
@@ -14316,6 +14334,9 @@ Polymer({
         }(),
         disconnect: function () {
             return []
+        }(),
+        userState: function () {
+            return []
         }()
     },
     ready: function () {
@@ -14336,6 +14357,8 @@ Polymer({
         this.listen(this, 'channelstream-listen-opened', 'testEvent');
         this.listen(this, 'channelstream-listen-closed', 'testEvent');
         this.listen(this, 'channelstream-listen-error', 'testEvent');
+        this.listen(this, 'channelstream-set-user-state', 'testEvent');
+        this.listen(this, 'channelstream-set-user-state-error', 'testEvent');
     },
 
     /**
@@ -14359,6 +14382,23 @@ Polymer({
      */
     addMutator: function (type, func) {
         this.mutators[type].push(func);
+    },
+    /**
+     * Updates user state.
+     *
+     */
+    updateUserState: function (stateObj) {
+        var request = this.$['ajaxSetUserState'];
+        request.url = this.userStateUrl;
+        request.body = {
+            username: this.username,
+            conn_id: this.connectionId,
+            update_state: stateObj
+        };
+        for (var i = 0; i < this.mutators.userState.length; i++) {
+            this.mutators.userState[i](request);
+        }
+        request.generateRequest();
     },
     /**
      * Subscribes user to channels.
@@ -14620,6 +14660,14 @@ Polymer({
         this.fire('channelstream-unsubscribe-error', event.detail);
     },
 
+    _handleSetUserState: function (event) {
+        this.fire('channelstream-set-user-state', event.detail.response);
+    },
+
+    _handleSetUserStateError: function (event) {
+        this.fire('channelstream-set-user-state-error', event.detail);
+    },
+    
     testEvent: function (event) {
         console.debug('launched', event.type, event.detail);
     }
@@ -22321,18 +22369,10 @@ Polymer({
         }
     },
     subscribeToChannel: function (event) {
-        var app = document.getElementsByTagName('channelstream-chat-demo')[0];
-        var connection = app.getConnection();
-        var channel = event.currentTarget.get('channel');
-        var index = this.get('channels').indexOf(channel);
-        if (index !== -1) {
-            var toUnsubscribe = connection.calculateUnsubscribe([channel]);
-            connection.unsubscribe(toUnsubscribe);
-        }
-        else {
-            var toSubscribe = connection.calculateSubscribe([channel]);
-            connection.subscribe(toSubscribe);
-        }
+        this.fire('iron-signal', {
+            name: 'channelpicker-subscribe',
+            data: {channel: event.currentTarget.get('channel')}
+        });
     },
     /** pregenerate list of channel states for easier looping */
     _generateConnectedChannels: function () {
@@ -22370,6 +22410,1415 @@ Polymer({
     },
     _computedEmail: function (op, username) {
         return this.usersStates[username].state.email;
+    }
+});
+(function() {
+      Polymer({
+        is: 'paper-listbox',
+
+        behaviors: [
+          Polymer.IronMenuBehavior
+        ],
+
+        hostAttributes: {
+          role: 'listbox'
+        }
+      });
+    })();
+Polymer({
+
+    is: 'opaque-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      this._effect = new KeyframeEffect(node, [
+        {'opacity': '1'},
+        {'opacity': '1'}
+      ], this.timingFromConfig(config));
+      node.style.opacity = '0';
+      return this._effect;
+    },
+
+    complete: function(config) {
+      config.node.style.opacity = '';
+    }
+
+  });
+(function() {
+    'use strict';
+    // Used to calculate the scroll direction during touch events.
+    var LAST_TOUCH_POSITION = {
+      pageX: 0,
+      pageY: 0
+    };
+    // Used to avoid computing event.path and filter scrollable nodes (better perf).
+    var ROOT_TARGET = null;
+    var SCROLLABLE_NODES = [];
+
+    /**
+     * The IronDropdownScrollManager is intended to provide a central source
+     * of authority and control over which elements in a document are currently
+     * allowed to scroll.
+     */
+
+    Polymer.IronDropdownScrollManager = {
+
+      /**
+       * The current element that defines the DOM boundaries of the
+       * scroll lock. This is always the most recently locking element.
+       */
+      get currentLockingElement() {
+        return this._lockingElements[this._lockingElements.length - 1];
+      },
+
+      /**
+       * Returns true if the provided element is "scroll locked", which is to
+       * say that it cannot be scrolled via pointer or keyboard interactions.
+       *
+       * @param {HTMLElement} element An HTML element instance which may or may
+       * not be scroll locked.
+       */
+      elementIsScrollLocked: function(element) {
+        var currentLockingElement = this.currentLockingElement;
+
+        if (currentLockingElement === undefined)
+          return false;
+
+        var scrollLocked;
+
+        if (this._hasCachedLockedElement(element)) {
+          return true;
+        }
+
+        if (this._hasCachedUnlockedElement(element)) {
+          return false;
+        }
+
+        scrollLocked = !!currentLockingElement &&
+          currentLockingElement !== element &&
+          !this._composedTreeContains(currentLockingElement, element);
+
+        if (scrollLocked) {
+          this._lockedElementCache.push(element);
+        } else {
+          this._unlockedElementCache.push(element);
+        }
+
+        return scrollLocked;
+      },
+
+      /**
+       * Push an element onto the current scroll lock stack. The most recently
+       * pushed element and its children will be considered scrollable. All
+       * other elements will not be scrollable.
+       *
+       * Scroll locking is implemented as a stack so that cases such as
+       * dropdowns within dropdowns are handled well.
+       *
+       * @param {HTMLElement} element The element that should lock scroll.
+       */
+      pushScrollLock: function(element) {
+        // Prevent pushing the same element twice
+        if (this._lockingElements.indexOf(element) >= 0) {
+          return;
+        }
+
+        if (this._lockingElements.length === 0) {
+          this._lockScrollInteractions();
+        }
+
+        this._lockingElements.push(element);
+
+        this._lockedElementCache = [];
+        this._unlockedElementCache = [];
+      },
+
+      /**
+       * Remove an element from the scroll lock stack. The element being
+       * removed does not need to be the most recently pushed element. However,
+       * the scroll lock constraints only change when the most recently pushed
+       * element is removed.
+       *
+       * @param {HTMLElement} element The element to remove from the scroll
+       * lock stack.
+       */
+      removeScrollLock: function(element) {
+        var index = this._lockingElements.indexOf(element);
+
+        if (index === -1) {
+          return;
+        }
+
+        this._lockingElements.splice(index, 1);
+
+        this._lockedElementCache = [];
+        this._unlockedElementCache = [];
+
+        if (this._lockingElements.length === 0) {
+          this._unlockScrollInteractions();
+        }
+      },
+
+      _lockingElements: [],
+
+      _lockedElementCache: null,
+
+      _unlockedElementCache: null,
+
+      _hasCachedLockedElement: function(element) {
+        return this._lockedElementCache.indexOf(element) > -1;
+      },
+
+      _hasCachedUnlockedElement: function(element) {
+        return this._unlockedElementCache.indexOf(element) > -1;
+      },
+
+      _composedTreeContains: function(element, child) {
+        // NOTE(cdata): This method iterates over content elements and their
+        // corresponding distributed nodes to implement a contains-like method
+        // that pierces through the composed tree of the ShadowDOM. Results of
+        // this operation are cached (elsewhere) on a per-scroll-lock basis, to
+        // guard against potentially expensive lookups happening repeatedly as
+        // a user scrolls / touchmoves.
+        var contentElements;
+        var distributedNodes;
+        var contentIndex;
+        var nodeIndex;
+
+        if (element.contains(child)) {
+          return true;
+        }
+
+        contentElements = Polymer.dom(element).querySelectorAll('content');
+
+        for (contentIndex = 0; contentIndex < contentElements.length; ++contentIndex) {
+
+          distributedNodes = Polymer.dom(contentElements[contentIndex]).getDistributedNodes();
+
+          for (nodeIndex = 0; nodeIndex < distributedNodes.length; ++nodeIndex) {
+
+            if (this._composedTreeContains(distributedNodes[nodeIndex], child)) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      },
+
+      _scrollInteractionHandler: function(event) {
+        // Avoid canceling an event with cancelable=false, e.g. scrolling is in
+        // progress and cannot be interrupted.
+        if (event.cancelable && this._shouldPreventScrolling(event)) {
+          event.preventDefault();
+        }
+        // If event has targetTouches (touch event), update last touch position.
+        if (event.targetTouches) {
+          var touch = event.targetTouches[0];
+          LAST_TOUCH_POSITION.pageX = touch.pageX;
+          LAST_TOUCH_POSITION.pageY = touch.pageY;
+        }
+      },
+
+      _lockScrollInteractions: function() {
+        this._boundScrollHandler = this._boundScrollHandler ||
+          this._scrollInteractionHandler.bind(this);
+        // Modern `wheel` event for mouse wheel scrolling:
+        document.addEventListener('wheel', this._boundScrollHandler, true);
+        // Older, non-standard `mousewheel` event for some FF:
+        document.addEventListener('mousewheel', this._boundScrollHandler, true);
+        // IE:
+        document.addEventListener('DOMMouseScroll', this._boundScrollHandler, true);
+        // Save the SCROLLABLE_NODES on touchstart, to be used on touchmove.
+        document.addEventListener('touchstart', this._boundScrollHandler, true);
+        // Mobile devices can scroll on touch move:
+        document.addEventListener('touchmove', this._boundScrollHandler, true);
+      },
+
+      _unlockScrollInteractions: function() {
+        document.removeEventListener('wheel', this._boundScrollHandler, true);
+        document.removeEventListener('mousewheel', this._boundScrollHandler, true);
+        document.removeEventListener('DOMMouseScroll', this._boundScrollHandler, true);
+        document.removeEventListener('touchstart', this._boundScrollHandler, true);
+        document.removeEventListener('touchmove', this._boundScrollHandler, true);
+      },
+
+      /**
+       * Returns true if the event causes scroll outside the current locking
+       * element, e.g. pointer/keyboard interactions, or scroll "leaking"
+       * outside the locking element when it is already at its scroll boundaries.
+       * @param {!Event} event
+       * @return {boolean}
+       * @private
+       */
+      _shouldPreventScrolling: function(event) {
+
+        // Update if root target changed. For touch events, ensure we don't
+        // update during touchmove.
+        var target = Polymer.dom(event).rootTarget;
+        if (event.type !== 'touchmove' && ROOT_TARGET !== target) {
+          ROOT_TARGET = target;
+          SCROLLABLE_NODES = this._getScrollableNodes(Polymer.dom(event).path);
+        }
+
+        // Prevent event if no scrollable nodes.
+        if (!SCROLLABLE_NODES.length) {
+          return true;
+        }
+        // Don't prevent touchstart event inside the locking element when it has
+        // scrollable nodes.
+        if (event.type === 'touchstart') {
+          return false;
+        }
+        // Get deltaX/Y.
+        var info = this._getScrollInfo(event);
+        // Prevent if there is no child that can scroll.
+        return !this._getScrollingNode(SCROLLABLE_NODES, info.deltaX, info.deltaY);
+      },
+
+      /**
+       * Returns an array of scrollable nodes up to the current locking element,
+       * which is included too if scrollable.
+       * @param {!Array<Node>} nodes
+       * @return {Array<Node>} scrollables
+       * @private
+       */
+      _getScrollableNodes: function(nodes) {
+        var scrollables = [];
+        var lockingIndex = nodes.indexOf(this.currentLockingElement);
+        // Loop from root target to locking element (included).
+        for (var i = 0; i <= lockingIndex; i++) {
+          var node = nodes[i];
+          // Skip document fragments.
+          if (node.nodeType === 11) {
+            continue;
+          }
+          // Check inline style before checking computed style.
+          var style = node.style;
+          if (style.overflow !== 'scroll' && style.overflow !== 'auto') {
+            style = window.getComputedStyle(node);
+          }
+          if (style.overflow === 'scroll' || style.overflow === 'auto') {
+            scrollables.push(node);
+          }
+        }
+        return scrollables;
+      },
+
+      /**
+       * Returns the node that is scrolling. If there is no scrolling,
+       * returns undefined.
+       * @param {!Array<Node>} nodes
+       * @param {number} deltaX Scroll delta on the x-axis
+       * @param {number} deltaY Scroll delta on the y-axis
+       * @return {Node|undefined}
+       * @private
+       */
+      _getScrollingNode: function(nodes, deltaX, deltaY) {
+        // No scroll.
+        if (!deltaX && !deltaY) {
+          return;
+        }
+        // Check only one axis according to where there is more scroll.
+        // Prefer vertical to horizontal.
+        var verticalScroll = Math.abs(deltaY) >= Math.abs(deltaX);
+        for (var i = 0; i < nodes.length; i++) {
+          var node = nodes[i];
+          var canScroll = false;
+          if (verticalScroll) {
+            // delta < 0 is scroll up, delta > 0 is scroll down.
+            canScroll = deltaY < 0 ? node.scrollTop > 0 :
+              node.scrollTop < node.scrollHeight - node.clientHeight;
+          } else {
+            // delta < 0 is scroll left, delta > 0 is scroll right.
+            canScroll = deltaX < 0 ? node.scrollLeft > 0 :
+              node.scrollLeft < node.scrollWidth - node.clientWidth;
+          }
+          if (canScroll) {
+            return node;
+          }
+        }
+      },
+
+      /**
+       * Returns scroll `deltaX` and `deltaY`.
+       * @param {!Event} event The scroll event
+       * @return {{
+       *  deltaX: number The x-axis scroll delta (positive: scroll right,
+       *                 negative: scroll left, 0: no scroll),
+       *  deltaY: number The y-axis scroll delta (positive: scroll down,
+       *                 negative: scroll up, 0: no scroll)
+       * }} info
+       * @private
+       */
+      _getScrollInfo: function(event) {
+        var info = {
+          deltaX: event.deltaX,
+          deltaY: event.deltaY
+        };
+        // Already available.
+        if ('deltaX' in event) {
+          // do nothing, values are already good.
+        }
+        // Safari has scroll info in `wheelDeltaX/Y`.
+        else if ('wheelDeltaX' in event) {
+          info.deltaX = -event.wheelDeltaX;
+          info.deltaY = -event.wheelDeltaY;
+        }
+        // Firefox has scroll info in `detail` and `axis`.
+        else if ('axis' in event) {
+          info.deltaX = event.axis === 1 ? event.detail : 0;
+          info.deltaY = event.axis === 2 ? event.detail : 0;
+        }
+        // On mobile devices, calculate scroll direction.
+        else if (event.targetTouches) {
+          var touch = event.targetTouches[0];
+          // Touch moves from right to left => scrolling goes right.
+          info.deltaX = LAST_TOUCH_POSITION.pageX - touch.pageX;
+          // Touch moves from down to up => scrolling goes down.
+          info.deltaY = LAST_TOUCH_POSITION.pageY - touch.pageY;
+        }
+        return info;
+      }
+    };
+  })();
+(function() {
+      'use strict';
+
+      Polymer({
+        is: 'iron-dropdown',
+
+        behaviors: [
+          Polymer.IronControlState,
+          Polymer.IronA11yKeysBehavior,
+          Polymer.IronOverlayBehavior,
+          Polymer.NeonAnimationRunnerBehavior
+        ],
+
+        properties: {
+          /**
+           * The orientation against which to align the dropdown content
+           * horizontally relative to the dropdown trigger.
+           * Overridden from `Polymer.IronFitBehavior`.
+           */
+          horizontalAlign: {
+            type: String,
+            value: 'left',
+            reflectToAttribute: true
+          },
+
+          /**
+           * The orientation against which to align the dropdown content
+           * vertically relative to the dropdown trigger.
+           * Overridden from `Polymer.IronFitBehavior`.
+           */
+          verticalAlign: {
+            type: String,
+            value: 'top',
+            reflectToAttribute: true
+          },
+
+          /**
+           * An animation config. If provided, this will be used to animate the
+           * opening of the dropdown.
+           */
+          openAnimationConfig: {
+            type: Object
+          },
+
+          /**
+           * An animation config. If provided, this will be used to animate the
+           * closing of the dropdown.
+           */
+          closeAnimationConfig: {
+            type: Object
+          },
+
+          /**
+           * If provided, this will be the element that will be focused when
+           * the dropdown opens.
+           */
+          focusTarget: {
+            type: Object
+          },
+
+          /**
+           * Set to true to disable animations when opening and closing the
+           * dropdown.
+           */
+          noAnimations: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * By default, the dropdown will constrain scrolling on the page
+           * to itself when opened.
+           * Set to true in order to prevent scroll from being constrained
+           * to the dropdown when it opens.
+           */
+          allowOutsideScroll: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Callback for scroll events.
+           * @type {Function}
+           * @private
+           */
+          _boundOnCaptureScroll: {
+            type: Function,
+            value: function() {
+              return this._onCaptureScroll.bind(this);
+            }
+          }
+        },
+
+        listeners: {
+          'neon-animation-finish': '_onNeonAnimationFinish'
+        },
+
+        observers: [
+          '_updateOverlayPosition(positionTarget, verticalAlign, horizontalAlign, verticalOffset, horizontalOffset)'
+        ],
+
+        /**
+         * The element that is contained by the dropdown, if any.
+         */
+        get containedElement() {
+          return Polymer.dom(this.$.content).getDistributedNodes()[0];
+        },
+
+        /**
+         * The element that should be focused when the dropdown opens.
+         * @deprecated
+         */
+        get _focusTarget() {
+          return this.focusTarget || this.containedElement;
+        },
+
+        ready: function() {
+          // Memoized scrolling position, used to block scrolling outside.
+          this._scrollTop = 0;
+          this._scrollLeft = 0;
+          // Used to perform a non-blocking refit on scroll.
+          this._refitOnScrollRAF = null;
+        },
+
+        attached: function () {
+          if (!this.sizingTarget || this.sizingTarget === this) {
+            this.sizingTarget = this.containedElement;
+          }
+        },
+
+        detached: function() {
+          this.cancelAnimation();
+          document.removeEventListener('scroll', this._boundOnCaptureScroll);
+          Polymer.IronDropdownScrollManager.removeScrollLock(this);
+        },
+
+        /**
+         * Called when the value of `opened` changes.
+         * Overridden from `IronOverlayBehavior`
+         */
+        _openedChanged: function() {
+          if (this.opened && this.disabled) {
+            this.cancel();
+          } else {
+            this.cancelAnimation();
+            this._updateAnimationConfig();
+            this._saveScrollPosition();
+            if (this.opened) {
+              document.addEventListener('scroll', this._boundOnCaptureScroll);
+              !this.allowOutsideScroll && Polymer.IronDropdownScrollManager.pushScrollLock(this);
+            } else {
+              document.removeEventListener('scroll', this._boundOnCaptureScroll);
+              Polymer.IronDropdownScrollManager.removeScrollLock(this);
+            }
+            Polymer.IronOverlayBehaviorImpl._openedChanged.apply(this, arguments);
+          }
+        },
+
+        /**
+         * Overridden from `IronOverlayBehavior`.
+         */
+        _renderOpened: function() {
+          if (!this.noAnimations && this.animationConfig.open) {
+            this.$.contentWrapper.classList.add('animating');
+            this.playAnimation('open');
+          } else {
+            Polymer.IronOverlayBehaviorImpl._renderOpened.apply(this, arguments);
+          }
+        },
+
+        /**
+         * Overridden from `IronOverlayBehavior`.
+         */
+        _renderClosed: function() {
+
+          if (!this.noAnimations && this.animationConfig.close) {
+            this.$.contentWrapper.classList.add('animating');
+            this.playAnimation('close');
+          } else {
+            Polymer.IronOverlayBehaviorImpl._renderClosed.apply(this, arguments);
+          }
+        },
+
+        /**
+         * Called when animation finishes on the dropdown (when opening or
+         * closing). Responsible for "completing" the process of opening or
+         * closing the dropdown by positioning it or setting its display to
+         * none.
+         */
+        _onNeonAnimationFinish: function() {
+          this.$.contentWrapper.classList.remove('animating');
+          if (this.opened) {
+            this._finishRenderOpened();
+          } else {
+            this._finishRenderClosed();
+          }
+        },
+
+        _onCaptureScroll: function() {
+          if (!this.allowOutsideScroll) {
+            this._restoreScrollPosition();
+          } else {
+            this._refitOnScrollRAF && window.cancelAnimationFrame(this._refitOnScrollRAF);
+            this._refitOnScrollRAF = window.requestAnimationFrame(this.refit.bind(this));
+          }
+        },
+
+        /**
+         * Memoizes the scroll position of the outside scrolling element.
+         * @private
+         */
+        _saveScrollPosition: function() {
+          if (document.scrollingElement) {
+            this._scrollTop = document.scrollingElement.scrollTop;
+            this._scrollLeft = document.scrollingElement.scrollLeft;
+          } else {
+            // Since we don't know if is the body or html, get max.
+            this._scrollTop = Math.max(document.documentElement.scrollTop, document.body.scrollTop);
+            this._scrollLeft = Math.max(document.documentElement.scrollLeft, document.body.scrollLeft);
+          }
+        },
+
+        /**
+         * Resets the scroll position of the outside scrolling element.
+         * @private
+         */
+        _restoreScrollPosition: function() {
+          if (document.scrollingElement) {
+            document.scrollingElement.scrollTop = this._scrollTop;
+            document.scrollingElement.scrollLeft = this._scrollLeft;
+          } else {
+            // Since we don't know if is the body or html, set both.
+            document.documentElement.scrollTop = this._scrollTop;
+            document.documentElement.scrollLeft = this._scrollLeft;
+            document.body.scrollTop = this._scrollTop;
+            document.body.scrollLeft = this._scrollLeft;
+          }
+        },
+
+        /**
+         * Constructs the final animation config from different properties used
+         * to configure specific parts of the opening and closing animations.
+         */
+        _updateAnimationConfig: function() {
+          var animations = (this.openAnimationConfig || []).concat(this.closeAnimationConfig || []);
+          for (var i = 0; i < animations.length; i++) {
+            animations[i].node = this.containedElement;
+          }
+          this.animationConfig = {
+            open: this.openAnimationConfig,
+            close: this.closeAnimationConfig
+          };
+        },
+
+        /**
+         * Updates the overlay position based on configured horizontal
+         * and vertical alignment.
+         */
+        _updateOverlayPosition: function() {
+          if (this.isAttached) {
+            // This triggers iron-resize, and iron-overlay-behavior will call refit if needed.
+            this.notifyResize();
+          }
+        },
+
+        /**
+         * Apply focus to focusTarget or containedElement
+         */
+        _applyFocus: function () {
+          var focusTarget = this.focusTarget || this.containedElement;
+          if (focusTarget && this.opened && !this.noAutoFocus) {
+            focusTarget.focus();
+          } else {
+            Polymer.IronOverlayBehaviorImpl._applyFocus.apply(this, arguments);
+          }
+        }
+      });
+    })();
+Polymer({
+    is: 'paper-menu-grow-height-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var height = rect.height;
+
+      this._effect = new KeyframeEffect(node, [{
+        height: (height / 2) + 'px'
+      }, {
+        height: height + 'px'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+
+  Polymer({
+    is: 'paper-menu-grow-width-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var width = rect.width;
+
+      this._effect = new KeyframeEffect(node, [{
+        width: (width / 2) + 'px'
+      }, {
+        width: width + 'px'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+
+  Polymer({
+    is: 'paper-menu-shrink-width-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var width = rect.width;
+
+      this._effect = new KeyframeEffect(node, [{
+        width: width + 'px'
+      }, {
+        width: width - (width / 20) + 'px'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+
+  Polymer({
+    is: 'paper-menu-shrink-height-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var height = rect.height;
+      var top = rect.top;
+
+      this.setPrefixedProperty(node, 'transformOrigin', '0 0');
+
+      this._effect = new KeyframeEffect(node, [{
+        height: height + 'px',
+        transform: 'translateY(0)'
+      }, {
+        height: height / 2 + 'px',
+        transform: 'translateY(-20px)'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+(function() {
+      'use strict';
+
+      var config = {
+        ANIMATION_CUBIC_BEZIER: 'cubic-bezier(.3,.95,.5,1)',
+        MAX_ANIMATION_TIME_MS: 400
+      };
+
+      var PaperMenuButton = Polymer({
+        is: 'paper-menu-button',
+
+        /**
+         * Fired when the dropdown opens.
+         *
+         * @event paper-dropdown-open
+         */
+
+        /**
+         * Fired when the dropdown closes.
+         *
+         * @event paper-dropdown-close
+         */
+
+        behaviors: [
+          Polymer.IronA11yKeysBehavior,
+          Polymer.IronControlState
+        ],
+
+        properties: {
+          /**
+           * True if the content is currently displayed.
+           */
+          opened: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            observer: '_openedChanged'
+          },
+
+          /**
+           * The orientation against which to align the menu dropdown
+           * horizontally relative to the dropdown trigger.
+           */
+          horizontalAlign: {
+            type: String,
+            value: 'left',
+            reflectToAttribute: true
+          },
+
+          /**
+           * The orientation against which to align the menu dropdown
+           * vertically relative to the dropdown trigger.
+           */
+          verticalAlign: {
+            type: String,
+            value: 'top',
+            reflectToAttribute: true
+          },
+
+          /**
+           * If true, the `horizontalAlign` and `verticalAlign` properties will
+           * be considered preferences instead of strict requirements when
+           * positioning the dropdown and may be changed if doing so reduces
+           * the area of the dropdown falling outside of `fitInto`.
+           */
+          dynamicAlign: {
+            type: Boolean
+          },
+
+          /**
+           * A pixel value that will be added to the position calculated for the
+           * given `horizontalAlign`. Use a negative value to offset to the
+           * left, or a positive value to offset to the right.
+           */
+          horizontalOffset: {
+            type: Number,
+            value: 0,
+            notify: true
+          },
+
+          /**
+           * A pixel value that will be added to the position calculated for the
+           * given `verticalAlign`. Use a negative value to offset towards the
+           * top, or a positive value to offset towards the bottom.
+           */
+          verticalOffset: {
+            type: Number,
+            value: 0,
+            notify: true
+          },
+
+          /**
+           * If true, the dropdown will be positioned so that it doesn't overlap
+           * the button.
+           */
+          noOverlap: {
+            type: Boolean
+          },
+
+          /**
+           * Set to true to disable animations when opening and closing the
+           * dropdown.
+           */
+          noAnimations: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Set to true to disable automatically closing the dropdown after
+           * a selection has been made.
+           */
+          ignoreSelect: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Set to true to enable automatically closing the dropdown after an
+           * item has been activated, even if the selection did not change.
+           */
+          closeOnActivate: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * An animation config. If provided, this will be used to animate the
+           * opening of the dropdown.
+           */
+          openAnimationConfig: {
+            type: Object,
+            value: function() {
+              return [{
+                name: 'fade-in-animation',
+                timing: {
+                  delay: 100,
+                  duration: 200
+                }
+              }, {
+                name: 'paper-menu-grow-width-animation',
+                timing: {
+                  delay: 100,
+                  duration: 150,
+                  easing: config.ANIMATION_CUBIC_BEZIER
+                }
+              }, {
+                name: 'paper-menu-grow-height-animation',
+                timing: {
+                  delay: 100,
+                  duration: 275,
+                  easing: config.ANIMATION_CUBIC_BEZIER
+                }
+              }];
+            }
+          },
+
+          /**
+           * An animation config. If provided, this will be used to animate the
+           * closing of the dropdown.
+           */
+          closeAnimationConfig: {
+            type: Object,
+            value: function() {
+              return [{
+                name: 'fade-out-animation',
+                timing: {
+                  duration: 150
+                }
+              }, {
+                name: 'paper-menu-shrink-width-animation',
+                timing: {
+                  delay: 100,
+                  duration: 50,
+                  easing: config.ANIMATION_CUBIC_BEZIER
+                }
+              }, {
+                name: 'paper-menu-shrink-height-animation',
+                timing: {
+                  duration: 200,
+                  easing: 'ease-in'
+                }
+              }];
+            }
+          },
+
+          /**
+           * By default, the dropdown will constrain scrolling on the page
+           * to itself when opened.
+           * Set to true in order to prevent scroll from being constrained
+           * to the dropdown when it opens.
+           */
+          allowOutsideScroll: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Whether focus should be restored to the button when the menu closes.
+           */
+          restoreFocusOnClose: {
+            type: Boolean,
+            value: true
+          },
+
+          /**
+           * This is the element intended to be bound as the focus target
+           * for the `iron-dropdown` contained by `paper-menu-button`.
+           */
+          _dropdownContent: {
+            type: Object
+          }
+        },
+
+        hostAttributes: {
+          role: 'group',
+          'aria-haspopup': 'true'
+        },
+
+        listeners: {
+          'iron-activate': '_onIronActivate',
+          'iron-select': '_onIronSelect'
+        },
+
+        /**
+         * The content element that is contained by the menu button, if any.
+         */
+        get contentElement() {
+          return Polymer.dom(this.$.content).getDistributedNodes()[0];
+        },
+
+        /**
+         * Toggles the drowpdown content between opened and closed.
+         */
+        toggle: function() {
+          if (this.opened) {
+            this.close();
+          } else {
+            this.open();
+          }
+        },
+
+        /**
+         * Make the dropdown content appear as an overlay positioned relative
+         * to the dropdown trigger.
+         */
+        open: function() {
+          if (this.disabled) {
+            return;
+          }
+
+          this.$.dropdown.open();
+        },
+
+        /**
+         * Hide the dropdown content.
+         */
+        close: function() {
+          this.$.dropdown.close();
+        },
+
+        /**
+         * When an `iron-select` event is received, the dropdown should
+         * automatically close on the assumption that a value has been chosen.
+         *
+         * @param {CustomEvent} event A CustomEvent instance with type
+         * set to `"iron-select"`.
+         */
+        _onIronSelect: function(event) {
+          if (!this.ignoreSelect) {
+            this.close();
+          }
+        },
+
+        /**
+         * Closes the dropdown when an `iron-activate` event is received if
+         * `closeOnActivate` is true.
+         *
+         * @param {CustomEvent} event A CustomEvent of type 'iron-activate'.
+         */
+        _onIronActivate: function(event) {
+          if (this.closeOnActivate) {
+            this.close();
+          }
+        },
+
+        /**
+         * When the dropdown opens, the `paper-menu-button` fires `paper-open`.
+         * When the dropdown closes, the `paper-menu-button` fires `paper-close`.
+         *
+         * @param {boolean} opened True if the dropdown is opened, otherwise false.
+         * @param {boolean} oldOpened The previous value of `opened`.
+         */
+        _openedChanged: function(opened, oldOpened) {
+          if (opened) {
+            // TODO(cdata): Update this when we can measure changes in distributed
+            // children in an idiomatic way.
+            // We poke this property in case the element has changed. This will
+            // cause the focus target for the `iron-dropdown` to be updated as
+            // necessary:
+            this._dropdownContent = this.contentElement;
+            this.fire('paper-dropdown-open');
+          } else if (oldOpened != null) {
+            this.fire('paper-dropdown-close');
+          }
+        },
+
+        /**
+         * If the dropdown is open when disabled becomes true, close the
+         * dropdown.
+         *
+         * @param {boolean} disabled True if disabled, otherwise false.
+         */
+        _disabledChanged: function(disabled) {
+          Polymer.IronControlState._disabledChanged.apply(this, arguments);
+          if (disabled && this.opened) {
+            this.close();
+          }
+        },
+
+        __onIronOverlayCanceled: function(event) {
+          var uiEvent = event.detail;
+          var target = Polymer.dom(uiEvent).rootTarget;
+          var trigger = this.$.trigger;
+          var path = Polymer.dom(uiEvent).path;
+
+          if (path.indexOf(trigger) > -1) {
+            event.preventDefault();
+          }
+        }
+      });
+
+      Object.keys(config).forEach(function (key) {
+        PaperMenuButton[key] = config[key];
+      });
+
+      Polymer.PaperMenuButton = PaperMenuButton;
+    })();
+(function() {
+      'use strict';
+
+      Polymer({
+        is: 'paper-dropdown-menu',
+
+        behaviors: [
+          Polymer.IronButtonState,
+          Polymer.IronControlState,
+          Polymer.IronFormElementBehavior,
+          Polymer.IronValidatableBehavior
+        ],
+
+        properties: {
+          /**
+           * The derived "label" of the currently selected item. This value
+           * is the `label` property on the selected item if set, or else the
+           * trimmed text content of the selected item.
+           */
+          selectedItemLabel: {
+            type: String,
+            notify: true,
+            readOnly: true
+          },
+
+          /**
+           * The last selected item. An item is selected if the dropdown menu has
+           * a child with class `dropdown-content`, and that child triggers an
+           * `iron-select` event with the selected `item` in the `detail`.
+           *
+           * @type {?Object}
+           */
+          selectedItem: {
+            type: Object,
+            notify: true,
+            readOnly: true
+          },
+
+          /**
+           * The value for this element that will be used when submitting in
+           * a form. It is read only, and will always have the same value
+           * as `selectedItemLabel`.
+           */
+          value: {
+            type: String,
+            notify: true,
+            readOnly: true
+          },
+
+          /**
+           * The label for the dropdown.
+           */
+          label: {
+            type: String
+          },
+
+          /**
+           * The placeholder for the dropdown.
+           */
+          placeholder: {
+            type: String
+          },
+
+          /**
+           * The error message to display when invalid.
+           */
+          errorMessage: {
+              type: String
+          },
+
+          /**
+           * True if the dropdown is open. Otherwise, false.
+           */
+          opened: {
+            type: Boolean,
+            notify: true,
+            value: false,
+            observer: '_openedChanged'
+          },
+
+          /**
+           * By default, the dropdown will constrain scrolling on the page
+           * to itself when opened.
+           * Set to true in order to prevent scroll from being constrained
+           * to the dropdown when it opens.
+           */
+          allowOutsideScroll: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Set to true to disable the floating label. Bind this to the
+           * `<paper-input-container>`'s `noLabelFloat` property.
+           */
+          noLabelFloat: {
+              type: Boolean,
+              value: false,
+              reflectToAttribute: true
+          },
+
+          /**
+           * Set to true to always float the label. Bind this to the
+           * `<paper-input-container>`'s `alwaysFloatLabel` property.
+           */
+          alwaysFloatLabel: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Set to true to disable animations when opening and closing the
+           * dropdown.
+           */
+          noAnimations: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * The orientation against which to align the menu dropdown
+           * horizontally relative to the dropdown trigger.
+           */
+          horizontalAlign: {
+            type: String,
+            value: 'right'
+          },
+
+          /**
+           * The orientation against which to align the menu dropdown
+           * vertically relative to the dropdown trigger.
+           */
+          verticalAlign: {
+            type: String,
+            value: 'top'
+          },
+
+          /**
+           * If true, the `horizontalAlign` and `verticalAlign` properties will
+           * be considered preferences instead of strict requirements when
+           * positioning the dropdown and may be changed if doing so reduces
+           * the area of the dropdown falling outside of `fitInto`.
+           */
+          dynamicAlign: {
+            type: Boolean
+          },
+        },
+
+        listeners: {
+          'tap': '_onTap'
+        },
+
+        keyBindings: {
+          'up down': 'open',
+          'esc': 'close'
+        },
+
+        hostAttributes: {
+          role: 'combobox',
+          'aria-autocomplete': 'none',
+          'aria-haspopup': 'true'
+        },
+
+        observers: [
+          '_selectedItemChanged(selectedItem)'
+        ],
+
+        attached: function() {
+          // NOTE(cdata): Due to timing, a preselected value in a `IronSelectable`
+          // child will cause an `iron-select` event to fire while the element is
+          // still in a `DocumentFragment`. This has the effect of causing
+          // handlers not to fire. So, we double check this value on attached:
+          var contentElement = this.contentElement;
+          if (contentElement && contentElement.selectedItem) {
+            this._setSelectedItem(contentElement.selectedItem);
+          }
+        },
+
+        /**
+         * The content element that is contained by the dropdown menu, if any.
+         */
+        get contentElement() {
+          return Polymer.dom(this.$.content).getDistributedNodes()[0];
+        },
+
+        /**
+         * Show the dropdown content.
+         */
+        open: function() {
+          this.$.menuButton.open();
+        },
+
+        /**
+         * Hide the dropdown content.
+         */
+        close: function() {
+          this.$.menuButton.close();
+        },
+
+        /**
+         * A handler that is called when `iron-select` is fired.
+         *
+         * @param {CustomEvent} event An `iron-select` event.
+         */
+        _onIronSelect: function(event) {
+          this._setSelectedItem(event.detail.item);
+        },
+
+        /**
+         * A handler that is called when `iron-deselect` is fired.
+         *
+         * @param {CustomEvent} event An `iron-deselect` event.
+         */
+        _onIronDeselect: function(event) {
+          this._setSelectedItem(null);
+        },
+
+        /**
+         * A handler that is called when the dropdown is tapped.
+         *
+         * @param {CustomEvent} event A tap event.
+         */
+        _onTap: function(event) {
+          if (Polymer.Gestures.findOriginalTarget(event) === this) {
+            this.open();
+          }
+        },
+
+        /**
+         * Compute the label for the dropdown given a selected item.
+         *
+         * @param {Element} selectedItem A selected Element item, with an
+         * optional `label` property.
+         */
+        _selectedItemChanged: function(selectedItem) {
+          var value = '';
+          if (!selectedItem) {
+            value = '';
+          } else {
+            value = selectedItem.label || selectedItem.getAttribute('label') || selectedItem.textContent.trim();
+          }
+
+          this._setValue(value);
+          this._setSelectedItemLabel(value);
+        },
+
+        /**
+         * Compute the vertical offset of the menu based on the value of
+         * `noLabelFloat`.
+         *
+         * @param {boolean} noLabelFloat True if the label should not float
+         * above the input, otherwise false.
+         */
+        _computeMenuVerticalOffset: function(noLabelFloat) {
+          // NOTE(cdata): These numbers are somewhat magical because they are
+          // derived from the metrics of elements internal to `paper-input`'s
+          // template. The metrics will change depending on whether or not the
+          // input has a floating label.
+          return noLabelFloat ? -4 : 8;
+        },
+
+        /**
+         * Returns false if the element is required and does not have a selection,
+         * and true otherwise.
+         * @param {*=} _value Ignored.
+         * @return {boolean} true if `required` is false, or if `required` is true
+         * and the element has a valid selection.
+         */
+        _getValidity: function(_value) {
+          return this.disabled || !this.required || (this.required && !!this.value);
+        },
+
+        _openedChanged: function() {
+          var openState = this.opened ? 'true' : 'false';
+          var e = this.contentElement;
+          if (e) {
+            e.setAttribute('aria-expanded', openState);
+          }
+        }
+      });
+    })();
+/** @polymerBehavior Polymer.PaperItemBehavior */
+  Polymer.PaperItemBehaviorImpl = {
+    hostAttributes: {
+      role: 'option',
+      tabindex: '0'
+    }
+  };
+
+  /** @polymerBehavior */
+  Polymer.PaperItemBehavior = [
+    Polymer.IronButtonState,
+    Polymer.IronControlState,
+    Polymer.PaperItemBehaviorImpl
+  ];
+Polymer({
+      is: 'paper-item',
+
+      behaviors: [
+        Polymer.PaperItemBehavior
+      ]
+    });
+Polymer({
+    is: 'chat-status-selector',
+    properties: {
+        isReady: Boolean,
+        selected: {
+            type: String,
+            value: "black",
+            observer: '_changeColor'
+        }
+    },
+
+    ready: function () {
+        this.isReady = true
+    },
+
+    _changeColor: function () {
+        if (!this.isReady) {
+            return
+        }
+        this.fire('iron-signal', {
+            name: 'change-status',
+            data: {color: this.selected}
+        });
     }
 });
 Polymer({
@@ -22600,7 +24049,11 @@ Polymer({
     },
     /** sends the message via channelstream conn manageer */
     sendMessage: function (event) {
-        this.$$('channelstream-connection').message(event.detail);
+        this.getConnection().message(event.detail);
+    },
+    changeStatus: function(event){
+        var stateUpdates = event.detail;
+        this.getConnection().updateUserState({user_state:stateUpdates});
     },
 
     /** kicks off the connection */
@@ -22614,6 +24067,7 @@ Polymer({
         channelstreamConnection.messageUrl = AppConf.messageUrl;
         channelstreamConnection.longPollUrl = AppConf.longPollUrl;
         channelstreamConnection.websocketUrl = AppConf.websocketUrl;
+        channelstreamConnection.userStateUrl = AppConf.userStateUrl;
 
         // add a mutator for demo purposes - modify the request
         // to inject some state vars to connection json
@@ -22661,6 +24115,21 @@ Polymer({
             chatView.loadHistory(data.channels_info.channels[key].history, key);
         }
     },
+
+    subscribeToChannel: function (event) {
+        var connection = this.getConnection();
+        var channel = event.detail.channel;
+        var index = this.get('channels').indexOf(channel);
+        if (index !== -1) {
+            var toUnsubscribe = connection.calculateUnsubscribe([channel]);
+            connection.unsubscribe(toUnsubscribe);
+        }
+        else {
+            var toSubscribe = connection.calculateSubscribe([channel]);
+            connection.subscribe(toSubscribe);
+        }
+    },
+
     handleSubscribed: function (event) {
         console.log('handleSubscribed');
         var chatView = this.$$('chat-view');

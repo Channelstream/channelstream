@@ -20,6 +20,7 @@ class Channel(object):
         self.connections = {}
         self.notify_presence = False
         self.broadcast_presence_with_user_lists = False
+        self.notify_state = False
         self.salvageable = False
         self.store_history = False
         self.history_size = 10
@@ -32,7 +33,7 @@ class Channel(object):
     def reconfigure_from_dict(self, config):
         if config:
             keys = ('notify_presence', 'store_history', 'history_size',
-                    'broadcast_presence_with_user_lists')
+                    'broadcast_presence_with_user_lists', 'notify_state')
             for key in keys:
                 val = config.get(key)
                 if val is not None:
@@ -107,6 +108,25 @@ class Channel(object):
         if action == 'joined':
             payload['state'] = channelstream.USERS[username].public_state
         self.add_message(payload, exclude_users=[username])
+        return payload
+
+    def send_user_state(self, user_inst, changed):
+        self.last_active = datetime.utcnow()
+
+        public_changed = [
+            x for x in changed if x['key'] in user_inst.public_state
+        ]
+
+        payload = {
+            'uuid': str(uuid.uuid4()).replace('-', ''),
+            'type': 'user_state_change',
+            'user': user_inst.username,
+            'timestamp': self.last_active,
+            'channel': self.name,
+            'message': {'state': user_inst.public_state,
+                        'changed': public_changed}
+        }
+        self.add_message(payload)
         return payload
 
     def add_message(self, message, pm_users=None, exclude_users=None):

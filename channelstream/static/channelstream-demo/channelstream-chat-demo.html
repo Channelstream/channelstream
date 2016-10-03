@@ -2543,6 +2543,8 @@ this handler will forever try to re-establish connection to the server increment
 
         <iron-ajax id="ajaxListen" url="" handle-as="text" loading="{{loadingListen}}" last-response="{{listenLastResponse}}" on-request="_handleListenOpen" on-error="_handleListenError" on-response="_handleListenMessageEvent" debounce-duration="100"></iron-ajax>
 
+        <iron-ajax id="ajaxSetUserState" url="" handle-as="json" method="post" content-type="application/json" loading="{{loadingSetUserState}}" last-response="{{userSetStateLastResponse}}" on-response="_handleSetUserState" debounce-duration="100"></iron-ajax>
+        
     </template>
     </dom-module>
 <!--
@@ -5840,24 +5842,657 @@ will only render 20.
 
     </template>
     </dom-module>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+Material design: [Menus](https://www.google.com/design/spec/components/menus.html)
+
+`<paper-listbox>` implements an accessible listbox control with Material Design styling. The focused item
+is highlighted, and the selected item has bolded text.
+
+    <paper-listbox>
+      <paper-item>Item 1</paper-item>
+      <paper-item>Item 2</paper-item>
+    </paper-listbox>
+
+An initial selection can be specified with the `selected` attribute.
+
+    <paper-listbox selected="0">
+      <paper-item>Item 1</paper-item>
+      <paper-item>Item 2</paper-item>
+    </paper-listbox>
+
+Make a multi-select listbox with the `multi` attribute. Items in a multi-select listbox can be deselected,
+and multiple item can be selected.
+
+    <paper-listbox multi>
+      <paper-item>Item 1</paper-item>
+      <paper-item>Item 2</paper-item>
+    </paper-listbox>
+
+### Styling
+
+The following custom properties and mixins are available for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--paper-listbox-background-color`   | Menu background color                                            | `--primary-background-color`
+`--paper-listbox-color`              | Menu foreground color                                            | `--primary-text-color`
+`--paper-listbox`                    | Mixin applied to the listbox                                        | `{}`
+
+### Accessibility
+
+`<paper-listbox>` has `role="listbox"` by default. A multi-select listbox will also have
+`aria-multiselectable` set. It implements key bindings to navigate through the listbox with the up and
+down arrow keys, esc to exit the listbox, and enter to activate a listbox item. Typing the first letter
+of a listbox item will also focus it.
+
+@group Paper Elements
+@element paper-listbox
+@hero hero.svg
+@demo demo/index.html
+-->
+
+<dom-module id="paper-listbox" assetpath="../../../bower_components/paper-listbox/">
+  <template>
+    <style>
+      :host {
+        display: block;
+        padding: 8px 0;
+
+        background: var(--paper-listbox-background-color, --primary-background-color);
+        color: var(--paper-listbox-color, --primary-text-color);
+
+        @apply(--paper-listbox);
+      }
+    </style>
+
+    <content></content>
+  </template>
+
+  </dom-module>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+`<opaque-animation>` makes an element `opacity:1` for the duration of the animation. Used to prevent
+webkit/safari from drawing a frame before an animation for elements that animate from display:none.
+-->
+
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+`<iron-dropdown>` is a generalized element that is useful when you have
+hidden content (`.dropdown-content`) that is revealed due to some change in
+state that should cause it to do so.
+
+Note that this is a low-level element intended to be used as part of other
+composite elements that cause dropdowns to be revealed.
+
+Examples of elements that might be implemented using an `iron-dropdown`
+include comboboxes, menubuttons, selects. The list goes on.
+
+The `<iron-dropdown>` element exposes attributes that allow the position
+of the `.dropdown-content` relative to the `.dropdown-trigger` to be
+configured.
+
+    <iron-dropdown horizontal-align="right" vertical-align="top">
+      <div class="dropdown-content">Hello!</div>
+    </iron-dropdown>
+
+In the above example, the `<div>` with class `.dropdown-content` will be
+hidden until the dropdown element has `opened` set to true, or when the `open`
+method is called on the element.
+
+@demo demo/index.html
+-->
+
+<dom-module id="iron-dropdown" assetpath="../../../bower_components/iron-dropdown/">
+  <template>
+    <style>
+      :host {
+        position: fixed;
+      }
+
+      #contentWrapper ::content > * {
+        overflow: auto;
+      }
+
+      #contentWrapper.animating ::content > * {
+        overflow: hidden;
+      }
+    </style>
+
+    <div id="contentWrapper">
+      <content id="content" select=".dropdown-content"></content>
+    </div>
+  </template>
+
+  </dom-module>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+Material design: [Dropdown buttons](https://www.google.com/design/spec/components/buttons.html#buttons-dropdown-buttons)
+
+`paper-menu-button` allows one to compose a designated "trigger" element with
+another element that represents "content", to create a dropdown menu that
+displays the "content" when the "trigger" is clicked.
+
+The child element with the class `dropdown-trigger` will be used as the
+"trigger" element. The child element with the class `dropdown-content` will be
+used as the "content" element.
+
+The `paper-menu-button` is sensitive to its content's `iron-select` events. If
+the "content" element triggers an `iron-select` event, the `paper-menu-button`
+will close automatically.
+
+Example:
+
+    <paper-menu-button>
+      <paper-icon-button icon="menu" class="dropdown-trigger"></paper-icon-button>
+      <paper-menu class="dropdown-content">
+        <paper-item>Share</paper-item>
+        <paper-item>Settings</paper-item>
+        <paper-item>Help</paper-item>
+      </paper-menu>
+    </paper-menu-button>
+
+### Styling
+
+The following custom properties and mixins are also available for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--paper-menu-button-dropdown-background` | Background color of the paper-menu-button dropdown | `--primary-background-color`
+`--paper-menu-button` | Mixin applied to the paper-menu-button | `{}`
+`--paper-menu-button-disabled` | Mixin applied to the paper-menu-button when disabled | `{}`
+`--paper-menu-button-dropdown` | Mixin applied to the paper-menu-button dropdown | `{}`
+`--paper-menu-button-content` | Mixin applied to the paper-menu-button content | `{}`
+
+@hero hero.svg
+@demo demo/index.html
+-->
+
+<dom-module id="paper-menu-button" assetpath="../../../bower_components/paper-menu-button/">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        position: relative;
+        padding: 8px;
+        outline: none;
+
+        @apply(--paper-menu-button);
+      }
+
+      :host([disabled]) {
+        cursor: auto;
+        color: var(--disabled-text-color);
+
+        @apply(--paper-menu-button-disabled);
+      }
+
+      iron-dropdown {
+        @apply(--paper-menu-button-dropdown);
+      }
+
+      .dropdown-content {
+        @apply(--shadow-elevation-2dp);
+
+        position: relative;
+        border-radius: 2px;
+        background-color: var(--paper-menu-button-dropdown-background, --primary-background-color);
+
+        @apply(--paper-menu-button-content);
+      }
+
+      :host([vertical-align="top"]) .dropdown-content {
+        margin-bottom: 20px;
+        margin-top: -10px;
+        top: 10px;
+      }
+
+      :host([vertical-align="bottom"]) .dropdown-content {
+        bottom: 10px;
+        margin-bottom: -10px;
+        margin-top: 20px;
+      }
+      
+      #trigger {
+        cursor: pointer;
+      }
+    </style>
+
+    <div id="trigger" on-tap="toggle">
+      <content select=".dropdown-trigger"></content>
+    </div>
+
+    <iron-dropdown id="dropdown" opened="{{opened}}" horizontal-align="[[horizontalAlign]]" vertical-align="[[verticalAlign]]" dynamic-align="[[dynamicAlign]]" horizontal-offset="[[horizontalOffset]]" vertical-offset="[[verticalOffset]]" no-overlap="[[noOverlap]]" open-animation-config="[[openAnimationConfig]]" close-animation-config="[[closeAnimationConfig]]" no-animations="[[noAnimations]]" focus-target="[[_dropdownContent]]" allow-outside-scroll="[[allowOutsideScroll]]" restore-focus-on-close="[[restoreFocusOnClose]]" on-iron-overlay-canceled="__onIronOverlayCanceled">
+      <div class="dropdown-content">
+        <content id="content" select=".dropdown-content"></content>
+      </div>
+    </iron-dropdown>
+  </template>
+
+  </dom-module>
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><iron-iconset-svg name="paper-dropdown-menu" size="24">
+<svg><defs>
+<g id="arrow-drop-down"><path d="M7 10l5 5 5-5z"></path></g>
+</defs></svg>
+</iron-iconset-svg>
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><dom-module id="paper-dropdown-menu-shared-styles" assetpath="../../../bower_components/paper-dropdown-menu/">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        position: relative;
+        text-align: left;
+
+        /* NOTE(cdata): Both values are needed, since some phones require the
+         * value to be `transparent`.
+         */
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        -webkit-tap-highlight-color: transparent;
+
+        --paper-input-container-input: {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          max-width: 100%;
+          box-sizing: border-box;
+          cursor: pointer;
+        };
+
+        @apply(--paper-dropdown-menu);
+      }
+
+      :host([disabled]) {
+        @apply(--paper-dropdown-menu-disabled);
+      }
+
+      :host([noink]) paper-ripple {
+        display: none;
+      }
+
+      :host([no-label-float]) paper-ripple {
+        top: 8px;
+      }
+
+      paper-ripple {
+        top: 12px;
+        left: 0px;
+        bottom: 8px;
+        right: 0px;
+
+        @apply(--paper-dropdown-menu-ripple);
+      }
+
+      paper-menu-button {
+        display: block;
+        padding: 0;
+
+        @apply(--paper-dropdown-menu-button);
+      }
+
+      paper-input {
+        @apply(--paper-dropdown-menu-input);
+      }
+
+      iron-icon {
+        color: var(--disabled-text-color);
+
+        @apply(--paper-dropdown-menu-icon);
+      }
+    </style>
+  </template>
+</dom-module>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+Material design: [Dropdown menus](https://www.google.com/design/spec/components/buttons.html#buttons-dropdown-buttons)
+
+`paper-dropdown-menu` is similar to a native browser select element.
+`paper-dropdown-menu` works with selectable content. The currently selected
+item is displayed in the control. If no item is selected, the `label` is
+displayed instead.
+
+Example:
+
+    <paper-dropdown-menu label="Your favourite pastry">
+      <paper-listbox class="dropdown-content">
+        <paper-item>Croissant</paper-item>
+        <paper-item>Donut</paper-item>
+        <paper-item>Financier</paper-item>
+        <paper-item>Madeleine</paper-item>
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+This example renders a dropdown menu with 4 options.
+
+The child element with the class `dropdown-content` is used as the dropdown
+menu. This can be a [`paper-listbox`](paper-listbox), or any other or
+element that acts like an [`iron-selector`](iron-selector).
+
+Specifically, the menu child must fire an
+[`iron-select`](iron-selector#event-iron-select) event when one of its
+children is selected, and an [`iron-deselect`](iron-selector#event-iron-deselect)
+event when a child is deselected. The selected or deselected item must
+be passed as the event's `detail.item` property.
+
+Applications can listen for the `iron-select` and `iron-deselect` events
+to react when options are selected and deselected.
+
+### Styling
+
+The following custom properties and mixins are also available for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--paper-dropdown-menu` | A mixin that is applied to the element host | `{}`
+`--paper-dropdown-menu-disabled` | A mixin that is applied to the element host when disabled | `{}`
+`--paper-dropdown-menu-ripple` | A mixin that is applied to the internal ripple | `{}`
+`--paper-dropdown-menu-button` | A mixin that is applied to the internal menu button | `{}`
+`--paper-dropdown-menu-input` | A mixin that is applied to the internal paper input | `{}`
+`--paper-dropdown-menu-icon` | A mixin that is applied to the internal icon | `{}`
+
+You can also use any of the `paper-input-container` and `paper-menu-button`
+style mixins and custom properties to style the internal input and menu button
+respectively.
+
+@group Paper Elements
+@element paper-dropdown-menu
+@hero hero.svg
+@demo demo/index.html
+-->
+
+<dom-module id="paper-dropdown-menu" assetpath="../../../bower_components/paper-dropdown-menu/">
+  <template>
+    <style include="paper-dropdown-menu-shared-styles"></style>
+
+    <!-- this div fulfills an a11y requirement for combobox, do not remove -->
+    <span role="button"></span>
+    <paper-menu-button id="menuButton" vertical-align="[[verticalAlign]]" horizontal-align="[[horizontalAlign]]" dynamic-align="[[dynamicAlign]]" vertical-offset="[[_computeMenuVerticalOffset(noLabelFloat)]]" disabled="[[disabled]]" no-animations="[[noAnimations]]" on-iron-select="_onIronSelect" on-iron-deselect="_onIronDeselect" opened="{{opened}}" close-on-activate="" allow-outside-scroll="[[allowOutsideScroll]]">
+      <div class="dropdown-trigger">
+        <paper-ripple></paper-ripple>
+        <!-- paper-input has type="text" for a11y, do not remove -->
+        <paper-input type="text" invalid="[[invalid]]" readonly="" disabled="[[disabled]]" value="[[selectedItemLabel]]" placeholder="[[placeholder]]" error-message="[[errorMessage]]" always-float-label="[[alwaysFloatLabel]]" no-label-float="[[noLabelFloat]]" label="[[label]]">
+          <iron-icon icon="paper-dropdown-menu:arrow-drop-down" suffix=""></iron-icon>
+        </paper-input>
+      </div>
+      <content id="content" select=".dropdown-content"></content>
+    </paper-menu-button>
+  </template>
+
+  </dom-module>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+`PaperItemBehavior` is a convenience behavior shared by <paper-item> and
+<paper-icon-item> that manages the shared control states and attributes of
+the items.
+-->
+
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><dom-module id="paper-item-shared-styles" assetpath="../../../bower_components/paper-item/">
+  <template>
+    <style>
+      :host, .paper-item {
+        display: block;
+        position: relative;
+        min-height: var(--paper-item-min-height, 48px);
+        padding: 0px 16px;
+      }
+
+      .paper-item {
+        @apply(--paper-font-subhead);
+        border:none;
+        outline: none;
+        background: white;
+        width: 100%;
+        text-align: left;
+      }
+
+      :host([hidden]), .paper-item[hidden] {
+        display: none !important;
+      }
+
+      :host(.iron-selected), .paper-item.iron-selected {
+        font-weight: var(--paper-item-selected-weight, bold);
+
+        @apply(--paper-item-selected);
+      }
+
+      :host([disabled]), .paper-item[disabled] {
+        color: var(--paper-item-disabled-color, --disabled-text-color);
+
+        @apply(--paper-item-disabled);
+      }
+
+      :host(:focus), .paper-item:focus {
+        position: relative;
+        outline: 0;
+
+        @apply(--paper-item-focused);
+      }
+
+      :host(:focus):before, .paper-item:focus:before {
+        @apply(--layout-fit);
+
+        background: currentColor;
+        content: '';
+        opacity: var(--dark-divider-opacity);
+        pointer-events: none;
+
+        @apply(--paper-item-focused-before);
+      }
+    </style>
+  </template>
+</dom-module>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+--><!--
+Material design: [Lists](https://www.google.com/design/spec/components/lists.html)
+
+`<paper-item>` is an interactive list item. By default, it is a horizontal flexbox.
+
+    <paper-item>Item</paper-item>
+
+Use this element with `<paper-item-body>` to make Material Design styled two-line and three-line
+items.
+
+    <paper-item>
+      <paper-item-body two-line>
+        <div>Show your status</div>
+        <div secondary>Your status is visible to everyone</div>
+      </paper-item-body>
+      <iron-icon icon="warning"></iron-icon>
+    </paper-item>
+
+To use `paper-item` as a link, wrap it in an anchor tag. Since `paper-item` will
+already receive focus, you may want to prevent the anchor tag from receiving
+focus as well by setting its tabindex to -1.
+
+    <a href="https://www.polymer-project.org/" tabindex="-1">
+      <paper-item raised>Polymer Project</paper-item>
+    </a>
+
+If you are concerned about performance and want to use `paper-item` in a `paper-listbox`
+with many items, you can just use a native `button` with the `paper-item` class
+applied (provided you have correctly included the shared styles):
+
+    <style is="custom-style" include="paper-item-shared-styles"></style>
+
+    <paper-listbox>
+      <button class="paper-item" role="option">Inbox</button>
+      <button class="paper-item" role="option">Starred</button>
+      <button class="paper-item" role="option">Sent mail</button>
+    </paper-listbox>
+
+### Styling
+
+The following custom properties and mixins are available for styling:
+
+Custom property               | Description                                  | Default
+------------------------------|----------------------------------------------|----------
+`--paper-item-min-height`     | Minimum height of the item                   | `48px`
+`--paper-item`                | Mixin applied to the item                    | `{}`
+`--paper-item-selected-weight`| The font weight of a selected item           | `bold`
+`--paper-item-selected`       | Mixin applied to selected paper-items        | `{}`
+`--paper-item-disabled-color` | The color for disabled paper-items           | `--disabled-text-color`
+`--paper-item-disabled`       | Mixin applied to disabled paper-items        | `{}`
+`--paper-item-focused`        | Mixin applied to focused paper-items         | `{}`
+`--paper-item-focused-before` | Mixin applied to :before focused paper-items | `{}`
+
+### Accessibility
+
+This element has `role="listitem"` by default. Depending on usage, it may be more appropriate to set
+`role="menuitem"`, `role="menuitemcheckbox"` or `role="menuitemradio"`.
+
+    <paper-item role="menuitemcheckbox">
+      <paper-item-body>
+        Show your status
+      </paper-item-body>
+      <paper-checkbox></paper-checkbox>
+    </paper-item>
+
+@group Paper Elements
+@element paper-item
+@demo demo/index.html
+-->
+
+<dom-module id="paper-item" assetpath="../../../bower_components/paper-item/">
+  <template>
+    <style include="paper-item-shared-styles"></style>
+    <style>
+      :host {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        @apply(--paper-font-subhead);
+
+        @apply(--paper-item);
+      }
+    </style>
+
+    <content></content>
+  </template>
+
+  </dom-module>
+<dom-module id="chat-status-selector" assetpath="../app-views/chat-view/chat-status-selector/">
+    <template>
+        <style>
+            paper-item {
+                width: 150px;
+            }
+        </style>
+        <paper-dropdown-menu label="Status Color">
+            <paper-listbox class="dropdown-content" selected="{{selected}}" attr-for-selected="value">
+                <paper-item value="black">Black</paper-item>
+                <paper-item value="red">Red</paper-item>
+                <paper-item value="green">Green</paper-item>
+                <paper-item value="blue">Blue</paper-item>
+            </paper-listbox>
+        </paper-dropdown-menu>
+    </template>
+
+    </dom-module>
 <dom-module id="chat-view" assetpath="../app-views/chat-view/">
     <template>
         <style include="iron-flex iron-flex-alignment">
-            chat-user-list {
+            :host .right-column {
                 width: 250px;
                 margin-left: 30px;
             }
 
-            chat-message-list {
+            :host .left-column {
                 @apply(--layout-flex);
             }
 
-            #message-input {
+            :host #message-input {
                 display: inline-block;
                 min-width: 50%;
             }
 
-            paper-tabs {
+            :host paper-tabs {
                 --paper-tabs-selection-bar-color: #000000;
                 display: inline-flex;
             }
@@ -5878,16 +6513,21 @@ will only render 20.
             </div>
         </paper-dialog>
 
-
-        <paper-tabs selected="{{selectedChannel}}" attr-for-selected="name">
-            <template is="dom-repeat" items="[[channels]]">
-                <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
-            </template>
-        </paper-tabs>
-
         <div class="layout horizontal">
-            <chat-message-list messages="[[visibleChannelMessages]]"></chat-message-list>
-            <chat-user-list users="[[visibleChannelUsers]]" users-states="[[usersStates]]"></chat-user-list>
+            <div class="left-column">
+                <paper-tabs selected="{{selectedChannel}}" attr-for-selected="name">
+                    <template is="dom-repeat" items="[[channels]]">
+                        <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
+                    </template>
+                </paper-tabs>
+                <chat-message-list messages="[[visibleChannelMessages]]"></chat-message-list>
+            </div>
+            <div class="right-column">
+                <chat-status-selector></chat-status-selector>
+                <chat-user-list users="[[visibleChannelUsers]]" users-states="[[usersStates]]"></chat-user-list>
+            </div>
+
+
         </div>
 
         <form is="iron-form" id="message-form" on-iron-form-presubmit="formPresubmit" method="post">
@@ -5916,8 +6556,8 @@ will only render 20.
         <channelstream-connection id="channelstream-connection" username="{{user.username}}" channels="{{channels}}" on-channelstream-listen-message="receivedMessage" on-channelstream-connected="handleConnected" on-channelstream-subscribed="handleSubscribed" on-channelstream-unsubscribed="handleUnsubscribed" on-channelstream-channels-changed="handleChannelsChange">
         </channelstream-connection>
         <iron-signals on-iron-signal-send-message="sendMessage"></iron-signals>
-        <iron-signals on-iron-signal-channelpicker-subscribe="channelUnsubscribe"></iron-signals>
-        <iron-signals on-iron-signal-channelpicker-unsubscribe="channelSubscribe"></iron-signals>
+        <iron-signals on-iron-signal-change-status="changeStatus"></iron-signals>
+        <iron-signals on-iron-signal-channelpicker-subscribe="subscribeToChannel"></iron-signals>
 
         <app-location route="{{route}}"></app-location>
         <app-route route="{{route}}" pattern="/demo/:page" data="{{routeData}}" tail="{{tail}}">

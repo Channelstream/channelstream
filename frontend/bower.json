@@ -31,7 +31,10 @@
     "iron-form": "PolymerElements/iron-form#^1.1.4",
     "paper-dialog": "PolymerElements/paper-dialog#^1.1.0",
     "paper-input": "PolymerElements/paper-input#^1.1.19",
-    "iron-list": "PolymerElements/iron-list#^1.3.9"
+    "iron-list": "PolymerElements/iron-list#^1.3.9",
+    "paper-listbox": "polymerelements/paper-listbox#^1.1.2",
+    "paper-dropdown-menu": "polymerelements/paper-dropdown-menu#^1.4.1",
+    "paper-item": "polymerelements/paper-item#^1.2.1"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

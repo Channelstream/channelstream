@@ -62,6 +62,19 @@ Polymer({
      */
 
     /**
+     * Fired when `setUserState()` succeeds.
+     *
+     * @event channelstream-set-user-state
+     */
+
+    /**
+     * Fired when `setUserState()` fails.
+     *
+     * @event channelstream-set-user-state-error
+     */
+
+
+    /**
      * Fired when listening connection receives a message.
      *
      * @event channelstream-listen-message
@@ -133,6 +146,11 @@ Polymer({
         },
         /** URL used in `unsubscribe()`. */
         unsubscribeUrl: {
+            type: String,
+            value: ''
+        },
+        /** URL used in `updateUserState()`. */
+        userStateUrl: {
             type: String,
             value: ''
         },
@@ -210,6 +228,9 @@ Polymer({
         }(),
         disconnect: function () {
             return []
+        }(),
+        userState: function () {
+            return []
         }()
     },
     ready: function () {
@@ -230,6 +251,8 @@ Polymer({
         this.listen(this, 'channelstream-listen-opened', 'testEvent');
         this.listen(this, 'channelstream-listen-closed', 'testEvent');
         this.listen(this, 'channelstream-listen-error', 'testEvent');
+        this.listen(this, 'channelstream-set-user-state', 'testEvent');
+        this.listen(this, 'channelstream-set-user-state-error', 'testEvent');
     },
 
     /**
@@ -253,6 +276,23 @@ Polymer({
      */
     addMutator: function (type, func) {
         this.mutators[type].push(func);
+    },
+    /**
+     * Updates user state.
+     *
+     */
+    updateUserState: function (stateObj) {
+        var request = this.$['ajaxSetUserState'];
+        request.url = this.userStateUrl;
+        request.body = {
+            username: this.username,
+            conn_id: this.connectionId,
+            update_state: stateObj
+        };
+        for (var i = 0; i < this.mutators.userState.length; i++) {
+            this.mutators.userState[i](request);
+        }
+        request.generateRequest();
     },
     /**
      * Subscribes user to channels.
@@ -514,6 +554,14 @@ Polymer({
         this.fire('channelstream-unsubscribe-error', event.detail);
     },
 
+    _handleSetUserState: function (event) {
+        this.fire('channelstream-set-user-state', event.detail.response);
+    },
+
+    _handleSetUserStateError: function (event) {
+        this.fire('channelstream-set-user-state-error', event.detail);
+    },
+    
     testEvent: function (event) {
         console.debug('launched', event.type, event.detail);
     }
