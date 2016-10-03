@@ -4059,7 +4059,7 @@ Custom property | Description | Default
 
             }
 
-            :host paper-material {
+            paper-material {
                 padding: 25px;
             }
 
@@ -6478,22 +6478,24 @@ This element has `role="listitem"` by default. Depending on usage, it may be mor
 <dom-module id="chat-view" assetpath="../app-views/chat-view/">
     <template>
         <style include="iron-flex iron-flex-alignment">
-            :host .right-column {
+            :host {
+                --paper-tabs-selection-bar-color: #000000;
+            }
+            .right-column {
                 width: 250px;
                 margin-left: 30px;
             }
 
-            :host .left-column {
+            .left-column {
                 @apply(--layout-flex);
             }
 
-            :host #message-input {
+            #message-input {
                 display: inline-block;
                 min-width: 50%;
             }
 
-            :host paper-tabs {
-                --paper-tabs-selection-bar-color: #000000;
+            paper-tabs {
                 display: inline-flex;
             }
         </style>
