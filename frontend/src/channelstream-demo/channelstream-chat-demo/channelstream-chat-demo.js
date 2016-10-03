@@ -62,7 +62,7 @@ Polymer({
                 chatView.addMessage(message);
             }
             // update users on presence message
-            if (message.type == 'presence') {
+            if (message.type === 'presence') {
                 // push channel and user states for newly joined user
                 if (message.message.action === 'joined') {
                     this.push(['channelsStates',
@@ -70,12 +70,15 @@ Polymer({
                     this.set(
                         ['usersStates', message.user],
                         {state: message.state, user: message.user})
-
                 }
                 else {
                     var ix = this.channelsStates[message.channel].users.indexOf(message.user);
                     this.splice(['channelsStates', message.channel, 'users'], ix, 1);
                 }
+            }
+            if (message.type === 'user_state_change'){
+                console.log('user_state_change', message);
+                this.set(['usersStates', message.user, 'state'], message.message.state)
             }
         }
     },

@@ -6,5 +6,8 @@ Polymer({
     },
     _computedEmail: function (op, username) {
         return this.usersStates[username].state.email;
+    },
+    _computedColor: function (op, username){
+        return this.usersStates[username].state.color || 'black';
     }
 });

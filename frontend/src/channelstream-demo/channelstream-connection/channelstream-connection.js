@@ -185,10 +185,10 @@ Polymer({
             value: 0
         },
         /** Should use websockets or long-polling by default */
-        useWebsocket: {
+        noWebsocket: {
             type: Boolean,
             reflectToAttribute: true,
-            value: true
+            value: false
         },
         connected: {
             type: Boolean,
@@ -394,10 +394,10 @@ Polymer({
      */
     startListening: function (event) {
         this.fire('start-listening', {});
-        if (this.useWebsocket) {
-            this.useWebsocket = window.WebSocket ? true : false;
+        if (this.noWebsocket === false) {
+            this.noWebsocket = window.WebSocket ? false : true;
         }
-        if (this.useWebsocket) {
+        if (this.noWebsocket === false) {
             this.openWebsocket();
         }
         else {

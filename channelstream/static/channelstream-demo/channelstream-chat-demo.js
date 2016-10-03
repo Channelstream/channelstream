@@ -14291,10 +14291,10 @@ Polymer({
             value: 0
         },
         /** Should use websockets or long-polling by default */
-        useWebsocket: {
+        noWebsocket: {
             type: Boolean,
             reflectToAttribute: true,
-            value: true
+            value: false
         },
         connected: {
             type: Boolean,
@@ -14500,10 +14500,10 @@ Polymer({
      */
     startListening: function (event) {
         this.fire('start-listening', {});
-        if (this.useWebsocket) {
-            this.useWebsocket = window.WebSocket ? true : false;
+        if (this.noWebsocket === false) {
+            this.noWebsocket = window.WebSocket ? false : true;
         }
-        if (this.useWebsocket) {
+        if (this.noWebsocket === false) {
             this.openWebsocket();
         }
         else {
@@ -22410,6 +22410,9 @@ Polymer({
     },
     _computedEmail: function (op, username) {
         return this.usersStates[username].state.email;
+    },
+    _computedColor: function (op, username){
+        return this.usersStates[username].state.color || 'black';
     }
 });
 (function() {
@@ -24030,7 +24033,7 @@ Polymer({
                 chatView.addMessage(message);
             }
             // update users on presence message
-            if (message.type == 'presence') {
+            if (message.type === 'presence') {
                 // push channel and user states for newly joined user
                 if (message.message.action === 'joined') {
                     this.push(['channelsStates',
@@ -24038,12 +24041,15 @@ Polymer({
                     this.set(
                         ['usersStates', message.user],
                         {state: message.state, user: message.user})
-
                 }
                 else {
                     var ix = this.channelsStates[message.channel].users.indexOf(message.user);
                     this.splice(['channelsStates', message.channel, 'users'], ix, 1);
                 }
+            }
+            if (message.type === 'user_state_change'){
+                console.log('user_state_change', message);
+                this.set(['usersStates', message.user, 'state'], message.message.state)
             }
         }
     },

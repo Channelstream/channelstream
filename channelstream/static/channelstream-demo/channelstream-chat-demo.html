@@ -5836,7 +5836,7 @@ will only render 20.
         <template is="dom-repeat" items="[[users]]">
             <div class="user" tabindex$="[[tabIndex]]">
                 <chat-avatar username="[[item]]" email="[[_computedEmail(usersStates.*, item)]]"></chat-avatar>
-                [[item]]
+                <span style$="color:{{_computedColor(usersStates.*, item)}}">[[item]]</span>
             </div>
         </template>
 
