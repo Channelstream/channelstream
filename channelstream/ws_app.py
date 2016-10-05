@@ -9,7 +9,7 @@ import channelstream
 class ChatApplicationSocket(WebSocket):
     def opened(self):
         self.qs = parse_qs(self.environ['QUERY_STRING'])
-        self.conn_id = self.qs['conn_id'][0]
+        self.conn_id = self.qs.get('conn_id', '-')[0]
         if self.conn_id not in channelstream.CONNECTIONS:
             # close connection instantly if user played with id
             self.close()
