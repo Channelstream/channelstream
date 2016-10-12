@@ -7,6 +7,7 @@ REQUIREMENTS = open(os.path.join(here, 'requirements.txt')).readlines()
 
 compiled = re.compile('([^=><]*).*')
 
+
 def parse_req(req):
     return compiled.search(req).group(1).strip()
 
@@ -14,7 +15,7 @@ def parse_req(req):
 requires = [_f for _f in map(parse_req, REQUIREMENTS) if _f]
 
 setup(name='channelstream',
-      version='0.5.2',
+      version='0.6.0',
       description='Websocket server supporting channels/users communication',
       classifiers=[
           'Intended Audience :: Developers'
