@@ -4,7 +4,7 @@ from datetime import datetime
 import gevent
 import six
 from gevent.queue import Queue, Empty
-from pyramid.view import view_config
+from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
 import channelstream
@@ -60,6 +60,7 @@ def get_connection_channels(connection):
     return sorted(found_channels)
 
 
+@view_defaults(route_name='action', renderer='json', permission='access')
 class ServerViews(object):
     def __init__(self, request):
         self.request = request
@@ -125,8 +126,7 @@ class ServerViews(object):
             include_users=include_users, exclude_channels=exclude_channels)
         return channels_info
 
-    @view_config(route_name='action', match_param='action=connect',
-                 renderer='json', permission='access')
+    @view_config(match_param='action=connect')
     def connect(self):
         """
         return the id of connected users - will be secured with password string
@@ -180,8 +180,7 @@ class ServerViews(object):
                 'channels': channels,
                 'channels_info': channels_info}
 
-    @view_config(route_name='action', match_param='action=subscribe',
-                 renderer='json', permission='access')
+    @view_config(match_param='action=subscribe')
     def subscribe(self, *args):
         """ call this to subscribe specific connection to new channels """
         json_body = self.request.json_body
@@ -225,8 +224,7 @@ class ServerViews(object):
                 "channels_info": channels_info,
                 "subscribed_to": sorted(subscribed_to)}
 
-    @view_config(route_name='action', match_param='action=unsubscribe',
-                 renderer='json', permission='access')
+    @view_config(match_param='action=unsubscribe')
     def unsubscribe(self, *args):
         """ call this to unsubscribe specific connection from channels """
         json_body = self.request.json_body
@@ -264,8 +262,7 @@ class ServerViews(object):
                 "channels_info": channels_info,
                 "unsubscribed_from": sorted(unsubscribe_channels)}
 
-    @view_config(route_name='action', match_param='action=listen',
-                 renderer='string')
+    @view_config(match_param='action=listen', permission=NO_PERMISSION_REQUIRED)
     def listen(self):
         config = self.request.registry.settings
         self.conn_id = self.request.params.get('conn_id')
@@ -307,8 +304,7 @@ class ServerViews(object):
         self.request.response.app_iter = yield_response()
         return self.request.response
 
-    @view_config(route_name='action', match_param='action=user_state',
-                 renderer='json', permission='access')
+    @view_config(match_param='action=user_state')
     def user_state(self):
         """ set the status of specific user """
         json_body = self.request.json_body
@@ -338,8 +334,7 @@ class ServerViews(object):
             'public_keys': user_inst.state_public_keys
         }
 
-    @view_config(route_name='action', match_param='action=message',
-                 renderer='json', permission='access')
+    @view_config(match_param='action=message')
     def message(self):
         msg_list = self.request.json_body
         for msg in msg_list:
@@ -348,8 +343,8 @@ class ServerViews(object):
             gevent.spawn(pass_message, msg, channelstream.stats)
         return True
 
-    @view_config(route_name='action', match_param='action=disconnect',
-                 renderer='json', permission=NO_PERMISSION_REQUIRED)
+    @view_config(match_param='action=disconnect',
+                 permission=NO_PERMISSION_REQUIRED)
     def disconnect(self):
         json_body = self.request.json_body
         if json_body:
@@ -362,8 +357,7 @@ class ServerViews(object):
             conn.mark_for_gc()
         return True
 
-    @view_config(route_name='action', match_param='action=channel_config',
-                 renderer='json', permission='access')
+    @view_config(match_param='action=channel_config')
     def channel_config(self):
         """ call this to reconfigure channels """
         json_body = self.request.json_body
@@ -429,8 +423,7 @@ class ServerViews(object):
             "uptime": uptime
         }
 
-    @view_config(route_name='action', match_param='action=info',
-                 renderer='json', permission='access')
+    @view_config(match_param='action=info')
     def info(self):
         if not self.request.body:
             req_channels = channelstream.CHANNELS.keys()

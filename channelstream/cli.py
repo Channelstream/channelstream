@@ -103,8 +103,7 @@ def cli_start():
     config['debug'] = asbool(config['debug'])
     config['port'] = int(config['port'])
     config['demo'] = asbool(config['demo'])
-    
-    
+
     for key in ['allow_posting_from', 'allow_cors']:
         if not config[key]:
             continue
@@ -128,7 +127,7 @@ def cli_start():
     log.info('Admin interface available on {}/admin'.format(url))
     if config['demo']:
         log.info('Demo enabled, visit {}/demo'.format(url))
-        log.warning('NEVER run the demo in production')
+        log.warning('\n\n!! NEVER run the demo in production !!\n\n')
 
     server = WSGIServer((config['host'], config['port']),
                         RoutingApplication(config))

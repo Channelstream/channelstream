@@ -3,7 +3,7 @@ import random
 import uuid
 import requests
 import six
-from pyramid.view import view_config
+from pyramid.view import view_config, view_defaults
 from itsdangerous import TimestampSigner
 from requests.auth import HTTPBasicAuth
 
@@ -26,12 +26,6 @@ def make_request(request, payload, endpoint, auth=None):
     return response
 
 
-def enable_demo(context, request):
-    if request.registry.settings['demo']:
-        return True
-    return False
-
-
 CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True,
                                 'store_history': True,
                                 'notify_state': True,
@@ -41,6 +35,7 @@ CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True,
                               'notify_presence': True}}
 
 
+@view_defaults(route_name='section_action', renderer='json')
 class DemoViews(object):
     def __init__(self, request):
         self.request = request
@@ -48,17 +43,14 @@ class DemoViews(object):
         self.request.response.headers.add('Cache-Control',
                                           'no-cache, no-store')
 
-    @view_config(route_name='demo', renderer='templates/demo.jinja2',
-                 custom_predicates=[enable_demo])
+    @view_config(route_name='demo', renderer='templates/demo.jinja2')
     def demo(self):
         """Render demo page"""
         random_name = 'anon_%s' % random.randint(1, 999999)
         return {'username': random_name}
 
-    @view_config(route_name='section_action',
-                 match_param=['section=demo', 'action=connect'],
-                 renderer='json', request_method="POST",
-                 custom_predicates=[enable_demo])
+    @view_config(match_param=['section=demo', 'action=connect'],
+                 request_method="POST")
     def connect(self):
         """handle authorization of users trying to connect"""
         channels = self.request.json_body['channels']
@@ -80,10 +72,8 @@ class DemoViews(object):
         self.request.response.status = result.status_code
         return result.json()
 
-    @view_config(route_name='section_action',
-                 match_param=['section=demo', 'action=user_state'],
-                 renderer='json', request_method="POST",
-                 custom_predicates=[enable_demo])
+    @view_config(match_param=['section=demo', 'action=user_state'],
+                 request_method="POST")
     def user_state(self):
         """"can be used to subscribe specific connection to other channels"""
         request_data = self.request.json_body
@@ -97,10 +87,8 @@ class DemoViews(object):
         self.request.response.status = result.status_code
         return result.json()
 
-    @view_config(route_name='section_action',
-                 match_param=['section=demo', 'action=subscribe'],
-                 renderer='json', request_method="POST",
-                 custom_predicates=[enable_demo])
+    @view_config(match_param=['section=demo', 'action=subscribe'],
+                 request_method="POST")
     def subscribe(self):
         """"can be used to subscribe specific connection to other channels"""
         request_data = self.request.json_body
@@ -114,10 +102,8 @@ class DemoViews(object):
         self.request.response.status = result.status_code
         return result.json()
 
-    @view_config(route_name='section_action',
-                 match_param=['section=demo', 'action=unsubscribe'],
-                 renderer='json', request_method="POST",
-                 custom_predicates=[enable_demo])
+    @view_config(match_param=['section=demo', 'action=unsubscribe'],
+                 request_method="POST")
     def unsubscribe(self):
         """"can be used to unsubscribe specific connection to other channels"""
         request_data = self.request.json_body
@@ -128,10 +114,8 @@ class DemoViews(object):
         self.request.response.status = result.status_code
         return result.json()
 
-    @view_config(route_name='section_action',
-                 match_param=['section=demo', 'action=message'],
-                 renderer='json', request_method="POST",
-                 custom_predicates=[enable_demo])
+    @view_config(match_param=['section=demo', 'action=message'],
+                 request_method="POST")
     def message(self):
         """send message to channel/users"""
         request_data = self.request.json_body
@@ -145,10 +129,8 @@ class DemoViews(object):
         self.request.response.status = result.status_code
         return result.json()
 
-    @view_config(route_name='section_action',
-                 match_param=['section=demo', 'action=channel_config'],
-                 renderer='json', request_method="POST",
-                 custom_predicates=[enable_demo])
+    @view_config(match_param=['section=demo', 'action=channel_config'],
+                 request_method="POST")
     def channel_config(self):
         """configure channel defaults"""
 
@@ -170,10 +152,7 @@ class DemoViews(object):
                                  headers=self.secret_headers).json()
         return response
 
-    @view_config(route_name='section_action',
-                 match_param=['section=demo', 'action=info'],
-                 renderer='json',
-                 custom_predicates=[enable_demo])
+    @view_config(match_param=['section=demo', 'action=info'])
     def info(self):
         """gets information for the "admin" demo page"""
         admin = self.request.registry.settings['admin_user']

@@ -34,6 +34,8 @@ def make_app(server_config):
     config.add_request_method('channelstream.utils.handle_cors', 'handle_cors')
     config.include('pyramid_jinja2')
     config.include('channelstream.wsgi_views')
-    config.scan('channelstream.wsgi_views')
+    config.scan('channelstream.wsgi_views.server')
+    if config.registry.settings['demo']:
+        config.scan('channelstream.wsgi_views.demo')
     app = config.make_wsgi_app()
     return app
