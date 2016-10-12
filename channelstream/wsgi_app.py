@@ -35,6 +35,7 @@ def make_app(server_config):
     config.include('pyramid_jinja2')
     config.include('channelstream.wsgi_views')
     config.scan('channelstream.wsgi_views.server')
+    config.scan('channelstream.events')
     if config.registry.settings['demo']:
         config.scan('channelstream.wsgi_views.demo')
     app = config.make_wsgi_app()
