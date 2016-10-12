@@ -379,13 +379,6 @@ class ServerViews(object):
                                                include_users=False)
         return channels_info
 
-    @view_config(
-        context='channelstream.wsgi_views.wsgi_security:RequestBasicChallenge')
-    def admin_challenge(self):
-        response = HTTPUnauthorized()
-        response.headers.update(forget(self.request))
-        return response
-
     @view_config(route_name='admin',
                  renderer='templates/admin.jinja2', permission='access')
     def admin(self):
@@ -442,3 +435,10 @@ class ServerViews(object):
                 'include_connections', True)
         channels_info = self.get_common_info(req_channels, info_config)
         return channels_info
+
+@view_config(
+    context='channelstream.wsgi_views.wsgi_security:RequestBasicChallenge')
+def admin_challenge(request):
+    response = HTTPUnauthorized()
+    response.headers.update(forget(request))
+    return response
