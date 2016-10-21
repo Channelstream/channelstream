@@ -3,7 +3,7 @@ from pyramid.events import subscriber
 
 
 @subscriber(NewRequest)
-def mysubscriber(event):
+def use_prefix(event):
     # rewrite prefix if X-Script-Name header is present
     script_name = event.request.headers.get('X_SCRIPT_NAME', '')
     if script_name:
