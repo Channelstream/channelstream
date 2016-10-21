@@ -688,7 +688,7 @@ default:
 return value != null ? value : undefined;
 }
 }
-});Polymer.version = "1.6.1";Polymer.Base._addFeature({
+});Polymer.version = "1.7.0";Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
 this._prepBehaviors();
@@ -2961,6 +2961,9 @@ var next = node.nextSibling;
 if (node.localName === 'template' && !node.hasAttribute('preserve-content')) {
 this._parseTemplate(node, i, list, annote);
 }
+if (node.localName == 'slot') {
+node = this._replaceSlotWithContent(node);
+}
 if (node.nodeType === Node.TEXT_NODE) {
 var n = next;
 while (n && n.nodeType === Node.TEXT_NODE) {
@@ -2985,6 +2988,22 @@ node = next;
 i++;
 }
 }
+},
+_replaceSlotWithContent: function (slot) {
+var content = slot.ownerDocument.createElement('content');
+while (slot.firstChild) {
+content.appendChild(slot.firstChild);
+}
+var attrs = slot.attributes;
+for (var i = 0; i < attrs.length; i++) {
+var attr = attrs[i];
+content.setAttribute(attr.name, attr.value);
+}
+var name = slot.getAttribute('name');
+var select = name ? '[slot=\'' + name + '\']' : ':not([slot])';
+content.setAttribute('select', select);
+slot.parentNode.replaceChild(content, slot);
+return content;
 },
 _parseTemplate: function (node, index, list, parent) {
 var content = document.createDocumentFragment();
@@ -3119,7 +3138,30 @@ resolveCss: resolveCss,
 resolveAttrs: resolveAttrs,
 resolveUrl: resolveUrl
 };
-}());Polymer.Base._addFeature({
+}());Polymer.Path = {
+root: function (path) {
+var dotIndex = path.indexOf('.');
+if (dotIndex === -1) {
+return path;
+}
+return path.slice(0, dotIndex);
+},
+isDeep: function (path) {
+return path.indexOf('.') !== -1;
+},
+isAncestor: function (base, path) {
+return base.indexOf(path + '.') === 0;
+},
+isDescendant: function (base, path) {
+return path.indexOf(base + '.') === 0;
+},
+translate: function (base, newBase, path) {
+return newBase + path.slice(base.length);
+},
+matches: function (base, wildcard, path) {
+return base === path || this.isAncestor(base, path) || Boolean(wildcard) && this.isDescendant(base, path);
+}
+};Polymer.Base._addFeature({
 _prepAnnotations: function () {
 if (!this._template) {
 this._notes = [];
@@ -3149,7 +3191,7 @@ var signature = this._parseMethod(p.value);
 if (signature) {
 p.signature = signature;
 } else {
-p.model = this._modelForPath(p.value);
+p.model = Polymer.Path.root(p.value);
 }
 }
 }
@@ -3412,8 +3454,9 @@ mouseEvent.stopPropagation();
 }
 };
 function setupTeardownMouseCanceller(setup) {
-for (var i = 0, en; i < MOUSE_EVENTS.length; i++) {
-en = MOUSE_EVENTS[i];
+var events = IS_TOUCH_ONLY ? ['click'] : MOUSE_EVENTS;
+for (var i = 0, en; i < events.length; i++) {
+en = events[i];
 if (setup) {
 document.addEventListener(en, mouseCanceller, true);
 } else {
@@ -3422,9 +3465,6 @@ document.removeEventListener(en, mouseCanceller, true);
 }
 }
 function ignoreMouse() {
-if (IS_TOUCH_ONLY) {
-return;
-}
 if (!POINTERSTATE.mouse.mouseIgnoreJob) {
 setupTeardownMouseCanceller(true);
 }
@@ -3617,7 +3657,7 @@ node[GESTURE_KEY] = gobj = {};
 }
 for (var i = 0, dep, gd; i < deps.length; i++) {
 dep = deps[i];
-if (IS_TOUCH_ONLY && MOUSE_EVENTS.indexOf(dep) > -1) {
+if (IS_TOUCH_ONLY && MOUSE_EVENTS.indexOf(dep) > -1 && dep !== 'click') {
 continue;
 }
 gd = gobj[dep];
@@ -4276,7 +4316,7 @@ fx.fn.call(this, property, this[property], fx.effect, old, fromAbove);
 },
 _clearPath: function (path) {
 for (var prop in this.__data__) {
-if (prop.indexOf(path + '.') === 0) {
+if (Polymer.Path.isDescendant(path, prop)) {
 this.__data__[prop] = undefined;
 }
 }
@@ -4353,7 +4393,7 @@ _addAnnotatedListener: function (model, index, property, path, event, negated) {
 if (!model._bindListeners) {
 model._bindListeners = [];
 }
-var fn = this._notedListenerFactory(property, path, this._isStructured(path), negated);
+var fn = this._notedListenerFactory(property, path, Polymer.Path.isDeep(path), negated);
 var eventName = event || Polymer.CaseMap.camelToDashCase(property) + '-changed';
 model._bindListeners.push({
 index: index,
@@ -4363,16 +4403,14 @@ changedFn: fn,
 event: eventName
 });
 },
-_isStructured: function (path) {
-return path.indexOf('.') > 0;
-},
 _isEventBogus: function (e, target) {
 return e.path && e.path[0] !== target;
 },
 _notedListenerFactory: function (property, path, isStructured, negated) {
 return function (target, value, targetPath) {
 if (targetPath) {
-this._notifyPath(this._fixPath(path, property, targetPath), value);
+var newPath = Polymer.Path.translate(property, path, targetPath);
+this._notifyPath(newPath, value);
 } else {
 value = target[property];
 if (negated) {
@@ -4494,7 +4532,7 @@ if (bailoutEarly && v === undefined) {
 return;
 }
 if (arg.wildcard) {
-var matches = path.indexOf(name + '.') === 0;
+var matches = Polymer.Path.isAncestor(path, name);
 values[i] = {
 path: matches ? path : name,
 value: matches ? value : v,
@@ -4721,8 +4759,8 @@ a.literal = true;
 break;
 }
 if (!a.literal) {
-a.model = this._modelForPath(arg);
-a.structured = arg.indexOf('.') > 0;
+a.model = Polymer.Path.root(arg);
+a.structured = Polymer.Path.isDeep(arg);
 if (a.structured) {
 a.wildcard = arg.slice(-2) == '.*';
 if (a.wildcard) {
@@ -4912,6 +4950,7 @@ this._handlers = [];
 });
 }());(function () {
 'use strict';
+var Path = Polymer.Path;
 Polymer.Base._addFeature({
 notifyPath: function (path, value, fromAbove) {
 var info = {};
@@ -5019,7 +5058,7 @@ info.path = parts.join('.');
 return prop;
 },
 _pathEffector: function (path, value) {
-var model = this._modelForPath(path);
+var model = Path.root(path);
 var fx$ = this._propertyEffects && this._propertyEffects[model];
 if (fx$) {
 for (var i = 0, fx; i < fx$.length && (fx = fx$[i]); i++) {
@@ -5034,34 +5073,30 @@ this._notifyBoundPaths(path, value);
 }
 },
 _annotationPathEffect: function (path, value, effect) {
-if (effect.value === path || effect.value.indexOf(path + '.') === 0) {
+if (Path.matches(effect.value, false, path)) {
 Polymer.Bind._annotationEffect.call(this, path, value, effect);
-} else if (path.indexOf(effect.value + '.') === 0 && !effect.negate) {
+} else if (!effect.negate && Path.isDescendant(effect.value, path)) {
 var node = this._nodes[effect.index];
 if (node && node._notifyPath) {
-var p = this._fixPath(effect.name, effect.value, path);
-node._notifyPath(p, value, true);
+var newPath = Path.translate(effect.value, effect.name, path);
+node._notifyPath(newPath, value, true);
 }
 }
 },
 _complexObserverPathEffect: function (path, value, effect) {
-if (this._pathMatchesEffect(path, effect)) {
+if (Path.matches(effect.trigger.name, effect.trigger.wildcard, path)) {
 Polymer.Bind._complexObserverEffect.call(this, path, value, effect);
 }
 },
 _computePathEffect: function (path, value, effect) {
-if (this._pathMatchesEffect(path, effect)) {
+if (Path.matches(effect.trigger.name, effect.trigger.wildcard, path)) {
 Polymer.Bind._computeEffect.call(this, path, value, effect);
 }
 },
 _annotatedComputationPathEffect: function (path, value, effect) {
-if (this._pathMatchesEffect(path, effect)) {
+if (Path.matches(effect.trigger.name, effect.trigger.wildcard, path)) {
 Polymer.Bind._annotatedComputationEffect.call(this, path, value, effect);
 }
-},
-_pathMatchesEffect: function (path, effect) {
-var effectArg = effect.trigger.name;
-return effectArg == path || effectArg.indexOf(path + '.') === 0 || effect.trigger.wildcard && path.indexOf(effectArg + '.') === 0;
 },
 linkPaths: function (to, from) {
 this._boundPaths = this._boundPaths || {};
@@ -5079,18 +5114,15 @@ delete this._boundPaths[path];
 _notifyBoundPaths: function (path, value) {
 for (var a in this._boundPaths) {
 var b = this._boundPaths[a];
-if (path.indexOf(a + '.') == 0) {
-this._notifyPath(this._fixPath(b, a, path), value);
-} else if (path.indexOf(b + '.') == 0) {
-this._notifyPath(this._fixPath(a, b, path), value);
+if (Path.isDescendant(a, path)) {
+this._notifyPath(Path.translate(a, b, path), value);
+} else if (Path.isDescendant(b, path)) {
+this._notifyPath(Path.translate(b, a, path), value);
 }
 }
-},
-_fixPath: function (property, root, path) {
-return property + path.slice(root.length);
 },
 _notifyPathUp: function (path, value) {
-var rootName = this._modelForPath(path);
+var rootName = Path.root(path);
 var dashCaseName = Polymer.CaseMap.camelToDashCase(rootName);
 var eventName = dashCaseName + this._EVENT_CHANGED;
 this.fire(eventName, {
@@ -5100,10 +5132,6 @@ value: value
 bubbles: false,
 _useCache: true
 });
-},
-_modelForPath: function (path) {
-var dot = path.indexOf('.');
-return dot < 0 ? path : path.slice(0, dot);
 },
 _EVENT_CHANGED: '-changed',
 notifySplices: function (path, splices) {
@@ -5210,8 +5238,6 @@ _annotationPathEffect: Polymer.Base._annotationPathEffect,
 _complexObserverPathEffect: Polymer.Base._complexObserverPathEffect,
 _annotatedComputationPathEffect: Polymer.Base._annotatedComputationPathEffect,
 _computePathEffect: Polymer.Base._computePathEffect,
-_modelForPath: Polymer.Base._modelForPath,
-_pathMatchesEffect: Polymer.Base._pathMatchesEffect,
 _notifyBoundPaths: Polymer.Base._notifyBoundPaths,
 _getPathParts: Polymer.Base._getPathParts
 });
@@ -5505,7 +5531,9 @@ var e$ = Polymer.TreeApi.arrayCopy(content.querySelectorAll(this.MODULE_STYLES_S
 for (var i = 0, e; i < e$.length; i++) {
 e = e$[i];
 if (e.localName === 'template') {
+if (!e.hasAttribute('preserve-content')) {
 cssText += this.cssFromElement(e);
+}
 } else {
 if (e.localName === 'style') {
 var include = e.getAttribute(this.INCLUDE_ATTR);
@@ -5632,9 +5660,21 @@ elementStyles: function (element, callback) {
 var styles = element._styles;
 var cssText = '';
 var cssBuildType = element.__cssBuild;
+var passthrough = settings.useNativeShadow || cssBuildType === 'shady';
+var cb;
+if (passthrough) {
+var self = this;
+cb = function (rule) {
+rule.selector = self._slottedToContent(rule.selector);
+rule.selector = rule.selector.replace(ROOT, ':host > *');
+if (callback) {
+callback(rule);
+}
+};
+}
 for (var i = 0, l = styles.length, s; i < l && (s = styles[i]); i++) {
 var rules = styleUtil.rulesForStyle(s);
-cssText += settings.useNativeShadow || cssBuildType === 'shady' ? styleUtil.toCssText(rules, callback) : this.css(rules, element.is, element.extends, callback, element._scopeCssViaAttr) + '\n\n';
+cssText += passthrough ? styleUtil.toCssText(rules, cb) : this.css(rules, element.is, element.extends, callback, element._scopeCssViaAttr) + '\n\n';
 }
 return cssText.trim();
 },
@@ -5682,6 +5722,8 @@ var stop = false;
 var hostContext = false;
 var self = this;
 selector = selector.trim();
+selector = this._slottedToContent(selector);
+selector = selector.replace(ROOT, ':host > *');
 selector = selector.replace(CONTENT_START, HOST + ' $1');
 selector = selector.replace(SIMPLE_SELECTOR_SEP, function (m, c, s) {
 if (!stop) {
@@ -5760,12 +5802,13 @@ this._transformRule(rule, this._transformDocumentSelector);
 }
 },
 normalizeRootSelector: function (rule) {
-if (rule.selector === ROOT) {
-rule.selector = 'html';
-}
+rule.selector = rule.selector.replace(ROOT, 'html');
 },
 _transformDocumentSelector: function (selector) {
 return selector.match(SCOPE_JUMP) ? this._transformComplexSelector(selector, SCOPE_DOC_SELECTOR) : this._transformSimpleSelector(selector.trim(), SCOPE_DOC_SELECTOR);
+},
+_slottedToContent: function (cssText) {
+return cssText.replace(SLOTTED_PAREN, CONTENT + '> $1');
 },
 SCOPE_NAME: 'style-scope'
 };
@@ -5788,6 +5831,7 @@ var PSEUDO_PREFIX = ':';
 var CLASS = 'class';
 var CONTENT_START = new RegExp('^(' + CONTENT + ')');
 var SELECTOR_NO_MATCH = 'should_not_match';
+var SLOTTED_PAREN = /(?:::slotted)(?:\(((?:\([^)(]*\)|[^)(]*)+?)\))/g;
 return api;
 }();Polymer.StyleExtends = function () {
 var styleUtil = Polymer.StyleUtil;
@@ -5965,7 +6009,7 @@ prefix = matchText + ';' + prefix;
 return prefix + out.join('; ') + ';';
 }
 function fixVars(matchText, varA, varB) {
-return 'var(' + varA + ',' + 'var(' + varB + '));';
+return 'var(' + varA + ',' + 'var(' + varB + '))';
 }
 function atApplyToCssProperties(mixinName, fallbacks) {
 mixinName = mixinName.replace(APPLY_NAME_CLEAN, '');
@@ -6026,20 +6070,28 @@ _map: mixinMap,
 _separator: MIXIN_VAR_SEP,
 transform: function (styles, elementProto) {
 this.__currentElementProto = elementProto;
-styleUtil.forRulesInStyles(styles, this._boundTransformRule);
+styleUtil.forRulesInStyles(styles, this._boundFindDefinitions);
+styleUtil.forRulesInStyles(styles, this._boundFindApplications);
+if (elementProto) {
 elementProto.__applyShimInvalid = false;
+}
 this.__currentElementProto = null;
 },
-transformRule: function (rule) {
-rule.cssText = this.transformCssText(rule.parsedCssText);
+_findDefinitions: function (rule) {
+var cssText = rule.parsedCssText;
+cssText = cssText.replace(BAD_VAR, fixVars);
+cssText = cssText.replace(VAR_ASSIGN, produceCssProperties);
+rule.cssText = cssText;
 if (rule.selector === ':root') {
 rule.selector = ':host > *';
 }
 },
-transformCssText: function (cssText) {
-cssText = cssText.replace(BAD_VAR, fixVars);
-cssText = cssText.replace(VAR_ASSIGN, produceCssProperties);
-return consumeCssProperties(cssText);
+_findApplications: function (rule) {
+rule.cssText = consumeCssProperties(rule.cssText);
+},
+transformRule: function (rule) {
+this._findDefinitions(rule);
+this._findApplications(rule);
 },
 _getInitialValueForProperty: function (property) {
 if (!this._measureElement) {
@@ -6051,6 +6103,8 @@ return window.getComputedStyle(this._measureElement).getPropertyValue(property);
 }
 };
 ApplyShim._boundTransformRule = ApplyShim.transformRule.bind(ApplyShim);
+ApplyShim._boundFindDefinitions = ApplyShim._findDefinitions.bind(ApplyShim);
+ApplyShim._boundFindApplications = ApplyShim._findApplications.bind(ApplyShim);
 return ApplyShim;
 }();(function () {
 var prepElement = Polymer.Base._prepElement;
@@ -6361,6 +6415,10 @@ properties: props,
 key: o
 };
 },
+_rootSelector: /:root|:host\s*>\s*\*/,
+_checkRoot: function (hostScope, selector) {
+return Boolean(selector.match(this._rootSelector)) || hostScope === 'html' && selector.indexOf('html') > -1;
+},
 whenHostOrRootRule: function (scope, rule, style, callback) {
 if (!rule.propertyInfo) {
 self.decorateRule(rule);
@@ -6370,16 +6428,12 @@ return;
 }
 var hostScope = scope.is ? styleTransformer._calcHostScope(scope.is, scope.extends) : 'html';
 var parsedSelector = rule.parsedSelector;
-var isRoot = parsedSelector === ':root';
-var isHost = parsedSelector.indexOf(':host') === 0;
+var isRoot = this._checkRoot(hostScope, parsedSelector);
+var isHost = !isRoot && parsedSelector.indexOf(':host') === 0;
 var cssBuild = scope.__cssBuild || style.__cssBuild;
 if (cssBuild === 'shady') {
-isRoot = parsedSelector === hostScope + ' > *.' + hostScope || parsedSelector.indexOf('html') !== -1;
+isRoot = parsedSelector === hostScope + ' > *.' + hostScope || parsedSelector.indexOf('html') > -1;
 isHost = !isRoot && parsedSelector.indexOf(hostScope) === 0;
-}
-if (cssBuild === 'shadow') {
-isRoot = parsedSelector === ':host > *' || parsedSelector === 'html';
-isHost = isHost && !isRoot;
 }
 if (!isRoot && !isHost) {
 return;
@@ -6389,6 +6443,9 @@ if (isHost) {
 if (settings.useNativeShadow && !rule.transformedSelector) {
 rule.transformedSelector = styleTransformer._transformRuleCss(rule, styleTransformer._transformComplexSelector, scope.is, hostScope);
 }
+selectorToMatch = rule.transformedSelector || rule.parsedSelector;
+}
+if (isRoot && hostScope === 'html') {
 selectorToMatch = rule.transformedSelector || rule.parsedSelector;
 }
 callback({
@@ -6495,6 +6552,9 @@ if (cssText) {
 style = styleUtil.applyCss(cssText, selector, null, element._scopeStyle);
 }
 } else if (!style.parentNode) {
+if (IS_IE && cssText.indexOf('@media') > -1) {
+style.textContent = cssText;
+}
 styleUtil.applyStyle(style, null, element._scopeStyle);
 }
 }
@@ -6504,9 +6564,6 @@ if (element._customStyle != style) {
 style._useCount++;
 }
 element._customStyle = style;
-}
-if (IS_IE) {
-style.textContent = style.textContent;
 }
 return style;
 },
@@ -6950,10 +7007,10 @@ var styleRules = styleUtil.rulesForStyle(e);
 if (!targetedBuild) {
 styleUtil.forEachRule(styleRules, function (rule) {
 styleTransformer.documentRule(rule);
-if (settings.useNativeCSSProperties && !buildType) {
-applyShim.transformRule(rule);
-}
 });
+if (settings.useNativeCSSProperties && !buildType) {
+applyShim.transform([e]);
+}
 }
 if (settings.useNativeCSSProperties) {
 e.textContent = styleUtil.toCssText(styleRules);
@@ -7180,8 +7237,7 @@ _forwardInstanceProp: function (inst, prop, value) {
 },
 _notifyPathUpImpl: function (path, value) {
 var dataHost = this.dataHost;
-var dot = path.indexOf('.');
-var root = dot < 0 ? path : path.slice(0, dot);
+var root = Polymer.Path.root(path);
 dataHost._forwardInstancePath.call(dataHost, this, path, value);
 if (root in dataHost._parentProps) {
 dataHost._templatized._notifyPath(dataHost._parentPropPrefix + path, value);
@@ -7191,7 +7247,7 @@ _pathEffectorImpl: function (path, value, fromAbove) {
 if (this._forwardParentPath) {
 if (path.indexOf(this._parentPropPrefix) === 0) {
 var subPath = path.substring(this._parentPropPrefix.length);
-var model = this._modelForPath(subPath);
+var model = Polymer.Path.root(subPath);
 if (model in this._parentProps) {
 this._forwardParentPath(subPath, value);
 }
@@ -9189,8 +9245,7 @@ Polymer({
          * `iconset_name:icon_name`.
          */
         icon: {
-          type: String,
-          observer: '_iconChanged'
+          type: String
         },
 
         /**
@@ -9198,8 +9253,7 @@ Polymer({
          * iconset.
          */
         theme: {
-          type: String,
-          observer: '_updateIcon'
+          type: String
         },
 
         /**
@@ -9208,19 +9262,24 @@ Polymer({
          * precedence over a given icon attribute.
          */
         src: {
-          type: String,
-          observer: '_srcChanged'
+          type: String
         },
 
         /**
          * @type {!Polymer.IronMeta}
          */
         _meta: {
-          value: Polymer.Base.create('iron-meta', {type: 'iconset'}),
-          observer: '_updateIcon'
+          value: Polymer.Base.create('iron-meta', {type: 'iconset'})
         }
 
       },
+
+      observers: [
+        '_updateIcon(_meta, isAttached)',
+        '_updateIcon(theme, isAttached)',
+        '_srcChanged(src, isAttached)',
+        '_iconChanged(icon, isAttached)'
+      ],
 
       _DEFAULT_ICONSET: 'icons',
 
@@ -9578,12 +9637,16 @@ Polymer({
       * To get @ returned, set noSpecialChars = false
      */
     function normalizedKeyForEvent(keyEvent, noSpecialChars) {
-      // Fall back from .key, to .keyIdentifier, to .keyCode, and then to
-      // .detail.key to support artificial keyboard events.
-      return transformKey(keyEvent.key, noSpecialChars) ||
-        transformKeyIdentifier(keyEvent.keyIdentifier) ||
-        transformKeyCode(keyEvent.keyCode) ||
-        transformKey(keyEvent.detail ? keyEvent.detail.key : keyEvent.detail, noSpecialChars) || '';
+      // Fall back from .key, to .detail.key for artifical keyboard events,
+      // and then to deprecated .keyIdentifier and .keyCode.
+      if (keyEvent.key) {
+        return transformKey(keyEvent.key, noSpecialChars);
+      }
+      if (keyEvent.detail && keyEvent.detail.key) {
+        return transformKey(keyEvent.detail.key, noSpecialChars);
+      }
+      return transformKeyIdentifier(keyEvent.keyIdentifier) ||
+        transformKeyCode(keyEvent.keyCode) || '';
     }
 
     function keyComboMatchesEvent(keyCombo, event) {
@@ -9921,6 +9984,8 @@ Polymer({
       }
     },
 
+    _SEARCH_RESET_TIMEOUT_MS: 1000,
+
     hostAttributes: {
       'role': 'menu',
       'tabindex': '0'
@@ -10001,16 +10066,40 @@ Polymer({
      * @param {KeyboardEvent} event A KeyboardEvent.
      */
     _focusWithKeyboardEvent: function(event) {
-      for (var i = 0, item; item = this.items[i]; i++) {
-        var attr = this.attrForItemTitle || 'textContent';
-        var title = item[attr] || item.getAttribute(attr);
+      this.cancelDebouncer('_clearSearchText');
 
-        if (!item.hasAttribute('disabled') && title &&
-            title.trim().charAt(0).toLowerCase() === String.fromCharCode(event.keyCode).toLowerCase()) {
+      var searchText = this._searchText || '';
+      var key = event.key && event.key.length == 1 ? event.key :
+          String.fromCharCode(event.keyCode);
+      searchText += key.toLocaleLowerCase();
+
+      var searchLength = searchText.length;
+
+      for (var i = 0, item; item = this.items[i]; i++) {
+        if (item.hasAttribute('disabled')) {
+          continue;
+        }
+
+        var attr = this.attrForItemTitle || 'textContent';
+        var title = (item[attr] || item.getAttribute(attr) || '').trim();
+
+        if (title.length < searchLength) {
+          continue;
+        }
+
+        if (title.slice(0, searchLength).toLocaleLowerCase() == searchText) {
           this._setFocusedItem(item);
           break;
         }
       }
+
+      this._searchText = searchText;
+      this.debounce('_clearSearchText', this._clearSearchText,
+                    this._SEARCH_RESET_TIMEOUT_MS);
+    },
+
+    _clearSearchText: function() {
+      this._searchText = '';
     },
 
     /**
@@ -11135,6 +11224,11 @@ Polymer({
         }
       },
 
+      /**
+       * This conflicts with Element#antimate().
+       * https://developer.mozilla.org/en-US/docs/Web/API/Element/animate
+       * @suppress {checkTypes}
+       */
       animate: function() {
         if (!this._animating) {
           return;
@@ -11445,8 +11539,25 @@ Polymer({
       size: {
         type: Number,
         value: 24
+      },
+
+      /**
+       * Set to true to enable mirroring of icons where specified when they are
+       * stamped. Icons that should be mirrored should be decorated with a
+       * `mirror-in-rtl` attribute.
+       */
+      rtlMirroring: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    _targetIsRTL: function(target) {
+      if (target && target.nodeType !== Node.ELEMENT_NODE) {
+        target = target.host;
       }
 
+      return target && window.getComputedStyle(target)['direction'] === 'rtl';
     },
 
     attached: function() {
@@ -11482,7 +11593,8 @@ Polymer({
       // Remove old svg element
       this.removeIcon(element);
       // install new svg element
-      var svg = this._cloneIcon(iconName);
+      var svg = this._cloneIcon(iconName,
+          this.rtlMirroring && this._targetIsRTL(element));
       if (svg) {
         var pde = Polymer.dom(element);
         pde.insertBefore(svg, pde.childNodes[0]);
@@ -11499,6 +11611,7 @@ Polymer({
      */
     removeIcon: function(element) {
       // Remove old svg element
+      element = element.root || element;
       if (element._svgIcon) {
         Polymer.dom(element).removeChild(element._svgIcon);
         element._svgIcon = null;
@@ -11541,28 +11654,35 @@ Polymer({
      * @return {Element} Returns an installable clone of the SVG element
      * matching `id`.
      */
-    _cloneIcon: function(id) {
+    _cloneIcon: function(id, mirrorAllowed) {
       // create the icon map on-demand, since the iconset itself has no discrete
       // signal to know when it's children are fully parsed
       this._icons = this._icons || this._createIconMap();
-      return this._prepareSvgClone(this._icons[id], this.size);
+      return this._prepareSvgClone(this._icons[id], this.size, mirrorAllowed);
     },
 
     /**
      * @param {Element} sourceSvg
      * @param {number} size
+     * @param {Boolean} mirrorAllowed
      * @return {Element}
      */
-    _prepareSvgClone: function(sourceSvg, size) {
+    _prepareSvgClone: function(sourceSvg, size, mirrorAllowed) {
       if (sourceSvg) {
         var content = sourceSvg.cloneNode(true),
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
-            viewBox = content.getAttribute('viewBox') || '0 0 ' + size + ' ' + size;
+            viewBox = content.getAttribute('viewBox') || '0 0 ' + size + ' ' + size,
+            cssText = 'pointer-events: none; display: block; width: 100%; height: 100%;';
+
+        if (mirrorAllowed && content.hasAttribute('mirror-in-rtl')) {
+          cssText += '-webkit-transform:scale(-1,1);transform:scale(-1,1);';
+        }
+
         svg.setAttribute('viewBox', viewBox);
         svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
         // TODO(dfreedm): `pointer-events: none` works around https://crbug.com/370136
         // TODO(sjmiles): inline style may not be ideal, but avoids requiring a shadow-root
-        svg.style.cssText = 'pointer-events: none; display: block; width: 100%; height: 100%;';
+        svg.style.cssText = cssText;
         svg.appendChild(content).removeAttribute('id');
         return svg;
       }
@@ -12175,7 +12295,7 @@ Polymer({
           type: String,
           notify: true,
           value: function() {
-            return window.decodeURIComponent(window.location.search.slice(1));
+            return window.location.search.slice(1);
           }
         },
         /**
@@ -12274,8 +12394,7 @@ Polymer({
         this._dontUpdateUrl = true;
         this._hashChanged();
         this.path = window.decodeURIComponent(window.location.pathname);
-        this.query = window.decodeURIComponent(
-            window.location.search.substring(1));
+        this.query = window.location.search.substring(1);
         this._dontUpdateUrl = false;
         this._updateUrl();
       },
@@ -12284,8 +12403,7 @@ Polymer({
             this.path).replace(/\#/g, '%23').replace(/\?/g, '%3F');
         var partiallyEncodedQuery = '';
         if (this.query) {
-          partiallyEncodedQuery = '?' + window.encodeURI(
-              this.query).replace(/\#/g, '%23');
+          partiallyEncodedQuery = '?' + this.query.replace(/\#/g, '%23');
         }
         var partiallyEncodedHash = '';
         if (this.hash) {
@@ -12299,8 +12417,7 @@ Polymer({
           return;
         }
         if (this.path === window.decodeURIComponent(window.location.pathname) &&
-            this.query === window.decodeURIComponent(
-                window.location.search.substring(1)) &&
+            this.query === window.location.search.substring(1) &&
             this.hash === window.decodeURIComponent(
                 window.location.hash.substring(1))) {
           // Nothing to do, the current URL is a representation of our properties.
@@ -12472,7 +12589,8 @@ Polymer({
       if (this._dontReact) {
         return;
       }
-      this.paramsString = this._encodeParams(this.paramsObject);
+      this.paramsString = this._encodeParams(this.paramsObject)
+          .replace(/%3F/g, '?').replace(/%2F/g, '/');
     },
     _encodeParams: function(params) {
       var encodedParams = [];
@@ -15521,6 +15639,14 @@ Polymer({
           computed: '_computeAnimated(animatedShadow)'
         }
       },
+      
+      /**
+       * Format function for aria-hidden. Use the ! operator results in the
+       * empty string when given a falsy value.
+       */
+      _isHidden: function(image) {
+        return image ? 'false' : 'true';
+      },
 
       _headingChanged: function(heading) {
         var label = this.getAttribute('aria-label');
@@ -15528,10 +15654,7 @@ Polymer({
       },
 
       _computeHeadingClass: function(image) {
-        var cls = 'title-text';
-        if (image)
-          cls += ' over-image';
-        return cls;
+        return image ? ' over-image' : '';
       },
 
       _computeAnimated: function(animatedShadow) {
@@ -18462,6 +18585,14 @@ context. You should place this element as a child of `<body>` whenever possible.
       this.opened = false;
     },
 
+    /**
+     * Invalidates the cached tabbable nodes. To be called when any of the focusable
+     * content changes (e.g. a button is disabled).
+     */
+    invalidateTabbables: function() {
+      this.__firstFocusableNode = this.__lastFocusableNode = null;
+    },
+
     _ensureSetup: function() {
       if (this._overlaySetup) {
         return;
@@ -18559,11 +18690,6 @@ context. You should place this element as a child of `<body>` whenever possible.
     _finishRenderOpened: function() {
       this.notifyResize();
       this.__isAnimating = false;
-
-      // Store it so we don't query too much.
-      var focusableNodes = this._focusableNodes;
-      this.__firstFocusableNode = focusableNodes[0];
-      this.__lastFocusableNode = focusableNodes[focusableNodes.length - 1];
 
       this.fire('iron-overlay-opened');
     },
@@ -18681,6 +18807,7 @@ context. You should place this element as a child of `<body>` whenever possible.
       if (!this.withBackdrop) {
         return;
       }
+      this.__ensureFirstLastFocusables();
       // TAB wraps from last to first focusable.
       // Shift + TAB wraps from first to last focusable.
       var shift = event.shiftKey;
@@ -18737,7 +18864,21 @@ context. You should place this element as a child of `<body>` whenever possible.
      */
     _onNodesChange: function() {
       if (this.opened && !this.__isAnimating) {
+        // It might have added focusable nodes, so invalidate cached values.
+        this.invalidateTabbables();
         this.notifyResize();
+      }
+    },
+
+    /**
+     * Will set first and last focusable nodes if any of them is not set.
+     * @private
+     */
+    __ensureFirstLastFocusables: function() {
+      if (!this.__firstFocusableNode || !this.__lastFocusableNode) {
+        var focusableNodes = this._focusableNodes;
+        this.__firstFocusableNode = focusableNodes[0];
+        this.__lastFocusableNode = focusableNodes[focusableNodes.length - 1];
       }
     },
 
@@ -20526,15 +20667,18 @@ Polymer({
       '_scrollTargetChanged(scrollTarget, isAttached)'
     ],
 
+    /**
+     * True if the event listener should be installed.
+     */
+    _shouldHaveListener: true,
+
     _scrollTargetChanged: function(scrollTarget, isAttached) {
       var eventTarget;
 
       if (this._oldScrollTarget) {
-        eventTarget = this._oldScrollTarget === this._doc ? window : this._oldScrollTarget;
-        eventTarget.removeEventListener('scroll', this._boundScrollHandler);
+        this._toggleScrollListener(false, this._oldScrollTarget);
         this._oldScrollTarget = null;
       }
-
       if (!isAttached) {
         return;
       }
@@ -20550,11 +20694,10 @@ Polymer({
 
       } else if (this._isValidScrollTarget()) {
 
-        eventTarget = scrollTarget === this._doc ? window : scrollTarget;
         this._boundScrollHandler = this._boundScrollHandler || this._scrollHandler.bind(this);
         this._oldScrollTarget = scrollTarget;
+        this._toggleScrollListener(this._shouldHaveListener, scrollTarget);
 
-        eventTarget.addEventListener('scroll', this._boundScrollHandler);
       }
     },
 
@@ -20681,7 +20824,31 @@ Polymer({
      */
     _isValidScrollTarget: function() {
       return this.scrollTarget instanceof HTMLElement;
+    },
+
+    _toggleScrollListener: function(yes, scrollTarget) {
+      if (!this._boundScrollHandler) {
+        return;
+      }
+      var eventTarget = scrollTarget === this._doc ? window : scrollTarget;
+
+      if (yes) {
+        eventTarget.addEventListener('scroll', this._boundScrollHandler);
+      } else {
+        eventTarget.removeEventListener('scroll', this._boundScrollHandler);
+      }
+    },
+
+    /**
+     * Enables or disables the scroll event listener.
+     *
+     * @param {boolean} yes True to add the event, False to remove it.
+     */
+    toggleScrollListener: function(yes) {
+      this._shouldHaveListener = yes;
+      this._toggleScrollListener(yes, this.scrollTarget);
     }
+
   };
 (function() {
 
@@ -20689,7 +20856,8 @@ Polymer({
   var IOS_TOUCH_SCROLLING = IOS && IOS[1] >= 8;
   var DEFAULT_PHYSICAL_COUNT = 3;
   var HIDDEN_Y = '-10000px';
-  var DEFAULT_GRID_SIZE = 200;
+  var ITEM_WIDTH = 0;
+  var ITEM_HEIGHT = 1;
   var SECRET_TABINDEX = -100;
 
   Polymer({
@@ -20921,7 +21089,7 @@ Polymer({
     /**
      * The max number of pages to render. One page is equivalent to the height of the list.
      */
-    _maxPages: 3,
+    _maxPages: 2,
 
     /**
      * The currently focused physical item.
@@ -21076,10 +21244,6 @@ Polymer({
       return this._viewportHeight * this._maxPages;
     },
 
-    get _optPhysicalCount() {
-      return this._estRowsInView * this._itemsPerRow * this._maxPages;
-    },
-
    /**
     * True if the current list is visible.
     */
@@ -21159,7 +21323,6 @@ Polymer({
     },
 
     attached: function() {
-      this.updateViewportBoundaries();
       if (this._physicalCount === 0) {
         this._debounceTemplate(this._render);
       }
@@ -21189,119 +21352,108 @@ Polymer({
     updateViewportBoundaries: function() {
       this._scrollerPaddingTop = this.scrollTarget === this ? 0 :
           parseInt(window.getComputedStyle(this)['padding-top'], 10);
-
+      this._viewportWidth = this.$.items.offsetWidth;
       this._viewportHeight = this._scrollTargetHeight;
-      if (this.grid) {
-        this._updateGridMetrics();
+      this.grid && this._updateGridMetrics();
+    },
+
+    /**
+     * Recycles the physical items when needed.
+     */
+    _scrollHandler: function() {
+      var scrollTop = Math.max(0, Math.min(this._maxScrollTop, this._scrollTop));
+      var delta = scrollTop - this._scrollPosition;
+      var isScrollingDown = delta >= 0;
+      // Track the current scroll position.
+      this._scrollPosition = scrollTop;
+      // Clear indexes.
+      this._firstVisibleIndexVal = null;
+      this._lastVisibleIndexVal = null;
+
+      // Random access.
+      if (Math.abs(delta) > this._physicalSize) {
+        var idxAdjustment =  Math.round(delta / this._physicalAverage) * this._itemsPerRow
+        this._physicalTop = this._physicalTop + delta;
+        this._virtualStart = this._virtualStart + idxAdjustment;
+        this._physicalStart = this._physicalStart + idxAdjustment;
+        this._update();
+      } else {
+        var reusables = this._getReusables(isScrollingDown);
+        if (isScrollingDown) {
+          this._physicalTop = reusables.physicalTop;
+          this._virtualStart = this._virtualStart + reusables.indexes.length;
+          this._physicalStart = this._physicalStart + reusables.indexes.length;
+        } else {
+          this._virtualStart = this._virtualStart - reusables.indexes.length;
+          this._physicalStart = this._physicalStart - reusables.indexes.length;
+        }
+        if (reusables.indexes.length === 0) {
+          this._increasePoolIfNeeded();
+        } else {
+          this._update(reusables.indexes, isScrollingDown ? null : reusables.indexes);
+        }
       }
     },
 
     /**
-     * Update the models, the position of the
-     * items in the viewport and recycle tiles as needed.
+     * Returns an object that contains the indexes of the physical items
+     * that might be reused and the physicalTop.
+     *
+     * @param {boolean} fromTop If the potential reusable items are above the scrolling region.
      */
-    _scrollHandler: function() {
-      // clamp the `scrollTop` value
-      var scrollTop = Math.max(0, Math.min(this._maxScrollTop, this._scrollTop));
-      var delta = scrollTop - this._scrollPosition;
-      var tileHeight, tileTop, kth, recycledTileSet, scrollBottom, physicalBottom;
-      var ratio = this._ratio;
-      var recycledTiles = 0;
-      var hiddenContentSize = this._hiddenContentSize;
-      var currentRatio = ratio;
-      var movingUp = [];
+    _getReusables: function(fromTop) {
+      var ith, lastIth, offsetContent, physicalItemHeight;
+      var idxs = [];
+      var protectedOffsetContent = this._hiddenContentSize * this._ratio;
+      var virtualStart = this._virtualStart;
+      var virtualEnd = this._virtualEnd;
+      var physicalCount = this._physicalCount;
+      var physicalTop = this._physicalTop + this._scrollerPaddingTop;
+      var scrollTop = this._scrollTop;
+      var scrollBottom = this._scrollBottom;
 
-      // track the last `scrollTop`
-      this._scrollPosition = scrollTop;
-
-      // clear cached visible indexes
-      this._firstVisibleIndexVal = null;
-      this._lastVisibleIndexVal = null;
-
-      scrollBottom = this._scrollBottom;
-      physicalBottom = this._physicalBottom;
-
-      // random access
-      if (Math.abs(delta) > this._physicalSize) {
-        this._physicalTop += delta;
-        recycledTiles =  Math.round(delta / this._physicalAverage);
-      }
-      // scroll up
-      else if (delta < 0) {
-        var topSpace = scrollTop - this._physicalTop;
-        var virtualStart = this._virtualStart;
-
-        recycledTileSet = [];
-
-        kth = this._physicalEnd;
-        currentRatio = topSpace / hiddenContentSize;
-
-        // move tiles from bottom to top
-        while (
-            // approximate `currentRatio` to `ratio`
-            currentRatio < ratio &&
-            // recycle less physical items than the total
-            recycledTiles < this._physicalCount &&
-            // ensure that these recycled tiles are needed
-            virtualStart - recycledTiles > 0 &&
-            // ensure that the tile is not visible
-            physicalBottom - this._getPhysicalSizeIncrement(kth) > scrollBottom
-        ) {
-
-          tileHeight = this._getPhysicalSizeIncrement(kth);
-          currentRatio += tileHeight / hiddenContentSize;
-          physicalBottom -= tileHeight;
-          recycledTileSet.push(kth);
-          recycledTiles++;
-          kth = (kth === 0) ? this._physicalCount - 1 : kth - 1;
-        }
-
-        movingUp = recycledTileSet;
-        recycledTiles = -recycledTiles;
-      }
-      // scroll down
-      else if (delta > 0) {
-        var bottomSpace = physicalBottom - scrollBottom;
-        var virtualEnd = this._virtualEnd;
-        var lastVirtualItemIndex = this._virtualCount-1;
-
-        recycledTileSet = [];
-
-        kth = this._physicalStart;
-        currentRatio = bottomSpace / hiddenContentSize;
-
-        // move tiles from top to bottom
-        while (
-            // approximate `currentRatio` to `ratio`
-            currentRatio < ratio &&
-            // recycle less physical items than the total
-            recycledTiles < this._physicalCount &&
-            // ensure that these recycled tiles are needed
-            virtualEnd + recycledTiles < lastVirtualItemIndex &&
-            // ensure that the tile is not visible
-            this._physicalTop + this._getPhysicalSizeIncrement(kth) < scrollTop
-          ) {
-
-          tileHeight = this._getPhysicalSizeIncrement(kth);
-          currentRatio += tileHeight / hiddenContentSize;
-
-          this._physicalTop += tileHeight;
-          recycledTileSet.push(kth);
-          recycledTiles++;
-          kth = (kth + 1) % this._physicalCount;
-        }
-      }
-
-      if (recycledTiles === 0) {
-        // Try to increase the pool if the list's client isn't filled up with physical items
-        if (physicalBottom < scrollBottom || this._physicalTop > scrollTop) {
-          this._increasePoolIfNeeded();
-        }
+      if (fromTop) {
+        ith = this._physicalStart;
+        lastIth = this._physicalEnd;
+        offsetContent = scrollTop - physicalTop;
       } else {
-        this._virtualStart = this._virtualStart + recycledTiles;
-        this._physicalStart = this._physicalStart + recycledTiles;
-        this._update(recycledTileSet, movingUp);
+        ith = this._physicalEnd;
+        lastIth = this._physicalStart;
+        offsetContent = this._physicalBottom - scrollBottom;
       }
+      while (true) {
+        physicalItemHeight = this._getPhysicalSizeIncrement(ith);
+        offsetContent = offsetContent - physicalItemHeight;
+        if (idxs.length >= physicalCount || offsetContent <= protectedOffsetContent) {
+          break;
+        }
+        if (fromTop) {
+          // Check that index is within the valid range.
+          if (virtualEnd + idxs.length + 1 >= this._virtualCount) {
+            break;
+          }
+          // Check that the index is not visible.
+          if (physicalTop + physicalItemHeight >= scrollTop) {
+            break;
+          }
+          idxs.push(ith);
+          physicalTop = physicalTop + physicalItemHeight;
+          ith = (ith + 1) % physicalCount;
+        } else {
+          // Check that index is within the valid range.
+          if (virtualStart - idxs.length <= 0) {
+            break;
+          }
+          // Check that the index is not visible.
+          if (physicalTop + this._physicalSize - physicalItemHeight <= scrollBottom) {
+            break;
+          }
+          idxs.push(ith);
+          physicalTop = physicalTop - physicalItemHeight;
+          ith = (ith === 0) ? physicalCount - 1 : ith - 1;
+        }
+      }
+      return { indexes: idxs, physicalTop: physicalTop - this._scrollerPaddingTop };
     },
 
     /**
@@ -21310,6 +21462,9 @@ Polymer({
      * @param {!Array<number>=} movingUp
      */
     _update: function(itemSet, movingUp) {
+      if (itemSet && itemSet.length === 0) {
+        return;
+      }
       this._manageFocus();
       this._assignModels(itemSet);
       this._updateMetrics(itemSet);
@@ -21421,13 +21576,20 @@ Polymer({
     },
 
     /**
-     * Render a new list of items.
+     * Renders the a new list.
      */
     _render: function() {
       if (this.isAttached && this._isVisible) {
         if (this._physicalCount === 0) {
+          this.updateViewportBoundaries();
           this._increasePool(DEFAULT_PHYSICAL_COUNT);
         } else {
+          // Try to recycle nodes
+          var reusables = this._getReusables(true);
+          this._physicalTop = reusables.physicalTop;
+          this._virtualStart = this._virtualStart + reusables.indexes.length;
+          this._physicalStart = this._physicalStart + reusables.indexes.length;
+          this._update(reusables.indexes);
           this._update();
         }
       }
@@ -21563,6 +21725,7 @@ Polymer({
       } else if (change.path === 'items.splices') {
         this._adjustVirtualIndex(change.value.indexSplices);
         this._virtualCount = this.items ? this.items.length : 0;
+
         this._debounceTemplate(this._render);
 
       } else {
@@ -21657,7 +21820,6 @@ Polymer({
         var el = this._physicalItems[pidx];
         var inst = el._templateInstance;
         var item = this.items && this.items[vidx];
-
         if (item != null) {
           inst[this.as] = item;
           inst.__key__ = this._collection.getKey(item);
@@ -21689,22 +21851,18 @@ Polymer({
       var prevPhysicalAvg = this._physicalAverage;
 
       this._iterateItems(function(pidx, vidx) {
-
         oldPhysicalSize += this._physicalSizes[pidx] || 0;
         this._physicalSizes[pidx] = this._physicalItems[pidx].offsetHeight;
         newPhysicalSize += this._physicalSizes[pidx];
         this._physicalAverageCount += this._physicalSizes[pidx] ? 1 : 0;
-
       }, itemSet);
 
-      this._viewportHeight = this._scrollTargetHeight;
       if (this.grid) {
         this._updateGridMetrics();
         this._physicalSize = Math.ceil(this._physicalCount / this._itemsPerRow) * this._rowHeight;
       } else {
         this._physicalSize = this._physicalSize + newPhysicalSize - oldPhysicalSize;
       }
-
       // Update the average if it measured something.
       if (this._physicalAverageCount !== prevAvgCount) {
         this._physicalAverage = Math.round(
@@ -21714,12 +21872,8 @@ Polymer({
     },
 
     _updateGridMetrics: function() {
-      this._viewportWidth = this.$.items.offsetWidth;
-      // Set item width to the value of the _physicalItems offsetWidth
-      this._itemWidth = this._physicalCount > 0 ? this._physicalItems[0].getBoundingClientRect().width : DEFAULT_GRID_SIZE;
-      // Set row height to the value of the _physicalItems offsetHeight
-      this._rowHeight = this._physicalCount > 0 ? this._physicalItems[0].offsetHeight : DEFAULT_GRID_SIZE;
-      // If in grid mode compute how many items with exist in each row
+      this._itemWidth = this._physicalCount > 0 ? this._physicalItems[0].getBoundingClientRect().width : 200;
+      this._rowHeight = this._physicalCount > 0 ? this._physicalItems[0].offsetHeight : 200;
       this._itemsPerRow = this._itemWidth ? Math.floor(this._viewportWidth / this._itemWidth) : this._itemsPerRow;
     },
 
@@ -21904,10 +22058,14 @@ Polymer({
       Polymer.dom.addDebouncer(this.debounce('_debounceTemplate', function() {
         this.updateViewportBoundaries();
         this._render();
-
-        if (this._physicalCount > 0 && this._isVisible) {
-          this._resetAverage();
-          this.scrollToIndex(this.firstVisibleIndex);
+        if (this._isVisible) {
+          this.toggleScrollListener(true);
+          if (this._physicalCount > 0) {
+            this._resetAverage();
+            this.scrollToIndex(this.firstVisibleIndex);
+          }
+        } else {
+          this.toggleScrollListener(false);
         }
       }.bind(this), 1));
     },
@@ -22050,7 +22208,6 @@ Polymer({
       model.tabIndex = SECRET_TABINDEX;
       activeElTabIndex = activeEl ? activeEl.tabIndex : -1;
       model.tabIndex = modelTabIndex;
-
       // Only select the item if the tap wasn't on a focusable child
       // or the element bound to `tabIndex`
       if (activeEl && physicalItem !== activeEl && physicalItem.contains(activeEl) && activeElTabIndex !== SECRET_TABINDEX) {
@@ -22131,7 +22288,6 @@ Polymer({
       var physicalItem = this._physicalItems[this._getPhysicalIndex(idx)];
       var model = physicalItem._templateInstance;
       var focusable;
-
       // set a secret tab index
       model.tabIndex = SECRET_TABINDEX;
       // check if focusable element is the physical item

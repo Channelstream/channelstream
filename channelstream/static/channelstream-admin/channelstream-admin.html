@@ -76,6 +76,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
 
+
 <!--
 @license
 Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
@@ -2030,6 +2031,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   0  8px 10px -5px rgba(0, 0, 0, 0.4);
     };
 
+    --shadow-elevation-24dp: {
+      box-shadow: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
+                  0 9px 46px 8px rgba(0, 0, 0, 0.12),
+                  0 11px 15px -7px rgba(0, 0, 0, 0.4);
+    };
   }
 
 </style>
@@ -2487,8 +2493,8 @@ Custom property | Description | Default
     </style>
 
     <div class="header">
-      <iron-image hidden$="[[!image]]" src="[[image]]" alt="[[alt]]" placeholder="[[placeholderImage]]" preload="[[preloadImage]]" fade="[[fadeImage]]"></iron-image>
-      <div hidden$="[[!heading]]" class$="[[_computeHeadingClass(image)]]">[[heading]]</div>
+      <iron-image hidden$="[[!image]]" aria-hidden$="[[_isHidden(image)]]" src="[[image]]" alt="[[alt]]" placeholder="[[placeholderImage]]" preload="[[preloadImage]]" fade="[[fadeImage]]"></iron-image>
+      <div hidden$="[[!heading]]" class$="title-text [[_computeHeadingClass(image)]]">[[heading]]</div>
     </div>
 
     <content></content>

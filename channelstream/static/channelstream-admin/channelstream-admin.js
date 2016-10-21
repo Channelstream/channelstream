@@ -688,7 +688,7 @@ default:
 return value != null ? value : undefined;
 }
 }
-});Polymer.version = "1.6.1";Polymer.Base._addFeature({
+});Polymer.version = "1.7.0";Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
 this._prepBehaviors();
@@ -2961,6 +2961,9 @@ var next = node.nextSibling;
 if (node.localName === 'template' && !node.hasAttribute('preserve-content')) {
 this._parseTemplate(node, i, list, annote);
 }
+if (node.localName == 'slot') {
+node = this._replaceSlotWithContent(node);
+}
 if (node.nodeType === Node.TEXT_NODE) {
 var n = next;
 while (n && n.nodeType === Node.TEXT_NODE) {
@@ -2985,6 +2988,22 @@ node = next;
 i++;
 }
 }
+},
+_replaceSlotWithContent: function (slot) {
+var content = slot.ownerDocument.createElement('content');
+while (slot.firstChild) {
+content.appendChild(slot.firstChild);
+}
+var attrs = slot.attributes;
+for (var i = 0; i < attrs.length; i++) {
+var attr = attrs[i];
+content.setAttribute(attr.name, attr.value);
+}
+var name = slot.getAttribute('name');
+var select = name ? '[slot=\'' + name + '\']' : ':not([slot])';
+content.setAttribute('select', select);
+slot.parentNode.replaceChild(content, slot);
+return content;
 },
 _parseTemplate: function (node, index, list, parent) {
 var content = document.createDocumentFragment();
@@ -3119,7 +3138,30 @@ resolveCss: resolveCss,
 resolveAttrs: resolveAttrs,
 resolveUrl: resolveUrl
 };
-}());Polymer.Base._addFeature({
+}());Polymer.Path = {
+root: function (path) {
+var dotIndex = path.indexOf('.');
+if (dotIndex === -1) {
+return path;
+}
+return path.slice(0, dotIndex);
+},
+isDeep: function (path) {
+return path.indexOf('.') !== -1;
+},
+isAncestor: function (base, path) {
+return base.indexOf(path + '.') === 0;
+},
+isDescendant: function (base, path) {
+return path.indexOf(base + '.') === 0;
+},
+translate: function (base, newBase, path) {
+return newBase + path.slice(base.length);
+},
+matches: function (base, wildcard, path) {
+return base === path || this.isAncestor(base, path) || Boolean(wildcard) && this.isDescendant(base, path);
+}
+};Polymer.Base._addFeature({
 _prepAnnotations: function () {
 if (!this._template) {
 this._notes = [];
@@ -3149,7 +3191,7 @@ var signature = this._parseMethod(p.value);
 if (signature) {
 p.signature = signature;
 } else {
-p.model = this._modelForPath(p.value);
+p.model = Polymer.Path.root(p.value);
 }
 }
 }
@@ -3412,8 +3454,9 @@ mouseEvent.stopPropagation();
 }
 };
 function setupTeardownMouseCanceller(setup) {
-for (var i = 0, en; i < MOUSE_EVENTS.length; i++) {
-en = MOUSE_EVENTS[i];
+var events = IS_TOUCH_ONLY ? ['click'] : MOUSE_EVENTS;
+for (var i = 0, en; i < events.length; i++) {
+en = events[i];
 if (setup) {
 document.addEventListener(en, mouseCanceller, true);
 } else {
@@ -3422,9 +3465,6 @@ document.removeEventListener(en, mouseCanceller, true);
 }
 }
 function ignoreMouse() {
-if (IS_TOUCH_ONLY) {
-return;
-}
 if (!POINTERSTATE.mouse.mouseIgnoreJob) {
 setupTeardownMouseCanceller(true);
 }
@@ -3617,7 +3657,7 @@ node[GESTURE_KEY] = gobj = {};
 }
 for (var i = 0, dep, gd; i < deps.length; i++) {
 dep = deps[i];
-if (IS_TOUCH_ONLY && MOUSE_EVENTS.indexOf(dep) > -1) {
+if (IS_TOUCH_ONLY && MOUSE_EVENTS.indexOf(dep) > -1 && dep !== 'click') {
 continue;
 }
 gd = gobj[dep];
@@ -4276,7 +4316,7 @@ fx.fn.call(this, property, this[property], fx.effect, old, fromAbove);
 },
 _clearPath: function (path) {
 for (var prop in this.__data__) {
-if (prop.indexOf(path + '.') === 0) {
+if (Polymer.Path.isDescendant(path, prop)) {
 this.__data__[prop] = undefined;
 }
 }
@@ -4353,7 +4393,7 @@ _addAnnotatedListener: function (model, index, property, path, event, negated) {
 if (!model._bindListeners) {
 model._bindListeners = [];
 }
-var fn = this._notedListenerFactory(property, path, this._isStructured(path), negated);
+var fn = this._notedListenerFactory(property, path, Polymer.Path.isDeep(path), negated);
 var eventName = event || Polymer.CaseMap.camelToDashCase(property) + '-changed';
 model._bindListeners.push({
 index: index,
@@ -4363,16 +4403,14 @@ changedFn: fn,
 event: eventName
 });
 },
-_isStructured: function (path) {
-return path.indexOf('.') > 0;
-},
 _isEventBogus: function (e, target) {
 return e.path && e.path[0] !== target;
 },
 _notedListenerFactory: function (property, path, isStructured, negated) {
 return function (target, value, targetPath) {
 if (targetPath) {
-this._notifyPath(this._fixPath(path, property, targetPath), value);
+var newPath = Polymer.Path.translate(property, path, targetPath);
+this._notifyPath(newPath, value);
 } else {
 value = target[property];
 if (negated) {
@@ -4494,7 +4532,7 @@ if (bailoutEarly && v === undefined) {
 return;
 }
 if (arg.wildcard) {
-var matches = path.indexOf(name + '.') === 0;
+var matches = Polymer.Path.isAncestor(path, name);
 values[i] = {
 path: matches ? path : name,
 value: matches ? value : v,
@@ -4721,8 +4759,8 @@ a.literal = true;
 break;
 }
 if (!a.literal) {
-a.model = this._modelForPath(arg);
-a.structured = arg.indexOf('.') > 0;
+a.model = Polymer.Path.root(arg);
+a.structured = Polymer.Path.isDeep(arg);
 if (a.structured) {
 a.wildcard = arg.slice(-2) == '.*';
 if (a.wildcard) {
@@ -4912,6 +4950,7 @@ this._handlers = [];
 });
 }());(function () {
 'use strict';
+var Path = Polymer.Path;
 Polymer.Base._addFeature({
 notifyPath: function (path, value, fromAbove) {
 var info = {};
@@ -5019,7 +5058,7 @@ info.path = parts.join('.');
 return prop;
 },
 _pathEffector: function (path, value) {
-var model = this._modelForPath(path);
+var model = Path.root(path);
 var fx$ = this._propertyEffects && this._propertyEffects[model];
 if (fx$) {
 for (var i = 0, fx; i < fx$.length && (fx = fx$[i]); i++) {
@@ -5034,34 +5073,30 @@ this._notifyBoundPaths(path, value);
 }
 },
 _annotationPathEffect: function (path, value, effect) {
-if (effect.value === path || effect.value.indexOf(path + '.') === 0) {
+if (Path.matches(effect.value, false, path)) {
 Polymer.Bind._annotationEffect.call(this, path, value, effect);
-} else if (path.indexOf(effect.value + '.') === 0 && !effect.negate) {
+} else if (!effect.negate && Path.isDescendant(effect.value, path)) {
 var node = this._nodes[effect.index];
 if (node && node._notifyPath) {
-var p = this._fixPath(effect.name, effect.value, path);
-node._notifyPath(p, value, true);
+var newPath = Path.translate(effect.value, effect.name, path);
+node._notifyPath(newPath, value, true);
 }
 }
 },
 _complexObserverPathEffect: function (path, value, effect) {
-if (this._pathMatchesEffect(path, effect)) {
+if (Path.matches(effect.trigger.name, effect.trigger.wildcard, path)) {
 Polymer.Bind._complexObserverEffect.call(this, path, value, effect);
 }
 },
 _computePathEffect: function (path, value, effect) {
-if (this._pathMatchesEffect(path, effect)) {
+if (Path.matches(effect.trigger.name, effect.trigger.wildcard, path)) {
 Polymer.Bind._computeEffect.call(this, path, value, effect);
 }
 },
 _annotatedComputationPathEffect: function (path, value, effect) {
-if (this._pathMatchesEffect(path, effect)) {
+if (Path.matches(effect.trigger.name, effect.trigger.wildcard, path)) {
 Polymer.Bind._annotatedComputationEffect.call(this, path, value, effect);
 }
-},
-_pathMatchesEffect: function (path, effect) {
-var effectArg = effect.trigger.name;
-return effectArg == path || effectArg.indexOf(path + '.') === 0 || effect.trigger.wildcard && path.indexOf(effectArg + '.') === 0;
 },
 linkPaths: function (to, from) {
 this._boundPaths = this._boundPaths || {};
@@ -5079,18 +5114,15 @@ delete this._boundPaths[path];
 _notifyBoundPaths: function (path, value) {
 for (var a in this._boundPaths) {
 var b = this._boundPaths[a];
-if (path.indexOf(a + '.') == 0) {
-this._notifyPath(this._fixPath(b, a, path), value);
-} else if (path.indexOf(b + '.') == 0) {
-this._notifyPath(this._fixPath(a, b, path), value);
+if (Path.isDescendant(a, path)) {
+this._notifyPath(Path.translate(a, b, path), value);
+} else if (Path.isDescendant(b, path)) {
+this._notifyPath(Path.translate(b, a, path), value);
 }
 }
-},
-_fixPath: function (property, root, path) {
-return property + path.slice(root.length);
 },
 _notifyPathUp: function (path, value) {
-var rootName = this._modelForPath(path);
+var rootName = Path.root(path);
 var dashCaseName = Polymer.CaseMap.camelToDashCase(rootName);
 var eventName = dashCaseName + this._EVENT_CHANGED;
 this.fire(eventName, {
@@ -5100,10 +5132,6 @@ value: value
 bubbles: false,
 _useCache: true
 });
-},
-_modelForPath: function (path) {
-var dot = path.indexOf('.');
-return dot < 0 ? path : path.slice(0, dot);
 },
 _EVENT_CHANGED: '-changed',
 notifySplices: function (path, splices) {
@@ -5210,8 +5238,6 @@ _annotationPathEffect: Polymer.Base._annotationPathEffect,
 _complexObserverPathEffect: Polymer.Base._complexObserverPathEffect,
 _annotatedComputationPathEffect: Polymer.Base._annotatedComputationPathEffect,
 _computePathEffect: Polymer.Base._computePathEffect,
-_modelForPath: Polymer.Base._modelForPath,
-_pathMatchesEffect: Polymer.Base._pathMatchesEffect,
 _notifyBoundPaths: Polymer.Base._notifyBoundPaths,
 _getPathParts: Polymer.Base._getPathParts
 });
@@ -5505,7 +5531,9 @@ var e$ = Polymer.TreeApi.arrayCopy(content.querySelectorAll(this.MODULE_STYLES_S
 for (var i = 0, e; i < e$.length; i++) {
 e = e$[i];
 if (e.localName === 'template') {
+if (!e.hasAttribute('preserve-content')) {
 cssText += this.cssFromElement(e);
+}
 } else {
 if (e.localName === 'style') {
 var include = e.getAttribute(this.INCLUDE_ATTR);
@@ -5632,9 +5660,21 @@ elementStyles: function (element, callback) {
 var styles = element._styles;
 var cssText = '';
 var cssBuildType = element.__cssBuild;
+var passthrough = settings.useNativeShadow || cssBuildType === 'shady';
+var cb;
+if (passthrough) {
+var self = this;
+cb = function (rule) {
+rule.selector = self._slottedToContent(rule.selector);
+rule.selector = rule.selector.replace(ROOT, ':host > *');
+if (callback) {
+callback(rule);
+}
+};
+}
 for (var i = 0, l = styles.length, s; i < l && (s = styles[i]); i++) {
 var rules = styleUtil.rulesForStyle(s);
-cssText += settings.useNativeShadow || cssBuildType === 'shady' ? styleUtil.toCssText(rules, callback) : this.css(rules, element.is, element.extends, callback, element._scopeCssViaAttr) + '\n\n';
+cssText += passthrough ? styleUtil.toCssText(rules, cb) : this.css(rules, element.is, element.extends, callback, element._scopeCssViaAttr) + '\n\n';
 }
 return cssText.trim();
 },
@@ -5682,6 +5722,8 @@ var stop = false;
 var hostContext = false;
 var self = this;
 selector = selector.trim();
+selector = this._slottedToContent(selector);
+selector = selector.replace(ROOT, ':host > *');
 selector = selector.replace(CONTENT_START, HOST + ' $1');
 selector = selector.replace(SIMPLE_SELECTOR_SEP, function (m, c, s) {
 if (!stop) {
@@ -5760,12 +5802,13 @@ this._transformRule(rule, this._transformDocumentSelector);
 }
 },
 normalizeRootSelector: function (rule) {
-if (rule.selector === ROOT) {
-rule.selector = 'html';
-}
+rule.selector = rule.selector.replace(ROOT, 'html');
 },
 _transformDocumentSelector: function (selector) {
 return selector.match(SCOPE_JUMP) ? this._transformComplexSelector(selector, SCOPE_DOC_SELECTOR) : this._transformSimpleSelector(selector.trim(), SCOPE_DOC_SELECTOR);
+},
+_slottedToContent: function (cssText) {
+return cssText.replace(SLOTTED_PAREN, CONTENT + '> $1');
 },
 SCOPE_NAME: 'style-scope'
 };
@@ -5788,6 +5831,7 @@ var PSEUDO_PREFIX = ':';
 var CLASS = 'class';
 var CONTENT_START = new RegExp('^(' + CONTENT + ')');
 var SELECTOR_NO_MATCH = 'should_not_match';
+var SLOTTED_PAREN = /(?:::slotted)(?:\(((?:\([^)(]*\)|[^)(]*)+?)\))/g;
 return api;
 }();Polymer.StyleExtends = function () {
 var styleUtil = Polymer.StyleUtil;
@@ -5965,7 +6009,7 @@ prefix = matchText + ';' + prefix;
 return prefix + out.join('; ') + ';';
 }
 function fixVars(matchText, varA, varB) {
-return 'var(' + varA + ',' + 'var(' + varB + '));';
+return 'var(' + varA + ',' + 'var(' + varB + '))';
 }
 function atApplyToCssProperties(mixinName, fallbacks) {
 mixinName = mixinName.replace(APPLY_NAME_CLEAN, '');
@@ -6026,20 +6070,28 @@ _map: mixinMap,
 _separator: MIXIN_VAR_SEP,
 transform: function (styles, elementProto) {
 this.__currentElementProto = elementProto;
-styleUtil.forRulesInStyles(styles, this._boundTransformRule);
+styleUtil.forRulesInStyles(styles, this._boundFindDefinitions);
+styleUtil.forRulesInStyles(styles, this._boundFindApplications);
+if (elementProto) {
 elementProto.__applyShimInvalid = false;
+}
 this.__currentElementProto = null;
 },
-transformRule: function (rule) {
-rule.cssText = this.transformCssText(rule.parsedCssText);
+_findDefinitions: function (rule) {
+var cssText = rule.parsedCssText;
+cssText = cssText.replace(BAD_VAR, fixVars);
+cssText = cssText.replace(VAR_ASSIGN, produceCssProperties);
+rule.cssText = cssText;
 if (rule.selector === ':root') {
 rule.selector = ':host > *';
 }
 },
-transformCssText: function (cssText) {
-cssText = cssText.replace(BAD_VAR, fixVars);
-cssText = cssText.replace(VAR_ASSIGN, produceCssProperties);
-return consumeCssProperties(cssText);
+_findApplications: function (rule) {
+rule.cssText = consumeCssProperties(rule.cssText);
+},
+transformRule: function (rule) {
+this._findDefinitions(rule);
+this._findApplications(rule);
 },
 _getInitialValueForProperty: function (property) {
 if (!this._measureElement) {
@@ -6051,6 +6103,8 @@ return window.getComputedStyle(this._measureElement).getPropertyValue(property);
 }
 };
 ApplyShim._boundTransformRule = ApplyShim.transformRule.bind(ApplyShim);
+ApplyShim._boundFindDefinitions = ApplyShim._findDefinitions.bind(ApplyShim);
+ApplyShim._boundFindApplications = ApplyShim._findApplications.bind(ApplyShim);
 return ApplyShim;
 }();(function () {
 var prepElement = Polymer.Base._prepElement;
@@ -6361,6 +6415,10 @@ properties: props,
 key: o
 };
 },
+_rootSelector: /:root|:host\s*>\s*\*/,
+_checkRoot: function (hostScope, selector) {
+return Boolean(selector.match(this._rootSelector)) || hostScope === 'html' && selector.indexOf('html') > -1;
+},
 whenHostOrRootRule: function (scope, rule, style, callback) {
 if (!rule.propertyInfo) {
 self.decorateRule(rule);
@@ -6370,16 +6428,12 @@ return;
 }
 var hostScope = scope.is ? styleTransformer._calcHostScope(scope.is, scope.extends) : 'html';
 var parsedSelector = rule.parsedSelector;
-var isRoot = parsedSelector === ':root';
-var isHost = parsedSelector.indexOf(':host') === 0;
+var isRoot = this._checkRoot(hostScope, parsedSelector);
+var isHost = !isRoot && parsedSelector.indexOf(':host') === 0;
 var cssBuild = scope.__cssBuild || style.__cssBuild;
 if (cssBuild === 'shady') {
-isRoot = parsedSelector === hostScope + ' > *.' + hostScope || parsedSelector.indexOf('html') !== -1;
+isRoot = parsedSelector === hostScope + ' > *.' + hostScope || parsedSelector.indexOf('html') > -1;
 isHost = !isRoot && parsedSelector.indexOf(hostScope) === 0;
-}
-if (cssBuild === 'shadow') {
-isRoot = parsedSelector === ':host > *' || parsedSelector === 'html';
-isHost = isHost && !isRoot;
 }
 if (!isRoot && !isHost) {
 return;
@@ -6389,6 +6443,9 @@ if (isHost) {
 if (settings.useNativeShadow && !rule.transformedSelector) {
 rule.transformedSelector = styleTransformer._transformRuleCss(rule, styleTransformer._transformComplexSelector, scope.is, hostScope);
 }
+selectorToMatch = rule.transformedSelector || rule.parsedSelector;
+}
+if (isRoot && hostScope === 'html') {
 selectorToMatch = rule.transformedSelector || rule.parsedSelector;
 }
 callback({
@@ -6495,6 +6552,9 @@ if (cssText) {
 style = styleUtil.applyCss(cssText, selector, null, element._scopeStyle);
 }
 } else if (!style.parentNode) {
+if (IS_IE && cssText.indexOf('@media') > -1) {
+style.textContent = cssText;
+}
 styleUtil.applyStyle(style, null, element._scopeStyle);
 }
 }
@@ -6504,9 +6564,6 @@ if (element._customStyle != style) {
 style._useCount++;
 }
 element._customStyle = style;
-}
-if (IS_IE) {
-style.textContent = style.textContent;
 }
 return style;
 },
@@ -6950,10 +7007,10 @@ var styleRules = styleUtil.rulesForStyle(e);
 if (!targetedBuild) {
 styleUtil.forEachRule(styleRules, function (rule) {
 styleTransformer.documentRule(rule);
-if (settings.useNativeCSSProperties && !buildType) {
-applyShim.transformRule(rule);
-}
 });
+if (settings.useNativeCSSProperties && !buildType) {
+applyShim.transform([e]);
+}
 }
 if (settings.useNativeCSSProperties) {
 e.textContent = styleUtil.toCssText(styleRules);
@@ -7180,8 +7237,7 @@ _forwardInstanceProp: function (inst, prop, value) {
 },
 _notifyPathUpImpl: function (path, value) {
 var dataHost = this.dataHost;
-var dot = path.indexOf('.');
-var root = dot < 0 ? path : path.slice(0, dot);
+var root = Polymer.Path.root(path);
 dataHost._forwardInstancePath.call(dataHost, this, path, value);
 if (root in dataHost._parentProps) {
 dataHost._templatized._notifyPath(dataHost._parentPropPrefix + path, value);
@@ -7191,7 +7247,7 @@ _pathEffectorImpl: function (path, value, fromAbove) {
 if (this._forwardParentPath) {
 if (path.indexOf(this._parentPropPrefix) === 0) {
 var subPath = path.substring(this._parentPropPrefix.length);
-var model = this._modelForPath(subPath);
+var model = Polymer.Path.root(subPath);
 if (model in this._parentProps) {
 this._forwardParentPath(subPath, value);
 }
@@ -9883,8 +9939,7 @@ Polymer({
          * `iconset_name:icon_name`.
          */
         icon: {
-          type: String,
-          observer: '_iconChanged'
+          type: String
         },
 
         /**
@@ -9892,8 +9947,7 @@ Polymer({
          * iconset.
          */
         theme: {
-          type: String,
-          observer: '_updateIcon'
+          type: String
         },
 
         /**
@@ -9902,19 +9956,24 @@ Polymer({
          * precedence over a given icon attribute.
          */
         src: {
-          type: String,
-          observer: '_srcChanged'
+          type: String
         },
 
         /**
          * @type {!Polymer.IronMeta}
          */
         _meta: {
-          value: Polymer.Base.create('iron-meta', {type: 'iconset'}),
-          observer: '_updateIcon'
+          value: Polymer.Base.create('iron-meta', {type: 'iconset'})
         }
 
       },
+
+      observers: [
+        '_updateIcon(_meta, isAttached)',
+        '_updateIcon(theme, isAttached)',
+        '_srcChanged(src, isAttached)',
+        '_iconChanged(icon, isAttached)'
+      ],
 
       _DEFAULT_ICONSET: 'icons',
 
@@ -10023,8 +10082,25 @@ Polymer({
       size: {
         type: Number,
         value: 24
+      },
+
+      /**
+       * Set to true to enable mirroring of icons where specified when they are
+       * stamped. Icons that should be mirrored should be decorated with a
+       * `mirror-in-rtl` attribute.
+       */
+      rtlMirroring: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    _targetIsRTL: function(target) {
+      if (target && target.nodeType !== Node.ELEMENT_NODE) {
+        target = target.host;
       }
 
+      return target && window.getComputedStyle(target)['direction'] === 'rtl';
     },
 
     attached: function() {
@@ -10060,7 +10136,8 @@ Polymer({
       // Remove old svg element
       this.removeIcon(element);
       // install new svg element
-      var svg = this._cloneIcon(iconName);
+      var svg = this._cloneIcon(iconName,
+          this.rtlMirroring && this._targetIsRTL(element));
       if (svg) {
         var pde = Polymer.dom(element);
         pde.insertBefore(svg, pde.childNodes[0]);
@@ -10077,6 +10154,7 @@ Polymer({
      */
     removeIcon: function(element) {
       // Remove old svg element
+      element = element.root || element;
       if (element._svgIcon) {
         Polymer.dom(element).removeChild(element._svgIcon);
         element._svgIcon = null;
@@ -10119,28 +10197,35 @@ Polymer({
      * @return {Element} Returns an installable clone of the SVG element
      * matching `id`.
      */
-    _cloneIcon: function(id) {
+    _cloneIcon: function(id, mirrorAllowed) {
       // create the icon map on-demand, since the iconset itself has no discrete
       // signal to know when it's children are fully parsed
       this._icons = this._icons || this._createIconMap();
-      return this._prepareSvgClone(this._icons[id], this.size);
+      return this._prepareSvgClone(this._icons[id], this.size, mirrorAllowed);
     },
 
     /**
      * @param {Element} sourceSvg
      * @param {number} size
+     * @param {Boolean} mirrorAllowed
      * @return {Element}
      */
-    _prepareSvgClone: function(sourceSvg, size) {
+    _prepareSvgClone: function(sourceSvg, size, mirrorAllowed) {
       if (sourceSvg) {
         var content = sourceSvg.cloneNode(true),
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
-            viewBox = content.getAttribute('viewBox') || '0 0 ' + size + ' ' + size;
+            viewBox = content.getAttribute('viewBox') || '0 0 ' + size + ' ' + size,
+            cssText = 'pointer-events: none; display: block; width: 100%; height: 100%;';
+
+        if (mirrorAllowed && content.hasAttribute('mirror-in-rtl')) {
+          cssText += '-webkit-transform:scale(-1,1);transform:scale(-1,1);';
+        }
+
         svg.setAttribute('viewBox', viewBox);
         svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
         // TODO(dfreedm): `pointer-events: none` works around https://crbug.com/370136
         // TODO(sjmiles): inline style may not be ideal, but avoids requiring a shadow-root
-        svg.style.cssText = 'pointer-events: none; display: block; width: 100%; height: 100%;';
+        svg.style.cssText = cssText;
         svg.appendChild(content).removeAttribute('id');
         return svg;
       }
@@ -10440,12 +10525,16 @@ Polymer({
       * To get @ returned, set noSpecialChars = false
      */
     function normalizedKeyForEvent(keyEvent, noSpecialChars) {
-      // Fall back from .key, to .keyIdentifier, to .keyCode, and then to
-      // .detail.key to support artificial keyboard events.
-      return transformKey(keyEvent.key, noSpecialChars) ||
-        transformKeyIdentifier(keyEvent.keyIdentifier) ||
-        transformKeyCode(keyEvent.keyCode) ||
-        transformKey(keyEvent.detail ? keyEvent.detail.key : keyEvent.detail, noSpecialChars) || '';
+      // Fall back from .key, to .detail.key for artifical keyboard events,
+      // and then to deprecated .keyIdentifier and .keyCode.
+      if (keyEvent.key) {
+        return transformKey(keyEvent.key, noSpecialChars);
+      }
+      if (keyEvent.detail && keyEvent.detail.key) {
+        return transformKey(keyEvent.detail.key, noSpecialChars);
+      }
+      return transformKeyIdentifier(keyEvent.keyIdentifier) ||
+        transformKeyCode(keyEvent.keyCode) || '';
     }
 
     function keyComboMatchesEvent(keyCombo, event) {
@@ -11601,6 +11690,11 @@ Polymer({
         }
       },
 
+      /**
+       * This conflicts with Element#antimate().
+       * https://developer.mozilla.org/en-US/docs/Web/API/Element/animate
+       * @suppress {checkTypes}
+       */
       animate: function() {
         if (!this._animating) {
           return;
@@ -12284,6 +12378,14 @@ Polymer({
           computed: '_computeAnimated(animatedShadow)'
         }
       },
+      
+      /**
+       * Format function for aria-hidden. Use the ! operator results in the
+       * empty string when given a falsy value.
+       */
+      _isHidden: function(image) {
+        return image ? 'false' : 'true';
+      },
 
       _headingChanged: function(heading) {
         var label = this.getAttribute('aria-label');
@@ -12291,10 +12393,7 @@ Polymer({
       },
 
       _computeHeadingClass: function(image) {
-        var cls = 'title-text';
-        if (image)
-          cls += ' over-image';
-        return cls;
+        return image ? ' over-image' : '';
       },
 
       _computeAnimated: function(animatedShadow) {
