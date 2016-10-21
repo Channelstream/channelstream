@@ -1,5 +1,4 @@
 import logging
-import uuid
 from datetime import datetime
 import gevent
 import six
@@ -7,48 +6,13 @@ from gevent.queue import Queue, Empty
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
+
 import channelstream
-from channelstream.user import User
-from channelstream.connection import Connection
-from channelstream.channel import Channel
+
+from channelstream import operations
 from ..ext_json import json
 
 log = logging.getLogger(__name__)
-
-
-def pass_message(msg, stats):
-    if msg.get('timestamp'):
-        # if present lets use timestamp provided in the message
-        if '.' in msg['timestamp']:
-            timestmp = datetime.strptime(msg['timestamp'],
-                                         '%Y-%m-%dT%H:%M:%S.%f')
-        else:
-            timestmp = datetime.strptime(msg['timestamp'],
-                                         '%Y-%m-%dT%H:%M:%S')
-    else:
-        timestmp = datetime.utcnow()
-    message = {'uuid': str(uuid.uuid4()).replace('-', ''),
-               'user': msg.get('user'),
-               'message': msg['message'],
-               'type': 'message',
-               'timestamp': timestmp}
-    pm_users = msg.get('pm_users', [])
-    total_sent = 0
-    stats['total_unique_messages'] += 1
-    exclude_users = msg.get('exclude_users') or []
-    if msg.get('channel'):
-        channel_inst = channelstream.CHANNELS.get(msg['channel'])
-        if channel_inst:
-            total_sent += channel_inst.add_message(message,
-                                                   pm_users=pm_users,
-                                                   exclude_users=exclude_users)
-    elif pm_users:
-        # if pm then iterate over all users and notify about new message!
-        for username in pm_users:
-            user_inst = channelstream.USERS.get(username)
-            if user_inst:
-                total_sent += user_inst.add_message(message)
-    stats['total_messages'] += total_sent
 
 
 def get_connection_channels(connection):
@@ -145,32 +109,14 @@ class ServerViews(object):
         if username is None:
             self.request.response.status = 400
             return {'error': "No username specified"}
-
-        # everything is ok so lets add new connection to
-        # channel and connection list
-        with channelstream.lock:
-            if username not in channelstream.USERS:
-                user = User(username)
-                user.state_from_dict(fresh_user_state)
-                channelstream.USERS[username] = user
-            else:
-                user = channelstream.USERS[username]
-            if state_public_keys is not None:
-                user.state_public_keys = state_public_keys
-
-            user.state_from_dict(update_user_state)
-            connection = Connection(username, conn_id)
-            if connection.id not in channelstream.CONNECTIONS:
-                channelstream.CONNECTIONS[connection.id] = connection
-            user.add_connection(connection)
-            for channel_name in channels:
-                # user gets assigned to a channel
-                if channel_name not in channelstream.CHANNELS:
-                    channel = Channel(channel_name,
-                                      channel_configs=channel_configs)
-                    channelstream.CHANNELS[channel_name] = channel
-                channelstream.CHANNELS[channel_name].add_connection(connection)
-            log.info('connecting %s with uuid %s' % (username, connection.id))
+        connection, user = operations.connect(
+            username=username,
+            fresh_user_state=fresh_user_state,
+            state_public_keys=state_public_keys,
+            update_user_state=update_user_state,
+            conn_id=conn_id,
+            channels=channels,
+            channel_configs=channel_configs)
 
         # get info config for channel information
         info_config = json_body.get('info') or {}
@@ -194,24 +140,10 @@ class ServerViews(object):
         if not channels:
             self.request.response.status = 400
             return {'error': "No channels specified"}
-        # everything is ok so lets add new connection to channel
-        # and connection list
-        # lets lock it just in case
-        # find the right user
-        user = channelstream.USERS.get(connection.username)
-        subscribed_to = []
-        with channelstream.lock:
-            if user:
-                for channel_name in channels:
-                    if channel_name not in channelstream.CHANNELS:
-                        channel = Channel(channel_name,
-                                          channel_configs=channel_configs)
-                        channelstream.CHANNELS[channel_name] = channel
-                    is_found = channelstream.CHANNELS[
-                        channel_name].add_connection(
-                        connection)
-                    if is_found:
-                        subscribed_to.append(channel_name)
+        subscribed_to = operations.subscribe(
+            connection=connection,
+            channels=channels,
+            channel_configs=channel_configs)
 
         # get info config for channel information
         current_channels = get_connection_channels(connection)
@@ -237,19 +169,9 @@ class ServerViews(object):
         if not unsubscribe_channels:
             self.request.response.status = 400
             return {'error': "No channels specified"}
-        # everything is ok so lets remove connections from the channels
-        # lets lock it just in case
-        # find the right user
-        user = channelstream.USERS.get(connection.username)
-        unsubscribed_from = []
-        with channelstream.lock:
-            if user:
-                for channel_name in unsubscribe_channels:
-                    if channel_name in channelstream.CHANNELS:
-                        is_found = channelstream.CHANNELS[
-                            channel_name].remove_connection(connection)
-                        if is_found:
-                            unsubscribed_from.append(channel_name)
+        unsubscribed_from = operations.unsubscribe(
+            connection=connection,
+            unsubscribe_channels=unsubscribe_channels)
 
         # get info config for channel information
         current_channels = get_connection_channels(connection)
@@ -260,7 +182,7 @@ class ServerViews(object):
             channels_info = {}
         return {"channels": current_channels,
                 "channels_info": channels_info,
-                "unsubscribed_from": sorted(unsubscribe_channels)}
+                "unsubscribed_from": sorted(unsubscribed_from)}
 
     @view_config(match_param='action=listen', permission=NO_PERMISSION_REQUIRED)
     def listen(self):
@@ -321,13 +243,8 @@ class ServerViews(object):
             return {'error': "User not found"}
         if state_public_keys is not None:
             user_inst.state_public_keys = state_public_keys
-        changed = user_inst.state_from_dict(user_state)
-        # mark active
-        user_inst.last_active = datetime.utcnow()
-        if changed:
-            channels = user_inst.get_channels()
-            for channel in [c for c in channels if c.notify_state]:
-                channel.send_user_state(user_inst, changed)
+        changed = operations.change_user_state(
+            user_inst=user_inst, user_state=user_state)
         return {
             'user_state': user_inst.state,
             'changed_state': changed,
@@ -340,7 +257,7 @@ class ServerViews(object):
         for msg in msg_list:
             if not msg.get('channel') and not msg.get('pm_users', []):
                 continue
-            gevent.spawn(pass_message, msg, channelstream.stats)
+            gevent.spawn(operations.pass_message, msg, channelstream.stats)
         return True
 
     @view_config(match_param='action=disconnect',
@@ -352,10 +269,7 @@ class ServerViews(object):
         else:
             conn_id = self.request.params.get('conn_id')
 
-        conn = channelstream.CONNECTIONS.get(conn_id)
-        if conn is not None:
-            conn.mark_for_gc()
-        return True
+        return operations.disconnect(conn_id=conn_id)
 
     @view_config(match_param='action=channel_config')
     def channel_config(self):
@@ -365,15 +279,7 @@ class ServerViews(object):
             self.request.response.status = 400
             return {'error': "No channels specified"}
 
-        with channelstream.lock:
-            for channel_name, config in json_body.items():
-                if not channelstream.CHANNELS.get(channel_name):
-                    channel = Channel(channel_name,
-                                      channel_configs=json_body)
-                    channelstream.CHANNELS[channel_name] = channel
-                else:
-                    channel = channelstream.CHANNELS[channel_name]
-                    channel.reconfigure_from_dict(json_body)
+        operations.set_channel_config(channel_configs=json_body)
         channels_info = self._get_channel_info(json_body.keys(),
                                                include_history=False,
                                                include_users=False)
@@ -435,6 +341,7 @@ class ServerViews(object):
                 'include_connections', True)
         channels_info = self.get_common_info(req_channels, info_config)
         return channels_info
+
 
 @view_config(
     context='channelstream.wsgi_views.wsgi_security:RequestBasicChallenge')
