@@ -31,7 +31,7 @@ install:
 
 script:
   - python setup.py develop
-  - py.test ziggurat_foundations/tests/
+  - py.test channelstream/tests.py
 
   # flake8 and rstcheck
   - if [ -n "$RSTCHECK" ]; then ./test.sh; fi
