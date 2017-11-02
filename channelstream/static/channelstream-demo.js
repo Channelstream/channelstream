@@ -30340,7 +30340,7 @@ __webpack_require__(150);
 
 var RegisterHtmlTemplate = __webpack_require__(1);
 
-RegisterHtmlTemplate.register("<dom-module id=chat-status-selector> <template> <style>paper-item{width:150px}</style> <paper-dropdown-menu label=\"Status Color\"> <paper-listbox class=dropdown-content selected={{selected}} attr-for-selected=value> <paper-item value=black>Black</paper-item> <paper-item value=red>Red</paper-item> <paper-item value=green>Green</paper-item> <paper-item value=blue>Blue</paper-item> </paper-listbox> </paper-dropdown-menu> </template> </dom-module>");
+RegisterHtmlTemplate.register("<dom-module id=chat-status-selector> <template> <style>paper-item{width:150px}</style> <paper-dropdown-menu label=\"Status Color\"> <paper-listbox slot=dropdown-content class=dropdown-content selected={{selected}} attr-for-selected=value> <paper-item value=black>Black</paper-item> <paper-item value=red>Red</paper-item> <paper-item value=green>Green</paper-item> <paper-item value=blue>Blue</paper-item> </paper-listbox> </paper-dropdown-menu> </template> </dom-module>");
 
 __webpack_require__(153);
 
