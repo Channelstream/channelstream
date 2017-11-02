@@ -5,50 +5,6 @@
     <title>Channelstream Demo</title>
     <base href="{{ request.route_url('index') }}"/>
     <script>
-        // Setup Polymer options
-        window.Polymer = {
-            dom: 'shadow',
-            lazyRegister: true
-        };
-        // Load webcomponentsjs polyfill if browser does not support native Web Components
-        (function () {
-            'use strict';
-            var onload = function () {
-                // For native Imports, manually fire WebComponentsReady so user code
-                // can use the same code path for native and polyfill'd imports.
-                if (!window.HTMLImports) {
-                    document.dispatchEvent(
-                        new CustomEvent('WebComponentsReady', {bubbles: true})
-                    );
-                }
-            };
-            var webComponentsSupported = (
-                'registerElement' in document
-                && 'import' in document.createElement('link')
-                && 'content' in document.createElement('template')
-            );
-            if (!webComponentsSupported) {
-                var script = document.createElement('script');
-                script.async = true;
-                script.src = 'static/webcomponents-lite.min.js';
-                script.onload = onload;
-                document.head.appendChild(script);
-            } else {
-                onload();
-            }
-
-            function clearObj(obj) {
-                for (var k in Object.keys(obj)) {
-                    obj[k] = null;
-                }
-            }
-            function unloadPolymer() {
-                clearObj(CustomElements.registry);
-            }
-            window.onbeforeunload = unloadPolymer;
-
-        })();
-
         var AppConf = {
             connectUrl: '{{ request.route_url('section_action',  section='demo', action='connect') }}',
             disconnectUrl: '{{ request.route_url('section_action',  section='demo', action='disconnect') }}',
@@ -60,12 +16,20 @@
             websocketUrl: '{{ request.route_url('action', action='ws').replace('http', 'ws') }}',
             infoUrl: '{{ request.route_url('section_action', section='demo', action='info') }}'
         }
-
     </script>
-
-    <link rel="import"
-          href="static/channelstream-demo/channelstream-chat-demo.html">
-
+    <script src="static/bower_components/webcomponentsjs/custom-elements-es5-adapter.js"></script>
+    <script src="static/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    <script>
+        (function () {
+            document.addEventListener('WebComponentsReady', function componentsReady() {
+                document.removeEventListener('WebComponentsReady', componentsReady, false);
+                var script = document.createElement('script');
+                script.src = 'static/channelstream-demo.js';
+                var refScript = document.getElementsByTagName('script')[0];
+                refScript.parentNode.insertBefore(script, refScript);
+            }, false);
+        })();
+    </script>
 </head>
 <body>
 

@@ -92,3 +92,4 @@ ENV/
 bower_components
 node_modules
 frontend/build
+/frontend/public/

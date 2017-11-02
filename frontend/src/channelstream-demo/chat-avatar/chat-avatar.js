@@ -1,3 +1,5 @@
+import gravatar from './gravatarjs.js';
+
 Polymer({
     is: 'chat-avatar',
     properties: {

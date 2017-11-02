@@ -42,11 +42,13 @@
         <paper-dialog id="loginDialog" with-backdrop>
             <p>Log in to post messages</p>
 
-            <form is="iron-form" id="login-form" method="post" on-iron-form-presubmit="formPresubmit">
+            <iron-form id="login-form">
+            <form method="post" on-iron-form-presubmit="formPresubmit">
                 <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed="changeUser"></iron-a11y-keys>
                 <paper-input value="{{loginUsername}}" label="User Name" min-length="1" auto-validate required></paper-input>
                 <paper-input value="{{loginEmail}}" label="Email" min-length="1" auto-validate required></paper-input>
             </form>
+            </iron-form>
 
 
             <div class="buttons">
@@ -70,8 +72,8 @@
 
 
         </div>
-
-        <form is="iron-form" id="message-form" on-iron-form-presubmit="formPresubmit" method="post">
+        <iron-form id="message-form">
+        <form on-iron-form-presubmit="formPresubmit" method="post">
             <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed="sendMessage"></iron-a11y-keys>
             <paper-input id="message-input" name="message" label="Your message" value="{{message}}"></paper-input>
             <paper-icon-button icon="icons:send" on-tap="sendMessage"></paper-icon-button>
@@ -84,6 +86,7 @@
             </template>
             <chat-channel-picker channels="{{channels}}" possible-channels="[[possibleChannels]]"></chat-channel-picker>
         </form>
+        </iron-form>
 
     </template>
     <script src="chat-view.js"></script>

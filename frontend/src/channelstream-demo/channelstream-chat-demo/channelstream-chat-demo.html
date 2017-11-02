@@ -2,7 +2,7 @@
 <link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../../bower_components/iron-signals/iron-signals.html">
 <link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
-<link rel="import" href="../../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../../bower_components/app-route/app-route.html">
 
@@ -17,6 +17,13 @@
             .pad-content {
                 padding: 20px;
             }
+
+            app-toolbar {
+                background-color: #4285f4;
+                color: #fff;
+                margin: 0 0 20px 0;
+            }
+
         </style>
         <channelstream-connection
             id="channelstream-connection"
@@ -40,14 +47,14 @@
             tail="{{tail}}">
         </app-route>
 
-        <paper-toolbar>
+        <app-toolbar>
             <span class="title">Channelstream Demo - Hello {{user.username}}</span>
 
             <paper-tabs selected="{{page}}" attr-for-selected="name">
                 <paper-tab name="chat">Chat</paper-tab>
                 <paper-tab name="admin">Admin Stats</paper-tab>
             </paper-tabs>
-        </paper-toolbar>
+        </app-toolbar>
 
         <iron-pages id="ironPages" selected="{{page}}" attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
             <chat-view name="chat"

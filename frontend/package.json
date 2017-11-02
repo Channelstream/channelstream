@@ -1,30 +1,31 @@
 {
-  "name": "polymer-starter-kit-custom-build",
-  "version": "0.0.0",
-  "description": "A starting point for Polymer 1.0 custom build apps",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:PolymerElements/generator-polymer-init-custom-build"
-  },
-  "license": "http://polymer.github.io/LICENSE.txt",
-  "bugs": {
-    "url": "https://github.com/PolymerElements/generator-polymer-init-custom-build/issues"
-  },
-  "engines": {
-    "node": ">=4.0"
-  },
-  "private": true,
-  "devDependencies": {
-    "del": "^2.2.1",
-    "gulp": "gulpjs/gulp#4.0",
-    "gulp-if": "^2.0.1",
-    "gulp-imagemin": "^3.0.1",
-    "gulp-watch": "^4.3.9",
-    "gulp-batch": "^1.0.5",
-    "merge-stream": "^1.0.0",
-    "plylog": "^0.4.0",
-    "polymer-build": "^0.4.0",
-    "gulp-vulcanize": "^6.1.0",
-    "gulp-crisper": "^1.1.0"
-  }
+    "name": "polymer-starter-kit-custom-build",
+    "version": "0.0.0",
+    "description": "A starting point for Polymer 1.0 custom build apps",
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:PolymerElements/generator-polymer-init-custom-build"
+    },
+    "license": "http://polymer.github.io/LICENSE.txt",
+    "bugs": {
+        "url": "https://github.com/PolymerElements/generator-polymer-init-custom-build/issues"
+    },
+    "engines": {
+        "node": ">=6.0"
+    },
+    "private": true,
+    "devDependencies": {
+        "babel-core": "^6.26.0",
+        "babel-loader": "^7.1.2",
+        "babel-preset-env": "^1.6.0",
+        "copy-webpack-plugin": "^4.1.1",
+        "html-webpack-plugin": "^2.30.1",
+        "polymer-webpack-loader": "^2.0.0",
+        "webpack": "^3.7.1",
+        "webpack-dev-server": "^2.9.1"
+    },
+    "dependencies": {
+        "bower": "^1.8.2",
+        "webpack-uglify-js-plugin": "^1.1.9"
+    }
 }
