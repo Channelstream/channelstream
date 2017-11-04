@@ -1,14 +1,17 @@
 {
-    "name": "polymer-starter-kit-custom-build",
-    "version": "0.0.0",
-    "description": "A starting point for Polymer 1.0 custom build apps",
+    "name": "channelstream-js-front",
+    "version": "0.1.0",
+    "description": "Frontends for polymer",
     "repository": {
         "type": "git",
-        "url": "git@github.com:PolymerElements/generator-polymer-init-custom-build"
+        "url": "git@github.com:AppEnlight/channelstream"
     },
-    "license": "http://polymer.github.io/LICENSE.txt",
+    "scripts": {
+        "build": "webpack --watch --progress"
+    },
+    "license": "https://github.com/AppEnlight/channelstream/blob/master/LICENSE",
     "bugs": {
-        "url": "https://github.com/PolymerElements/generator-polymer-init-custom-build/issues"
+        "url": "https://github.com/AppEnlight/channelstream/issues"
     },
     "engines": {
         "node": ">=6.0"
@@ -26,6 +29,7 @@
     },
     "dependencies": {
         "bower": "^1.8.2",
+        "web-animations-js": "^2.3.1",
         "webpack-uglify-js-plugin": "^1.1.9"
     }
 }

@@ -1,23 +1,30 @@
-Polymer({
-    is: 'chat-message-list',
-    // this is required so we can pass visible/hidden state to message list and iron-list
-    behaviors: [
-        Polymer.IronResizableBehavior
-    ],
-    attached: function() {
+class ChatMessageList extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element) {
+    static get is() {
+        return 'chat-message-list';
+    }
+
+    static get properties() {
+        return {
+            messages: Array
+        };
+    }
+
+    static get observers() {
+        return [
+            // Observer method name, followed by a list of dependencies, in parenthesis
+            '_messagesChanged(messages.splices)'
+        ]
+    }
+
+    attached() {
         this.notifyResize();
-    },
+    }
 
-    properties: {
-        messages: Array
-    },
-    observers: [
-        '_messagesChanged(messages.splices)'
-    ],
-
-    _messagesChanged: function () {
-        if(this.messages){
+    _messagesChanged() {
+        if (this.messages) {
             this.$$('iron-list').scrollToIndex(this.messages.length - 1);
         }
     }
-});
+}
+
+customElements.define(ChatMessageList.is, ChatMessageList);

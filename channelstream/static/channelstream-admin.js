@@ -19461,74 +19461,115 @@ __webpack_require__(92);
 "use strict";
 
 
-Polymer({
-    is: 'channelstream-admin',
-    properties: {
-        urlAdminJson: String,
-        channels: {
-            type: Array,
-            value: []
-        },
-        loadingAdmin: {
-            type: Boolean,
-            observer: 'loadingChange'
-        },
-        user: Object
-    },
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-    ready: function ready() {
-        // refresh data when document is attached to dom
-        this.$['ajax-admin-info'].url = this.urlAdminJson;
-        this.refresh();
-        this._addInterval();
-    },
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-    refresh: function refresh() {
-        this.$['ajax-admin-info'].generateRequest();
-    },
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-    _addInterval: function _addInterval() {
-        this.interval = setInterval(this.refresh.bind(this), 5000);
-    },
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-    _clearInterval: function _clearInterval() {
-        if (this.interval) {
-            clearInterval(this.interval);
-        }
-    },
-    loadingChange: function loadingChange(newVal) {
-        if (newVal) {
-            this.$$('paper-progress').toggleClass('transparent', false);
-        } else {
-            this.$$('paper-progress').toggleClass('transparent', true);
-        }
-    },
-    setChannels: function setChannels(event) {
-        // changes channels object response to a list for iteration in template
-        var keys = Object.keys(event.detail.response.channels);
-        var channels = [];
-        for (var i = 0; i < keys.length; i++) {
-            var key = keys[i];
-            channels.push(event.detail.response.channels[key]);
-        }
-        this.channels = channels;
-    },
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-    toggleHistory: function toggleHistory(event) {
-        var index = event.currentTarget.get('index');
-        if (index !== undefined) {
-            this.$$('.channel-history-' + index).toggle();
-        }
-    },
+var ChannelStreamAdmin = function (_Polymer$Element) {
+    _inherits(ChannelStreamAdmin, _Polymer$Element);
 
-    toggleUsers: function toggleUsers(event) {
-        var index = event.currentTarget.get('index');
-        if (index !== undefined) {
-            this.$$('.channel-users-' + index).toggle();
-        }
+    function ChannelStreamAdmin() {
+        _classCallCheck(this, ChannelStreamAdmin);
+
+        return _possibleConstructorReturn(this, (ChannelStreamAdmin.__proto__ || Object.getPrototypeOf(ChannelStreamAdmin)).apply(this, arguments));
     }
 
-});
+    _createClass(ChannelStreamAdmin, [{
+        key: 'ready',
+        value: function ready() {
+            _get(ChannelStreamAdmin.prototype.__proto__ || Object.getPrototypeOf(ChannelStreamAdmin.prototype), 'ready', this).call(this);
+            // refresh data when document is attached to dom
+            this.$['ajax-admin-info'].url = this.urlAdminJson;
+            this.refresh();
+            this._addInterval();
+        }
+    }, {
+        key: 'refresh',
+        value: function refresh() {
+            this.$['ajax-admin-info'].generateRequest();
+        }
+    }, {
+        key: '_addInterval',
+        value: function _addInterval() {
+            this.interval = setInterval(this.refresh.bind(this), 5000);
+        }
+    }, {
+        key: '_clearInterval',
+        value: function _clearInterval() {
+            if (this.interval) {
+                clearInterval(this.interval);
+            }
+        }
+    }, {
+        key: 'loadingChange',
+        value: function loadingChange(newVal) {
+            if (newVal) {
+                this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', false);
+            } else {
+                this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', true);
+            }
+        }
+    }, {
+        key: 'setChannels',
+        value: function setChannels(event) {
+            // changes channels object response to a list for iteration in template
+            var keys = Object.keys(event.detail.response.channels);
+            var channels = [];
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                channels.push(event.detail.response.channels[key]);
+            }
+            this.channels = channels;
+        }
+    }, {
+        key: 'toggleHistory',
+        value: function toggleHistory(event) {
+            var index = event.currentTarget.get('index');
+            if (index !== undefined) {
+                this.shadowRoot.querySelector('.channel-history-' + index).toggle();
+            }
+        }
+    }, {
+        key: 'toggleUsers',
+        value: function toggleUsers(event) {
+            var index = event.currentTarget.get('index');
+            if (index !== undefined) {
+                this.shadowRoot.querySelector('.channel-users-' + index).toggle();
+            }
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'channelstream-admin';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                urlAdminJson: String,
+                channels: {
+                    type: Array,
+                    value: []
+                },
+                loadingAdmin: {
+                    type: Boolean,
+                    observer: 'loadingChange'
+                },
+                user: Object
+            };
+        }
+    }]);
+
+    return ChannelStreamAdmin;
+}(Polymer.Element);
+
+customElements.define(ChannelStreamAdmin.is, ChannelStreamAdmin);
 
 /***/ })
 /******/ ]);

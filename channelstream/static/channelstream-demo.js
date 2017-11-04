@@ -26109,85 +26109,127 @@ __webpack_require__(112);
 "use strict";
 
 
-Polymer({
-    is: 'admin-view',
-    properties: {
-        channels: {
-            type: Array,
-            value: []
-        },
-        loadingAdmin: {
-            type: Boolean,
-            observer: 'loadingChange'
-        },
-        ironSelected: {
-            type: Boolean,
-            observer: 'ironChange'
-        },
-        user: Object
-    },
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-    ready: function ready() {
-        // refresh data when document is attached to dom
-        this.refresh();
-    },
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-    refresh: function refresh() {
-        this.$['ajax-admin-info'].url = AppConf.infoUrl;
-        this.$['ajax-admin-info'].generateRequest();
-    },
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-    _addInterval: function _addInterval() {
-        this.interval = setInterval(this.refresh.bind(this), 5000);
-    },
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-    _clearInterval: function _clearInterval() {
-        if (this.interval) {
-            clearInterval(this.interval);
-        }
-    },
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-    ironChange: function ironChange(newVal, oldVal) {
-        // refresh the data every 5s
-        if (newVal) {
-            this._addInterval();
-        } else {
-            this._clearInterval();
-        }
-    },
-    loadingChange: function loadingChange(newVal) {
-        if (newVal) {
-            this.$$('paper-progress').toggleClass('transparent', false);
-        } else {
-            this.$$('paper-progress').toggleClass('transparent', true);
-        }
-    },
-    setChannels: function setChannels(event) {
-        // changes channels object response to a list for iteration in template
-        var keys = Object.keys(event.detail.response.channels);
-        var channels = [];
-        for (var i = 0; i < keys.length; i++) {
-            var key = keys[i];
-            channels.push(event.detail.response.channels[key]);
-        }
-        this.channels = channels;
-    },
+var AdminView = function (_Polymer$Element) {
+    _inherits(AdminView, _Polymer$Element);
 
-    toggleHistory: function toggleHistory(event) {
-        var index = event.currentTarget.get('index');
-        if (index !== undefined) {
-            this.$$('.channel-history-' + index).toggle();
-        }
-    },
+    function AdminView() {
+        _classCallCheck(this, AdminView);
 
-    toggleUsers: function toggleUsers(event) {
-        var index = event.currentTarget.get('index');
-        if (index !== undefined) {
-            this.$$('.channel-users-' + index).toggle();
-        }
+        return _possibleConstructorReturn(this, (AdminView.__proto__ || Object.getPrototypeOf(AdminView)).apply(this, arguments));
     }
 
-});
+    _createClass(AdminView, [{
+        key: 'ready',
+        value: function ready() {
+            _get(AdminView.prototype.__proto__ || Object.getPrototypeOf(AdminView.prototype), 'ready', this).call(this);
+            // refresh data when document is attached to dom
+            this.refresh();
+        }
+    }, {
+        key: 'refresh',
+        value: function refresh() {
+            this.$['ajax-admin-info'].url = AppConf.infoUrl;
+            this.$['ajax-admin-info'].generateRequest();
+        }
+    }, {
+        key: '_addInterval',
+        value: function _addInterval() {
+            this.interval = setInterval(this.refresh.bind(this), 5000);
+        }
+    }, {
+        key: '_clearInterval',
+        value: function _clearInterval() {
+            if (this.interval) {
+                clearInterval(this.interval);
+            }
+        }
+    }, {
+        key: 'ironChange',
+        value: function ironChange(newVal, oldVal) {
+            // refresh the data every 5s
+            if (newVal) {
+                this._addInterval();
+            } else {
+                this._clearInterval();
+            }
+        }
+    }, {
+        key: 'loadingChange',
+        value: function loadingChange(newVal) {
+            if (newVal) {
+                this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', false);
+            } else {
+                this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', true);
+            }
+        }
+    }, {
+        key: 'setChannels',
+        value: function setChannels(event) {
+            // changes channels object response to a list for iteration in template
+            var keys = Object.keys(event.detail.response.channels);
+            var channels = [];
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                channels.push(event.detail.response.channels[key]);
+            }
+            this.channels = channels;
+        }
+    }, {
+        key: 'toggleHistory',
+        value: function toggleHistory(event) {
+            var index = event.currentTarget.get('index');
+            if (index !== undefined) {
+                this.shadowRoot.querySelector('.channel-history-' + index).toggle();
+            }
+        }
+    }, {
+        key: 'toggleUsers',
+        value: function toggleUsers(event) {
+            var index = event.currentTarget.get('index');
+            if (index !== undefined) {
+                this.shadowRoot.querySelector('.channel-users-' + index).toggle();
+            }
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'admin-view';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                channels: {
+                    type: Array,
+                    value: []
+                },
+                loadingAdmin: {
+                    type: Boolean,
+                    observer: 'loadingChange'
+                },
+                ironSelected: {
+                    type: Boolean,
+                    observer: 'ironChange'
+                },
+                user: Object
+            };
+        }
+    }]);
+
+    return AdminView;
+}(Polymer.Element);
+
+customElements.define(AdminView.is, AdminView);
 
 /***/ }),
 /* 113 */
@@ -30022,25 +30064,56 @@ __webpack_require__(135);
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 var _gravatarjs = __webpack_require__(134);
 
 var _gravatarjs2 = _interopRequireDefault(_gravatarjs);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-Polymer({
-    is: 'chat-avatar',
-    properties: {
-        email: String,
-        username: String
-    },
-    _getAvatar: function _getAvatar() {
-        var avatar = this.email || this.username || 'test';
-        return (0, _gravatarjs2.default)(avatar, {
-            size: 50, rating: "pg", backup: "retro", secure: true
-        });
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ChatAvatar = function (_Polymer$Element) {
+    _inherits(ChatAvatar, _Polymer$Element);
+
+    function ChatAvatar() {
+        _classCallCheck(this, ChatAvatar);
+
+        return _possibleConstructorReturn(this, (ChatAvatar.__proto__ || Object.getPrototypeOf(ChatAvatar)).apply(this, arguments));
     }
-});
+
+    _createClass(ChatAvatar, [{
+        key: '_getAvatar',
+        value: function _getAvatar() {
+            var avatar = this.email || this.username || 'test';
+            return (0, _gravatarjs2.default)(avatar, {
+                size: 50, rating: "pg", backup: "retro", secure: true
+            });
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'chat-avatar';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                email: String,
+                username: String
+            };
+        }
+    }]);
+
+    return ChatAvatar;
+}(Polymer.Element);
+
+customElements.define(ChatAvatar.is, ChatAvatar);
 
 /***/ }),
 /* 134 */
@@ -30169,19 +30242,50 @@ function gravatar(email, options) {
 "use strict";
 
 
-Polymer({
-    is: 'chat-message',
-    properties: {
-        user: String,
-        timestamp: Object,
-        message: Object,
-        channel: String,
-        type: String
-    },
-    _shortTime: function _shortTime() {
-        return this.timestamp.split('.')[0];
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ChatMessage = function (_Polymer$Element) {
+    _inherits(ChatMessage, _Polymer$Element);
+
+    function ChatMessage() {
+        _classCallCheck(this, ChatMessage);
+
+        return _possibleConstructorReturn(this, (ChatMessage.__proto__ || Object.getPrototypeOf(ChatMessage)).apply(this, arguments));
     }
-});
+
+    _createClass(ChatMessage, [{
+        key: '_shortTime',
+        value: function _shortTime() {
+            return this.timestamp.split('.')[0];
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'chat-message';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                user: String,
+                timestamp: Object,
+                message: Object,
+                channel: String,
+                type: String
+            };
+        }
+    }]);
+
+    return ChatMessage;
+}(Polymer.Element);
+
+customElements.define(ChatMessage.is, ChatMessage);
 
 /***/ }),
 /* 136 */
@@ -30190,25 +30294,60 @@ Polymer({
 "use strict";
 
 
-Polymer({
-    is: 'chat-message-list',
-    // this is required so we can pass visible/hidden state to message list and iron-list
-    behaviors: [Polymer.IronResizableBehavior],
-    attached: function attached() {
-        this.notifyResize();
-    },
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-    properties: {
-        messages: Array
-    },
-    observers: ['_messagesChanged(messages.splices)'],
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-    _messagesChanged: function _messagesChanged() {
-        if (this.messages) {
-            this.$$('iron-list').scrollToIndex(this.messages.length - 1);
-        }
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ChatMessageList = function (_Polymer$mixinBehavio) {
+    _inherits(ChatMessageList, _Polymer$mixinBehavio);
+
+    function ChatMessageList() {
+        _classCallCheck(this, ChatMessageList);
+
+        return _possibleConstructorReturn(this, (ChatMessageList.__proto__ || Object.getPrototypeOf(ChatMessageList)).apply(this, arguments));
     }
-});
+
+    _createClass(ChatMessageList, [{
+        key: 'attached',
+        value: function attached() {
+            this.notifyResize();
+        }
+    }, {
+        key: '_messagesChanged',
+        value: function _messagesChanged() {
+            if (this.messages) {
+                this.$$('iron-list').scrollToIndex(this.messages.length - 1);
+            }
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'chat-message-list';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                messages: Array
+            };
+        }
+    }, {
+        key: 'observers',
+        get: function get() {
+            return [
+            // Observer method name, followed by a list of dependencies, in parenthesis
+            '_messagesChanged(messages.splices)'];
+        }
+    }]);
+
+    return ChatMessageList;
+}(Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element));
+
+customElements.define(ChatMessageList.is, ChatMessageList);
 
 /***/ }),
 /* 137 */
@@ -30236,50 +30375,93 @@ __webpack_require__(138);
 "use strict";
 
 
-Polymer({
-    is: 'chat-channel-picker',
-    // this is required so we can pass visible/hidden state to message list and iron-list
-    behaviors: [Polymer.IronResizableBehavior],
-    properties: {
-        channels: Array,
-        possibleChannels: Array,
-        connectedChannels: {
-            type: String,
-            computed: '_generateConnectedChannels(channels.*, possibleChannels)'
-        }
-    },
-    subscribeToChannel: function subscribeToChannel(event) {
-        this.fire('iron-signal', {
-            name: 'channelpicker-subscribe',
-            data: { channel: event.currentTarget.get('channel') }
-        });
-    },
-    /** pregenerate list of channel states for easier looping */
-    _generateConnectedChannels: function _generateConnectedChannels() {
-        var channels = [];
-        for (var i = 0; i < this.possibleChannels.length; i++) {
-            var channel = this.possibleChannels[i];
-            channels.push({
-                channel: channel,
-                connected: this.channels.indexOf(channel) !== -1
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ChatChannelPicker = function (_Polymer$mixinBehavio) {
+    _inherits(ChatChannelPicker, _Polymer$mixinBehavio);
+
+    function ChatChannelPicker() {
+        _classCallCheck(this, ChatChannelPicker);
+
+        return _possibleConstructorReturn(this, (ChatChannelPicker.__proto__ || Object.getPrototypeOf(ChatChannelPicker)).apply(this, arguments));
+    }
+
+    _createClass(ChatChannelPicker, [{
+        key: 'subscribeToChannel',
+        value: function subscribeToChannel(event) {
+            this.fire('iron-signal', {
+                name: 'channelpicker-subscribe',
+                data: { channel: event.currentTarget.get('channel') }
             });
         }
-        return channels;
-    },
 
-    _computedConnectIcon: function _computedConnectIcon(enabled) {
-        if (enabled) {
-            return 'icons:check-box';
+        /** pregenerate list of channel states for easier looping */
+
+    }, {
+        key: '_generateConnectedChannels',
+        value: function _generateConnectedChannels() {
+            var channels = [];
+            for (var i = 0; i < this.possibleChannels.length; i++) {
+                var channel = this.possibleChannels[i];
+                channels.push({
+                    channel: channel,
+                    connected: this.channels.indexOf(channel) !== -1
+                });
+            }
+            return channels;
         }
-        return 'icons:check-box-outline-blank';
-    },
-    _computedConnectLabel: function _computedConnectLabel(enabled, channel) {
-        if (enabled) {
-            return 'Connected to "' + channel + '"';
+    }, {
+        key: '_computedConnectIcon',
+        value: function _computedConnectIcon(enabled) {
+            if (enabled) {
+                return 'icons:check-box';
+            }
+            return 'icons:check-box-outline-blank';
         }
-        return 'Connect to "' + channel + '"';
-    }
-});
+    }, {
+        key: '_computedConnectLabel',
+        value: function _computedConnectLabel(enabled, channel) {
+            if (enabled) {
+                return 'Connected to "' + channel + '"';
+            }
+            return 'Connect to "' + channel + '"';
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'chat-channel-picker';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                channels: Array,
+                possibleChannels: Array,
+                connectedChannels: {
+                    type: String,
+                    computed: '_generateConnectedChannels(channels.*, possibleChannels)'
+                }
+            };
+        }
+    }, {
+        key: 'observers',
+        get: function get() {
+            return [
+            // Observer method name, followed by a list of dependencies, in parenthesis
+            '_messagesChanged(messages.splices)'];
+        }
+    }]);
+
+    return ChatChannelPicker;
+}(Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element));
+
+customElements.define(ChatChannelPicker.is, ChatChannelPicker);
 
 /***/ }),
 /* 139 */
@@ -30309,19 +30491,52 @@ __webpack_require__(140);
 "use strict";
 
 
-Polymer({
-    is: 'chat-user-list',
-    properties: {
-        users: Array,
-        usersStates: Object
-    },
-    _computedEmail: function _computedEmail(op, username) {
-        return this.usersStates[username].state.email;
-    },
-    _computedColor: function _computedColor(op, username) {
-        return this.usersStates[username].state.color || 'black';
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ChatUserList = function (_Polymer$Element) {
+    _inherits(ChatUserList, _Polymer$Element);
+
+    function ChatUserList() {
+        _classCallCheck(this, ChatUserList);
+
+        return _possibleConstructorReturn(this, (ChatUserList.__proto__ || Object.getPrototypeOf(ChatUserList)).apply(this, arguments));
     }
-});
+
+    _createClass(ChatUserList, [{
+        key: '_computedEmail',
+        value: function _computedEmail(op, username) {
+            return this.usersStates[username].state.email;
+        }
+    }, {
+        key: '_computedColor',
+        value: function _computedColor(op, username) {
+            return this.usersStates[username].state.color || 'black';
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'chat-user-list';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                users: Array,
+                usersStates: Object
+            };
+        }
+    }]);
+
+    return ChatUserList;
+}(Polymer.Element);
+
+customElements.define(ChatUserList.is, ChatUserList);
 
 /***/ }),
 /* 141 */
@@ -31537,31 +31752,69 @@ RegisterHtmlTemplate.register("<dom-module id=paper-item-shared-styles> <templat
 "use strict";
 
 
-Polymer({
-    is: 'chat-status-selector',
-    properties: {
-        isReady: Boolean,
-        selected: {
-            type: String,
-            value: "black",
-            observer: '_changeColor'
-        }
-    },
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-    ready: function ready() {
-        this.isReady = true;
-    },
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-    _changeColor: function _changeColor() {
-        if (!this.isReady) {
-            return;
-        }
-        this.fire('iron-signal', {
-            name: 'change-status',
-            data: { color: this.selected }
-        });
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ChatStatusSelector = function (_Polymer$Element) {
+    _inherits(ChatStatusSelector, _Polymer$Element);
+
+    function ChatStatusSelector() {
+        _classCallCheck(this, ChatStatusSelector);
+
+        return _possibleConstructorReturn(this, (ChatStatusSelector.__proto__ || Object.getPrototypeOf(ChatStatusSelector)).apply(this, arguments));
     }
-});
+
+    _createClass(ChatStatusSelector, [{
+        key: 'ready',
+        value: function ready() {
+            _get(ChatStatusSelector.prototype.__proto__ || Object.getPrototypeOf(ChatStatusSelector.prototype), 'ready', this).call(this);
+            this.isReady = true;
+        }
+    }, {
+        key: '_changeColor',
+        value: function _changeColor() {
+            if (!this.isReady) {
+                return;
+            }
+            this.dispatchEvent(new CustomEvent('iron-signal', {
+                detail: {
+                    name: 'change-status',
+                    data: { color: this.selected }
+                },
+                bubbles: true,
+                composed: true
+            }));
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'chat-status-selector';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                isReady: Boolean,
+                selected: {
+                    type: String,
+                    value: "black",
+                    observer: '_changeColor'
+                }
+            };
+        }
+    }]);
+
+    return ChatStatusSelector;
+}(Polymer.Element);
+
+customElements.define(ChatStatusSelector.is, ChatStatusSelector);
 
 /***/ }),
 /* 154 */
@@ -31570,142 +31823,194 @@ Polymer({
 "use strict";
 
 
-Polymer({
-    is: 'chat-view',
-    // this is required so we can pass visible/hidden state to message list and iron-list
-    behaviors: [Polymer.IronResizableBehavior],
-    properties: {
-        channels: Array,
-        selectedChannel: {
-            type: String,
-            value: 'pub_chan',
-            notify: true
-        },
-        user: {
-            type: Object,
-            notify: true
-        },
-        userState: {
-            type: Object,
-            value: function value() {
-                return {};
-            },
-            notify: true
-        },
-        usersStates: {
-            type: Object,
-            value: function value() {
-                return {};
-            },
-            notify: true
-        },
-        channelsStates: {
-            type: Object,
-            value: function value() {
-                return {};
-            },
-            notify: true
-        },
-        messages: {
-            type: Object,
-            value: function value() {
-                return {};
-            },
-            notify: true
-        },
-        visibleChannelMessages: {
-            type: Array,
-            computed: '_computeVisibleMessages(messages.*, selectedChannel)',
-            notify: true
-        },
-        visibleChannelUsers: {
-            type: Array,
-            computed: '_computeVisibleUsers(channelsStates.*, selectedChannel)',
-            notify: true
-        }
-    },
-    attached: function attached() {
-        this.async(this.notifyResize, 1);
-    },
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-    /** Act only on various message types */
-    addMessage: function addMessage(message) {
-        // create a new key for channel
-        if (typeof this.messages[message.channel] === 'undefined') {
-            this.messages[message.channel] = [];
-        }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-        // push message
-        if (message.type === 'message') {
-            this.push(['messages', message.channel], message);
-        } else if (message.type === 'presence') {
-            var text = 'User ' + message.user + ' ' + message.message.action;
-            // set presence text and normalize to format message element expects
-            message.message = {
-                text: text,
-                email: '',
-                action: message.message.action
-            };
-            this.push(['messages', message.channel], message);
-        }
-    },
-    loadHistory: function loadHistory(messageList, channel) {
-        this.set(['messages', channel], messageList);
-    },
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-    isAnonymous: function isAnonymous(username) {
-        return username.toLowerCase().indexOf('anonymous') !== -1;
-    },
-    openDialog: function openDialog() {
-        this.$.loginDialog.open();
-    },
-    changeUser: function changeUser(event) {
-        event.preventDefault();
-        if (this.$['login-form'].validate()) {
-            this.set('user', {
-                username: this.loginUsername,
-                email: this.loginEmail
-            });
-            this.$.loginDialog.close();
-        }
-    },
-    /** stop default form submit because shady dom might fire it twice */
-    formPresubmit: function formPresubmit(event) {
-        event.preventDefault();
-    },
-    /** sends the signal that will pass the message to the
-     * channelstream-connection element */
-    sendMessage: function sendMessage(event) {
-        event.preventDefault();
-        this.fire('iron-signal', {
-            name: 'send-message',
-            data: {
-                message: {
-                    text: this.message,
-                    email: this.user.email
-                },
-                channel: this.selectedChannel,
-                user: this.user.username
-            }
-        });
-        this.$$('#message-form paper-input').value = '';
-    },
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-    _computeVisibleMessages: function _computeVisibleMessages() {
-        this.linkPaths('visibleChannelMessages', 'messages.' + this.selectedChannel);
-        if (this.messages && this.selectedChannel) {
-            return this.messages[this.selectedChannel];
-        }
-        return [];
-    },
-    _computeVisibleUsers: function _computeVisibleUsers() {
-        this.linkPaths('visibleChannelUsers', 'channelsStates.' + this.selectedChannel + '.users');
-        if (this.channelsStates[this.selectedChannel]) {
-            return this.channelsStates[this.selectedChannel].users;
-        }
-        return [];
+var ChatView = function (_Polymer$mixinBehavio) {
+    _inherits(ChatView, _Polymer$mixinBehavio);
+
+    function ChatView() {
+        _classCallCheck(this, ChatView);
+
+        return _possibleConstructorReturn(this, (ChatView.__proto__ || Object.getPrototypeOf(ChatView)).apply(this, arguments));
     }
-});
+
+    _createClass(ChatView, [{
+        key: 'attached',
+        value: function attached() {
+            this.async(this.notifyResize, 1);
+        }
+
+        /** Act only on various message types */
+
+    }, {
+        key: 'addMessage',
+        value: function addMessage(message) {
+            // create a new key for channel
+            if (typeof this.messages[message.channel] === 'undefined') {
+                this.messages[message.channel] = [];
+            }
+
+            // push message
+            if (message.type === 'message') {
+                this.push(['messages', message.channel], message);
+            } else if (message.type === 'presence') {
+                var text = 'User ' + message.user + ' ' + message.message.action;
+                // set presence text and normalize to format message element expects
+                message.message = {
+                    text: text,
+                    email: '',
+                    action: message.message.action
+                };
+                this.push(['messages', message.channel], message);
+            }
+        }
+    }, {
+        key: 'loadHistory',
+        value: function loadHistory(messageList, channel) {
+            this.set(['messages', channel], messageList);
+        }
+    }, {
+        key: 'isAnonymous',
+        value: function isAnonymous(username) {
+            return username.toLowerCase().indexOf('anonymous') !== -1;
+        }
+    }, {
+        key: 'openDialog',
+        value: function openDialog() {
+            this.$.loginDialog.open();
+        }
+    }, {
+        key: 'changeUser',
+        value: function changeUser(event) {
+            event.preventDefault();
+            if (this.$['login-form'].validate()) {
+                this.set('user', {
+                    username: this.loginUsername,
+                    email: this.loginEmail
+                });
+                this.$.loginDialog.close();
+            }
+        }
+        /** stop default form submit because shady dom might fire it twice */
+
+    }, {
+        key: 'formPresubmit',
+        value: function formPresubmit(event) {
+            event.preventDefault();
+        }
+        /** sends the signal that will pass the message to the
+         * channelstream-connection element */
+
+    }, {
+        key: 'sendMessage',
+        value: function sendMessage(event) {
+            event.preventDefault();
+            this.fire('iron-signal', {
+                name: 'send-message',
+                data: {
+                    message: {
+                        text: this.message,
+                        email: this.user.email
+                    },
+                    channel: this.selectedChannel,
+                    user: this.user.username
+                }
+            });
+            this.shadowRoot.querySelector('#message-form paper-input').value = '';
+        }
+    }, {
+        key: '_computeVisibleMessages',
+        value: function _computeVisibleMessages() {
+            this.linkPaths('visibleChannelMessages', 'messages.' + this.selectedChannel);
+            if (this.messages && this.selectedChannel) {
+                return this.messages[this.selectedChannel];
+            }
+            return [];
+        }
+    }, {
+        key: '_computeVisibleUsers',
+        value: function _computeVisibleUsers() {
+            this.linkPaths('visibleChannelUsers', 'channelsStates.' + this.selectedChannel + '.users');
+            if (this.channelsStates[this.selectedChannel]) {
+                return this.channelsStates[this.selectedChannel].users;
+            }
+            return [];
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'chat-view';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                channels: Array,
+                selectedChannel: {
+                    type: String,
+                    value: 'pub_chan',
+                    notify: true
+                },
+                user: {
+                    type: Object,
+                    notify: true
+                },
+                userState: {
+                    type: Object,
+                    value: function value() {
+                        return {};
+                    },
+
+                    notify: true
+                },
+                usersStates: {
+                    type: Object,
+                    value: function value() {
+                        return {};
+                    },
+
+                    notify: true
+                },
+                channelsStates: {
+                    type: Object,
+                    value: function value() {
+                        return {};
+                    },
+
+                    notify: true
+                },
+                messages: {
+                    type: Object,
+                    value: function value() {
+                        return {};
+                    },
+
+                    notify: true
+                },
+                visibleChannelMessages: {
+                    type: Array,
+                    computed: '_computeVisibleMessages(messages.*, selectedChannel)',
+                    notify: true
+                },
+                visibleChannelUsers: {
+                    type: Array,
+                    computed: '_computeVisibleUsers(channelsStates.*, selectedChannel)',
+                    notify: true
+                }
+            };
+        }
+    }]);
+
+    return ChatView;
+}(Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element));
+
+customElements.define(ChatView.is, ChatView);
 
 /***/ }),
 /* 155 */
@@ -31714,209 +32019,275 @@ Polymer({
 "use strict";
 
 
-Polymer({
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-    is: 'channelstream-chat-demo',
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-    properties: {
-        isReady: Boolean,
-        user: {
-            type: Object,
-            value: function value() {
-                return {
-                    username: 'Anonymous_' + String(Math.floor(Math.random() * 10000)),
-                    email: ''
-                };
-            }
-        },
-        channels: {
-            type: Array,
-            value: function value() {
-                return ['pub_chan'];
-            }
-        },
-        possibleChannels: {
-            type: Array,
-            value: function value() {
-                return ['notify', 'pub_chan', 'second_channel'];
-            }
-        },
-        userState: {
-            type: Object,
-            value: function value() {
-                return {};
-            },
-            notify: true
-        },
-        usersStates: {
-            type: Object,
-            value: function value() {
-                return {};
-            },
-            notify: true
-        },
-        channelsStates: {
-            type: Object,
-            value: function value() {
-                return {};
-            },
-            notify: true
-        }
-    },
-    observers: ['routePageChanged(routeData.page)', 'pageChanged(page)', 'handleUserChange(user.*)'],
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-    /** mediator pattern pushes events from connection to chat view */
-    receivedMessage: function receivedMessage(event) {
-        var chatView = this.$$('chat-view');
-        for (var i = 0; i < event.detail.length; i++) {
-            var message = event.detail[i];
-            if (['message', 'presence'].indexOf(message.type) !== -1) {
-                chatView.addMessage(message);
-            }
-            // update users on presence message
-            if (message.type === 'presence') {
-                // push channel and user states for newly joined user
-                if (message.message.action === 'joined') {
-                    this.push(['channelsStates', message.channel, 'users'], message.user);
-                    this.set(['usersStates', message.user], { state: message.state, user: message.user });
-                } else {
-                    var ix = this.channelsStates[message.channel].users.indexOf(message.user);
-                    this.splice(['channelsStates', message.channel, 'users'], ix, 1);
-                }
-            }
-            if (message.type === 'user_state_change') {
-                console.log('user_state_change', message);
-                this.set(['usersStates', message.user, 'state'], message.message.state);
-            }
-        }
-    },
-    /** sends the message via channelstream conn manageer */
-    sendMessage: function sendMessage(event) {
-        this.getConnection().message(event.detail);
-    },
-    changeStatus: function changeStatus(event) {
-        var stateUpdates = event.detail;
-        this.getConnection().updateUserState({ user_state: stateUpdates });
-    },
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-    /** kicks off the connection */
-    ready: function ready() {
-        this.isReady = true;
-        var channelstreamConnection = this.$$('channelstream-connection');
-        channelstreamConnection.connectUrl = AppConf.connectUrl;
-        channelstreamConnection.disconnectUrl = AppConf.disconnectUrl;
-        channelstreamConnection.subscribeUrl = AppConf.subscribeUrl;
-        channelstreamConnection.unsubscribeUrl = AppConf.unsubscribeUrl;
-        channelstreamConnection.messageUrl = AppConf.messageUrl;
-        channelstreamConnection.longPollUrl = AppConf.longPollUrl;
-        channelstreamConnection.websocketUrl = AppConf.websocketUrl;
-        channelstreamConnection.userStateUrl = AppConf.userStateUrl;
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-        // add a mutator for demo purposes - modify the request
-        // to inject some state vars to connection json
-        channelstreamConnection.addMutator('connect', function (request) {
-            request.body.state = { email: this.user.email, status: 'ready' };
-        }.bind(this));
-        channelstreamConnection.connect();
-    },
-    /** creates new connection on name change */
-    handleUserChange: function handleUserChange() {
-        if (!this.isReady) {
-            return;
-        }
-        var connection = this.$$('channelstream-connection');
-        connection.disconnect();
-        connection.connect();
-    },
-    /** subscribes/unsubscribes users from channels in channelstream */
-    handleChannelsChange: function handleChannelsChange() {
-        if (!this.isReady) {
-            return;
-        }
-        var connection = this.$$('channelstream-connection');
-        var shouldUnsubscribe = connection.calculateUnsubscribe();
-        if (shouldUnsubscribe.length > 0) {
-            connection.unsubscribe(shouldUnsubscribe);
-        } else {
-            connection.subscribe();
-        }
-    },
-    getConnection: function getConnection() {
-        return this.$['channelstream-connection'];
-    },
+var ChannelStreamChatDemo = function (_Polymer$Element) {
+    _inherits(ChannelStreamChatDemo, _Polymer$Element);
 
-    handleConnected: function handleConnected(event) {
-        var data = event.detail;
-        var chatView = this.$$('chat-view');
-        this.set('userState', data.state);
-        this.set('channelsStates', data.channels_info.channels);
-        this.set('channels', data.channels);
-        this.updateUserStates(data.channels_info);
-        for (var i = 0; i < data.channels.length; i++) {
-            var key = data.channels[i];
-            chatView.loadHistory(data.channels_info.channels[key].history, key);
-        }
-    },
+    function ChannelStreamChatDemo() {
+        _classCallCheck(this, ChannelStreamChatDemo);
 
-    subscribeToChannel: function subscribeToChannel(event) {
-        var connection = this.getConnection();
-        var channel = event.detail.channel;
-        var index = this.get('channels').indexOf(channel);
-        if (index !== -1) {
-            var toUnsubscribe = connection.calculateUnsubscribe([channel]);
-            connection.unsubscribe(toUnsubscribe);
-        } else {
-            var toSubscribe = connection.calculateSubscribe([channel]);
-            connection.subscribe(toSubscribe);
-        }
-    },
-
-    handleSubscribed: function handleSubscribed(event) {
-        console.log('handleSubscribed');
-        var chatView = this.$$('chat-view');
-        var channelInfo = event.detail.channels_info;
-        var channelKeys = event.detail.subscribed_to;
-        this.set('channels', event.detail.channels);
-        this.updateUserStates(channelInfo);
-        for (var i = 0; i < channelKeys.length; i++) {
-            var key = channelKeys[i];
-            this.set(['channelsStates', key], channelInfo.channels[key]);
-            chatView.loadHistory(channelInfo.channels[key].history, key);
-        }
-    },
-
-    handleUnsubscribed: function handleUnsubscribed(event) {
-        var channelKeys = event.detail.unsubscribed_from;
-        for (var i = 0; i < channelKeys.length; i++) {
-            var key = channelKeys[i];
-            this.set(['channelsStates', key], null);
-        }
-        this.set('channels', event.detail.channels);
-    },
-
-    /** updates channel states when we get them returned from connection elem */
-    updateUserStates: function updateUserStates(channels_info) {
-        var channel_data = channels_info.channels;
-        var user_data = channels_info.users;
-        var channels = Object.keys(channel_data);
-        for (var i = 0; i < channels.length; i++) {
-            var channel = channel_data[channels[i]];
-            this.set(['channelsStates', channel.name], channel);
-            for (var j = 0; j < channel.users.length; j++) {
-                this.set(['usersStates', user_data[j].user], user_data[j]);
-            }
-        }
-    },
-
-    routePageChanged: function routePageChanged(page) {
-        this.page = page || 'chat';
-    },
-
-    pageChanged: function pageChanged(page) {
-        this.set('routeData.page', this.page);
+        return _possibleConstructorReturn(this, (ChannelStreamChatDemo.__proto__ || Object.getPrototypeOf(ChannelStreamChatDemo)).apply(this, arguments));
     }
 
-});
+    _createClass(ChannelStreamChatDemo, [{
+        key: 'receivedMessage',
+
+
+        /** mediator pattern pushes events from connection to chat view */
+        value: function receivedMessage(event) {
+            var chatView = this.shadowRoot.querySelector('chat-view');
+            for (var i = 0; i < event.detail.length; i++) {
+                var message = event.detail[i];
+                if (['message', 'presence'].indexOf(message.type) !== -1) {
+                    chatView.addMessage(message);
+                }
+                // update users on presence message
+                if (message.type === 'presence') {
+                    // push channel and user states for newly joined user
+                    if (message.message.action === 'joined') {
+                        this.push(['channelsStates', message.channel, 'users'], message.user);
+                        this.set(['usersStates', message.user], { state: message.state, user: message.user });
+                    } else {
+                        var ix = this.channelsStates[message.channel].users.indexOf(message.user);
+                        this.splice(['channelsStates', message.channel, 'users'], ix, 1);
+                    }
+                }
+                if (message.type === 'user_state_change') {
+                    console.log('user_state_change', message);
+                    this.set(['usersStates', message.user, 'state'], message.message.state);
+                }
+            }
+        }
+        /** sends the message via channelstream conn manageer */
+
+    }, {
+        key: 'sendMessage',
+        value: function sendMessage(event) {
+            this.getConnection().message(event.detail);
+        }
+    }, {
+        key: 'changeStatus',
+        value: function changeStatus(event) {
+            var stateUpdates = event.detail;
+            this.getConnection().updateUserState({ user_state: stateUpdates });
+        }
+
+        /** kicks off the connection */
+
+    }, {
+        key: 'ready',
+        value: function ready() {
+            _get(ChannelStreamChatDemo.prototype.__proto__ || Object.getPrototypeOf(ChannelStreamChatDemo.prototype), 'ready', this).call(this);
+            this.isReady = true;
+            var channelstreamConnection = this.shadowRoot.querySelector('channelstream-connection');
+            channelstreamConnection.connectUrl = AppConf.connectUrl;
+            channelstreamConnection.disconnectUrl = AppConf.disconnectUrl;
+            channelstreamConnection.subscribeUrl = AppConf.subscribeUrl;
+            channelstreamConnection.unsubscribeUrl = AppConf.unsubscribeUrl;
+            channelstreamConnection.messageUrl = AppConf.messageUrl;
+            channelstreamConnection.longPollUrl = AppConf.longPollUrl;
+            channelstreamConnection.websocketUrl = AppConf.websocketUrl;
+            channelstreamConnection.userStateUrl = AppConf.userStateUrl;
+
+            // add a mutator for demo purposes - modify the request
+            // to inject some state vars to connection json
+            channelstreamConnection.addMutator('connect', function (request) {
+                request.body.state = { email: this.user.email, status: 'ready' };
+            }.bind(this));
+            channelstreamConnection.connect();
+        }
+        /** creates new connection on name change */
+
+    }, {
+        key: 'handleUserChange',
+        value: function handleUserChange() {
+            if (!this.isReady) {
+                return;
+            }
+            var connection = this.shadowRoot.querySelector('channelstream-connection');
+            connection.disconnect();
+            connection.connect();
+        }
+        /** subscribes/unsubscribes users from channels in channelstream */
+
+    }, {
+        key: 'handleChannelsChange',
+        value: function handleChannelsChange() {
+            if (!this.isReady) {
+                return;
+            }
+            var connection = this.shadowRoot.querySelector('channelstream-connection');
+            var shouldUnsubscribe = connection.calculateUnsubscribe();
+            if (shouldUnsubscribe.length > 0) {
+                connection.unsubscribe(shouldUnsubscribe);
+            } else {
+                connection.subscribe();
+            }
+        }
+    }, {
+        key: 'getConnection',
+        value: function getConnection() {
+            return this.$['channelstream-connection'];
+        }
+    }, {
+        key: 'handleConnected',
+        value: function handleConnected(event) {
+            var data = event.detail;
+            var chatView = this.shadowRoot.querySelector('chat-view');
+            this.set('userState', data.state);
+            this.set('channelsStates', data.channels_info.channels);
+            this.set('channels', data.channels);
+            this.updateUserStates(data.channels_info);
+            for (var i = 0; i < data.channels.length; i++) {
+                var key = data.channels[i];
+                chatView.loadHistory(data.channels_info.channels[key].history, key);
+            }
+        }
+    }, {
+        key: 'subscribeToChannel',
+        value: function subscribeToChannel(event) {
+            var connection = this.getConnection();
+            var channel = event.detail.channel;
+            var index = this.get('channels').indexOf(channel);
+            if (index !== -1) {
+                var toUnsubscribe = connection.calculateUnsubscribe([channel]);
+                connection.unsubscribe(toUnsubscribe);
+            } else {
+                var toSubscribe = connection.calculateSubscribe([channel]);
+                connection.subscribe(toSubscribe);
+            }
+        }
+    }, {
+        key: 'handleSubscribed',
+        value: function handleSubscribed(event) {
+            console.log('handleSubscribed');
+            var chatView = this.shadowRoot.querySelector('chat-view');
+            var channelInfo = event.detail.channels_info;
+            var channelKeys = event.detail.subscribed_to;
+            this.set('channels', event.detail.channels);
+            this.updateUserStates(channelInfo);
+            for (var i = 0; i < channelKeys.length; i++) {
+                var key = channelKeys[i];
+                this.set(['channelsStates', key], channelInfo.channels[key]);
+                chatView.loadHistory(channelInfo.channels[key].history, key);
+            }
+        }
+    }, {
+        key: 'handleUnsubscribed',
+        value: function handleUnsubscribed(event) {
+            var channelKeys = event.detail.unsubscribed_from;
+            for (var i = 0; i < channelKeys.length; i++) {
+                var key = channelKeys[i];
+                this.set(['channelsStates', key], null);
+            }
+            this.set('channels', event.detail.channels);
+        }
+
+        /** updates channel states when we get them returned from connection elem */
+
+    }, {
+        key: 'updateUserStates',
+        value: function updateUserStates(channels_info) {
+            var channel_data = channels_info.channels;
+            var user_data = channels_info.users;
+            var channels = Object.keys(channel_data);
+            for (var i = 0; i < channels.length; i++) {
+                var channel = channel_data[channels[i]];
+                this.set(['channelsStates', channel.name], channel);
+                for (var j = 0; j < channel.users.length; j++) {
+                    this.set(['usersStates', user_data[j].user], user_data[j]);
+                }
+            }
+        }
+    }, {
+        key: 'routePageChanged',
+        value: function routePageChanged(page) {
+            this.page = page || 'chat';
+        }
+    }, {
+        key: 'pageChanged',
+        value: function pageChanged(page) {
+            this.set('routeData.page', this.page);
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'channelstream-chat-demo';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                isReady: Boolean,
+                user: {
+                    type: Object,
+                    value: function value() {
+                        return {
+                            username: 'Anonymous_' + String(Math.floor(Math.random() * 10000)),
+                            email: ''
+                        };
+                    }
+                },
+                channels: {
+                    type: Array,
+                    value: function value() {
+                        return ['pub_chan'];
+                    }
+                },
+                possibleChannels: {
+                    type: Array,
+                    value: function value() {
+                        return ['notify', 'pub_chan', 'second_channel'];
+                    }
+                },
+                userState: {
+                    type: Object,
+                    value: function value() {
+                        return {};
+                    },
+
+                    notify: true
+                },
+                usersStates: {
+                    type: Object,
+                    value: function value() {
+                        return {};
+                    },
+
+                    notify: true
+                },
+                channelsStates: {
+                    type: Object,
+                    value: function value() {
+                        return {};
+                    },
+
+                    notify: true
+                }
+            };
+        }
+    }, {
+        key: 'observers',
+        get: function get() {
+            return [
+            // Observer method name, followed by a list of dependencies, in parenthesis
+            'routePageChanged(routeData.page)', 'pageChanged(page)', 'handleUserChange(user.*)'];
+        }
+    }]);
+
+    return ChannelStreamChatDemo;
+}(Polymer.Element);
+
+customElements.define(ChannelStreamChatDemo.is, ChannelStreamChatDemo);
 
 /***/ })
 /******/ ]);

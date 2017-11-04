@@ -1,42 +1,49 @@
-Polymer({
-    is: 'admin-view',
-    properties: {
-        channels: {
-            type: Array,
-            value: []
-        },
-        loadingAdmin: {
-            type: Boolean,
-            observer: 'loadingChange'
-        },
-        ironSelected: {
-            type: Boolean,
-            observer: 'ironChange'
-        },
-        user: Object
-    },
+class AdminView extends Polymer.Element {
 
-    ready: function () {
+    static get is() {
+        return 'admin-view';
+    }
+
+    static get properties() {
+        return {
+            channels: {
+                type: Array,
+                value: []
+            },
+            loadingAdmin: {
+                type: Boolean,
+                observer: 'loadingChange'
+            },
+            ironSelected: {
+                type: Boolean,
+                observer: 'ironChange'
+            },
+            user: Object
+        };
+    }
+
+    ready() {
+        super.ready()
         // refresh data when document is attached to dom
         this.refresh();
-    },
+    }
 
-    refresh: function () {
+    refresh() {
         this.$['ajax-admin-info'].url = AppConf.infoUrl;
         this.$['ajax-admin-info'].generateRequest();
-    },
+    }
 
-    _addInterval: function () {
+    _addInterval() {
         this.interval = setInterval(this.refresh.bind(this), 5000)
-    },
+    }
 
-    _clearInterval: function () {
+    _clearInterval() {
         if (this.interval) {
             clearInterval(this.interval);
         }
-    },
+    }
 
-    ironChange: function (newVal, oldVal) {
+    ironChange(newVal, oldVal) {
         // refresh the data every 5s
         if (newVal) {
             this._addInterval();
@@ -44,16 +51,18 @@ Polymer({
         else {
             this._clearInterval();
         }
-    },
-    loadingChange: function (newVal) {
+    }
+
+    loadingChange(newVal) {
         if (newVal) {
-            this.$$('paper-progress').toggleClass('transparent', false);
+            this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', false);
         }
         else {
-            this.$$('paper-progress').toggleClass('transparent', true);
+            this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', true);
         }
-    },
-    setChannels: function (event) {
+    }
+
+    setChannels(event) {
         // changes channels object response to a list for iteration in template
         var keys = Object.keys(event.detail.response.channels);
         var channels = [];
@@ -62,20 +71,21 @@ Polymer({
             channels.push(event.detail.response.channels[key])
         }
         this.channels = channels;
-    },
+    }
 
-    toggleHistory: function (event) {
+    toggleHistory(event) {
         var index = event.currentTarget.get('index');
-        if(index !== undefined){
-            this.$$('.channel-history-' + index).toggle();
-        }
-    },
-
-    toggleUsers: function (event) {
-        var index = event.currentTarget.get('index');
-        if(index !== undefined){
-            this.$$('.channel-users-' + index).toggle();
+        if (index !== undefined) {
+            this.shadowRoot.querySelector('.channel-history-' + index).toggle();
         }
     }
 
-});
+    toggleUsers(event) {
+        var index = event.currentTarget.get('index');
+        if (index !== undefined) {
+            this.shadowRoot.querySelector('.channel-users-' + index).toggle();
+        }
+    }
+}
+
+customElements.define(AdminView.is, AdminView);

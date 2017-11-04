@@ -4,20 +4,19 @@
     <meta charset="UTF-8">
     <title>Channelstream Admin</title>
     <base href="{{ request.route_url('index') }}"/>
+    <script src="static/bower_components/webcomponentsjs/custom-elements-es5-adapter.js"></script>
+    <script src="static/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
     <script>
-        <script src="static/bower_components/webcomponentsjs/custom-elements-es5-adapter.js"></script>
-        <script src="static/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-        <script>
-            (function () {
-                document.addEventListener('WebComponentsReady', function componentsReady() {
-                    document.removeEventListener('WebComponentsReady', componentsReady, false);
-                    var script = document.createElement('script');
-                    script.src = 'static/channelstream-admin.js';
-                    var refScript = document.getElementsByTagName('script')[0];
-                    refScript.parentNode.insertBefore(script, refScript);
-                }, false);
-            })();
-        </script>
+        (function () {
+            document.addEventListener('WebComponentsReady', function componentsReady() {
+                document.removeEventListener('WebComponentsReady', componentsReady, false);
+                var script = document.createElement('script');
+                script.src = 'static/channelstream-admin.js';
+                var refScript = document.getElementsByTagName('script')[0];
+                refScript.parentNode.insertBefore(script, refScript);
+            }, false);
+        })();
+    </script>
 
 </head>
 <body>

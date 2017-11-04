@@ -1,61 +1,69 @@
-Polymer({
+class ChannelStreamChatDemo extends Polymer.Element {
 
-    is: 'channelstream-chat-demo',
+    static get is() {
+        return 'channelstream-chat-demo';
+    }
 
-    properties: {
-        isReady: Boolean,
-        user: {
-            type: Object,
-            value: function () {
-                return {
-                    username: 'Anonymous_' + String(Math.floor(Math.random() * 10000)),
-                    email: ''
+    static get properties() {
+        return {
+            isReady: Boolean,
+            user: {
+                type: Object,
+                value() {
+                    return {
+                        username: 'Anonymous_' + String(Math.floor(Math.random() * 10000)),
+                        email: ''
+                    }
                 }
-            }
-        },
-        channels: {
-            type: Array,
-            value: function () {
-                return ['pub_chan']
-            }
-        },
-        possibleChannels: {
-            type: Array,
-            value: function () {
-                return ['notify', 'pub_chan', 'second_channel']
-            }
-        },
-        userState: {
-            type: Object,
-            value: function () {
-                return {};
             },
-            notify: true
-        },
-        usersStates: {
-            type: Object,
-            value: function () {
-                return {};
+            channels: {
+                type: Array,
+                value() {
+                    return ['pub_chan']
+                }
             },
-            notify: true
-        },
-        channelsStates: {
-            type: Object,
-            value: function () {
-                return {};
+            possibleChannels: {
+                type: Array,
+                value() {
+                    return ['notify', 'pub_chan', 'second_channel']
+                }
             },
-            notify: true
-        }
-    },
-    observers: [
-        'routePageChanged(routeData.page)',
-        'pageChanged(page)',
-        'handleUserChange(user.*)'
-    ],
+            userState: {
+                type: Object,
+                value() {
+                    return {};
+                },
+                notify: true
+            },
+            usersStates: {
+                type: Object,
+                value() {
+                    return {};
+                },
+                notify: true
+            },
+            channelsStates: {
+                type: Object,
+                value() {
+                    return {};
+                },
+                notify: true
+            }
+        };
+    }
+
+    static get observers() {
+        return [
+            // Observer method name, followed by a list of dependencies, in parenthesis
+            'routePageChanged(routeData.page)',
+            'pageChanged(page)',
+            'handleUserChange(user.*)'
+        ];
+    }
 
     /** mediator pattern pushes events from connection to chat view */
-    receivedMessage: function (event) {
-        var chatView = this.$$('chat-view');
+    receivedMessage(event) {
+        var chatView = this.shadowRoot.querySelector('chat-view');
         for (var i = 0; i < event.detail.length; i++) {
             var message = event.detail[i];
             if (['message', 'presence'].indexOf(message.type) !== -1) {
@@ -81,20 +89,21 @@ Polymer({
                 this.set(['usersStates', message.user, 'state'], message.message.state)
             }
         }
-    },
+    }
     /** sends the message via channelstream conn manageer */
-    sendMessage: function (event) {
+    sendMessage(event) {
         this.getConnection().message(event.detail);
-    },
-    changeStatus: function(event){
+    }
+    changeStatus(event){
         var stateUpdates = event.detail;
         this.getConnection().updateUserState({user_state:stateUpdates});
-    },
+    }
 
     /** kicks off the connection */
-    ready: function () {
+    ready() {
+        super.ready();
         this.isReady = true;
-        var channelstreamConnection = this.$$('channelstream-connection');
+        var channelstreamConnection = this.shadowRoot.querySelector('channelstream-connection');
         channelstreamConnection.connectUrl = AppConf.connectUrl;
         channelstreamConnection.disconnectUrl = AppConf.disconnectUrl;
         channelstreamConnection.subscribeUrl = AppConf.subscribeUrl;
@@ -110,22 +119,22 @@ Polymer({
             request.body.state = {email: this.user.email, status: 'ready'};
         }.bind(this));
         channelstreamConnection.connect()
-    },
+    }
     /** creates new connection on name change */
-    handleUserChange: function () {
+    handleUserChange() {
         if (!this.isReady) {
             return
         }
-        var connection = this.$$('channelstream-connection');
+        var connection = this.shadowRoot.querySelector('channelstream-connection');
         connection.disconnect();
         connection.connect();
-    },
+    }
     /** subscribes/unsubscribes users from channels in channelstream */
-    handleChannelsChange: function () {
+    handleChannelsChange() {
         if (!this.isReady) {
             return
         }
-        var connection = this.$$('channelstream-connection');
+        var connection = this.shadowRoot.querySelector('channelstream-connection');
         var shouldUnsubscribe = connection.calculateUnsubscribe();
         if (shouldUnsubscribe.length > 0) {
             connection.unsubscribe(shouldUnsubscribe);
@@ -133,14 +142,14 @@ Polymer({
         else {
             connection.subscribe();
         }
-    },
-    getConnection: function () {
+    }
+    getConnection() {
         return this.$['channelstream-connection'];
-    },
+    }
 
-    handleConnected: function (event) {
+    handleConnected(event) {
         var data = event.detail;
-        var chatView = this.$$('chat-view');
+        var chatView = this.shadowRoot.querySelector('chat-view');
         this.set('userState', data.state);
         this.set('channelsStates', data.channels_info.channels);
         this.set('channels', data.channels);
@@ -149,9 +158,9 @@ Polymer({
             var key = data.channels[i];
             chatView.loadHistory(data.channels_info.channels[key].history, key);
         }
-    },
+    }
 
-    subscribeToChannel: function (event) {
+    subscribeToChannel(event) {
         var connection = this.getConnection();
         var channel = event.detail.channel;
         var index = this.get('channels').indexOf(channel);
@@ -163,11 +172,11 @@ Polymer({
             var toSubscribe = connection.calculateSubscribe([channel]);
             connection.subscribe(toSubscribe);
         }
-    },
+    }
 
-    handleSubscribed: function (event) {
+    handleSubscribed(event) {
         console.log('handleSubscribed');
-        var chatView = this.$$('chat-view');
+        var chatView = this.shadowRoot.querySelector('chat-view');
         var channelInfo = event.detail.channels_info;
         var channelKeys = event.detail.subscribed_to;
         this.set('channels', event.detail.channels);
@@ -177,19 +186,19 @@ Polymer({
             this.set(['channelsStates', key], channelInfo.channels[key]);
             chatView.loadHistory(channelInfo.channels[key].history, key);
         }
-    },
+    }
 
-    handleUnsubscribed: function (event) {
+    handleUnsubscribed(event) {
         var channelKeys = event.detail.unsubscribed_from;
         for (var i = 0; i < channelKeys.length; i++) {
             var key = channelKeys[i];
             this.set(['channelsStates', key], null);
         }
         this.set('channels', event.detail.channels);
-    },
+    }
 
     /** updates channel states when we get them returned from connection elem */
-    updateUserStates: function (channels_info) {
+    updateUserStates(channels_info) {
         var channel_data = channels_info.channels;
         var user_data = channels_info.users;
         var channels = Object.keys(channel_data);
@@ -200,14 +209,15 @@ Polymer({
                 this.set(['usersStates', user_data[j].user], user_data[j]);
             }
         }
-    },
-
-    routePageChanged: function (page) {
-        this.page = page || 'chat';
-    },
-
-    pageChanged: function (page) {
-        this.set('routeData.page', this.page);
     }
 
-});
+    routePageChanged(page) {
+        this.page = page || 'chat';
+    }
+
+    pageChanged(page) {
+        this.set('routeData.page', this.page);
+    }
+}
+
+customElements.define(ChannelStreamChatDemo.is, ChannelStreamChatDemo);
