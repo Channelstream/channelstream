@@ -58,17 +58,17 @@ module.exports = {
             from: path.resolve(__dirname, 'bower_components/webcomponentsjs/*.js'),
             to: 'bower_components/webcomponentsjs/[name].[ext]'
         }]),
-        // new webpackUglifyJsPlugin({
-        //     cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),
-        //     debug: true,
-        //     minimize: true,
-        //     sourceMap: false,
-        //     output: {
-        //         comments: false
-        //     },
-        //     compressor: {
-        //         warnings: false
-        //     }
-        // })
+        new webpackUglifyJsPlugin({
+            cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),
+            debug: true,
+            minimize: true,
+            sourceMap: false,
+            output: {
+                comments: false
+            },
+            compressor: {
+                warnings: false
+            }
+        })
     ]
 };

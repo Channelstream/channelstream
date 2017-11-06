@@ -10,21 +10,31 @@
         <pre>[[output]]</pre>
     </template>
     <script>
-        Polymer({
-            is: 'app-debug',
-            properties: {
-                data: {
-                    type: Object
-                }
-            },
-            observers: [
-                '_dumpOut(data.*)'
-            ],
+        class AppDebug extends Polymer.Element {
 
-            _dumpOut: function () {
+            static get is() {
+                return 'app-debug';
+            }
+
+            static get properties() {
+                return {
+                    data: {
+                        type: Object
+                    }
+                };
+            }
+            static get observers() {
+                return [
+                    '_dumpOut(data.*)'
+                ];
+            }
+
+            _dumpOut() {
                 this.output = JSON.stringify(this.data, null, 4);
             }
-        });
+        }
+
+        customElements.define(AppDebug.is, AppDebug);
 
     </script>
 </dom-module>

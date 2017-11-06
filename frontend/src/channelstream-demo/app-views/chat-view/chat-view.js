@@ -17,29 +17,29 @@ class ChatView extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], P
             },
             userState: {
                 type: Object,
-                value() {
-                    return {}
+                value: function() {
+                    return {};
                 },
                 notify: true
             },
             usersStates: {
                 type: Object,
-                value() {
-                    return {}
+                value: function() {
+                    return {};
                 },
                 notify: true
             },
             channelsStates: {
                 type: Object,
-                value() {
-                    return {}
+                value: function() {
+                    return {};
                 },
                 notify: true
             },
             messages: {
                 type: Object,
-                value() {
-                    return {}
+                value: function() {
+                    return {};
                 },
                 notify: true
             },

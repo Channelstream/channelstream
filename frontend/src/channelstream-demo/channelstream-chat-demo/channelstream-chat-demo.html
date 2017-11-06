@@ -3,9 +3,6 @@
 <link rel="import" href="../../../bower_components/iron-signals/iron-signals.html">
 <link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
-<link rel="import" href="../../../bower_components/app-route/app-location.html">
-<link rel="import" href="../../../bower_components/app-route/app-route.html">
-
 <link rel="import" href="../../debug.html">
 <link rel="import" href="../channelstream-connection/channelstream-connection.html">
 <link rel="import" href="../app-views/admin-view/admin-view.html">
@@ -38,14 +35,6 @@
         <iron-signals on-iron-signal-send-message="sendMessage"></iron-signals>
         <iron-signals on-iron-signal-change-status="changeStatus"></iron-signals>
         <iron-signals on-iron-signal-channelpicker-subscribe="subscribeToChannel"></iron-signals>
-
-        <app-location route="{{route}}"></app-location>
-        <app-route
-            route="{{route}}"
-            pattern="/demo/:page"
-            data="{{routeData}}"
-            tail="{{tail}}">
-        </app-route>
 
         <app-toolbar>
             <span class="title">Channelstream Demo - Hello {{user.username}}</span>

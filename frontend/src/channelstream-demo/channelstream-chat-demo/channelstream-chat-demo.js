@@ -9,44 +9,49 @@ class ChannelStreamChatDemo extends Polymer.Element {
             isReady: Boolean,
             user: {
                 type: Object,
-                value() {
+                value: function() {
                     return {
                         username: 'Anonymous_' + String(Math.floor(Math.random() * 10000)),
                         email: ''
-                    }
+                    };
                 }
             },
             channels: {
                 type: Array,
-                value() {
-                    return ['pub_chan']
+                value: function() {
+                    return ['pub_chan'];
                 }
             },
             possibleChannels: {
                 type: Array,
-                value() {
+                value: function() {
                     return ['notify', 'pub_chan', 'second_channel']
                 }
             },
             userState: {
                 type: Object,
-                value() {
+                value: function() {
                     return {};
                 },
                 notify: true
             },
             usersStates: {
                 type: Object,
-                value() {
+                value: function() {
                     return {};
                 },
                 notify: true
             },
             channelsStates: {
                 type: Object,
-                value() {
+                value: function() {
                     return {};
                 },
+                notify: true
+            },
+            page: {
+                type: String,
+                value: 'chat',
                 notify: true
             }
         };
