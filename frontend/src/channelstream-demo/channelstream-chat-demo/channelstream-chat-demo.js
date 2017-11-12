@@ -90,7 +90,6 @@ class ChannelStreamChatDemo extends Polymer.Element {
                 }
             }
             if (message.type === 'user_state_change'){
-                console.log('user_state_change', message);
                 this.set(['usersStates', message.user, 'state'], message.message.state)
             }
         }
