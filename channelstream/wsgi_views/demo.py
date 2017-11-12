@@ -3,7 +3,7 @@ import random
 import uuid
 import requests
 import six
-`import gevent
+import gevent
 from pyramid.view import view_config, view_defaults
 from itsdangerous import TimestampSigner
 from requests.auth import HTTPBasicAuth
