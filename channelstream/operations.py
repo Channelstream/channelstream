@@ -171,6 +171,7 @@ def pass_message(msg, stats):
     message = {'uuid': str(uuid.uuid4()).replace('-', ''),
                'user': msg.get('user'),
                'message': msg['message'],
+               'no_history': msg.get('no_history'),
                'type': 'message',
                'timestamp': timestmp}
     pm_users = msg.get('pm_users', [])

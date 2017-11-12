@@ -152,13 +152,14 @@ class TestChannel(object):
         channel.add_message({'message': 'test1', 'type': 'message'})
         channel.add_message({'message': 'test2', 'type': 'message'})
         channel.add_message({'message': 'test3', 'type': 'message'})
-        channel.add_message({'message': 'test4', 'type': 'message'})
+        channel.add_message({'message': 'test4', 'type': 'message', 'no_history': True})
+        channel.add_message({'message': 'test5', 'type': 'message'})
 
         assert len(channel.history) == 3
         assert channel.history == [
             {'channel': 'test', 'message': 'test2', 'type': 'message'},
             {'channel': 'test', 'message': 'test3', 'type': 'message'},
-            {'channel': 'test', 'message': 'test4', 'type': 'message'}
+            {'channel': 'test', 'message': 'test5', 'type': 'message'}
         ]
 
     def test_user_state(self):

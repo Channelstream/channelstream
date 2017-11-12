@@ -12,7 +12,7 @@ def use_prefix(event):
         if path_info.startswith(script_name):
             event.request.environ['PATH_INFO'] = path_info[len(script_name):]
 
-    # make sure http/https can be controller
+    # make sure http/https can be controlled
     scheme = event.request.headers.get('X_SCHEME', '')
     scheme = event.request.headers.get('X_URL_SCHEME', scheme)
     if scheme:

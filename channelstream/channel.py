@@ -13,6 +13,9 @@ log = logging.getLogger(__name__)
 class Channel(object):
     """ Represents one of our chat channels - has some config options """
 
+    config_keys = ['notify_presence', 'store_history', 'history_size',
+                   'broadcast_presence_with_user_lists', 'notify_state']
+
     def __init__(self, name, long_name=None, channel_config=None):
         """
 
@@ -39,9 +42,7 @@ class Channel(object):
 
     def reconfigure_from_dict(self, config):
         if config:
-            keys = ('notify_presence', 'store_history', 'history_size',
-                    'broadcast_presence_with_user_lists', 'notify_state')
-            for key in keys:
+            for key in self.config_keys:
                 val = config.get(key)
                 if val is not None:
                     setattr(self, key, val)
@@ -144,9 +145,9 @@ class Channel(object):
         pm_users = pm_users or []
         exclude_users = exclude_users or []
         self.last_active = datetime.utcnow()
-        if self.store_history and message['type'] == 'message':
+        if self.store_history and message['type'] == 'message' and not message.get('no_history'):
             self.history.append(message)
-            self.history = self.history[(self.history_size) * -1:]
+            self.history = self.history[self.history_size * -1:]
         message.update({'channel': self.name})
         # message everyone subscribed except excluded
         total_sent = 0
@@ -163,14 +164,7 @@ class Channel(object):
             self.name, len(self.connections))
 
     def get_info(self, include_history=True, include_users=False):
-        settings = {
-            'notify_presence': self.notify_presence,
-            'broadcast_presence_with_user_lists':
-                self.broadcast_presence_with_user_lists,
-            'salvageable': self.salvageable,
-            'store_history': self.store_history,
-            'history_size': self.history_size
-        }
+        settings = {k: getattr(self, k) for k in self.config_keys}
 
         chan_info = {
             'name': self.name,
