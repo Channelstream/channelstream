@@ -145,7 +145,8 @@ class Channel(object):
         pm_users = pm_users or []
         exclude_users = exclude_users or []
         self.last_active = datetime.utcnow()
-        if self.store_history and message['type'] == 'message' and not message.get('no_history'):
+        no_history = message.pop('no_history', False)
+        if self.store_history and message['type'] == 'message' and not no_history:
             self.history.append(message)
             self.history = self.history[self.history_size * -1:]
         message.update({'channel': self.name})
