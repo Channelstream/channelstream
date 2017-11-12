@@ -13,21 +13,28 @@ log = logging.getLogger(__name__)
 class Channel(object):
     """ Represents one of our chat channels - has some config options """
 
-    def __init__(self, name, long_name=None, channel_configs=None):
+    def __init__(self, name, long_name=None, channel_config=None):
+        """
+
+        :param name:
+        :param long_name:
+        :param channel_config:
+        """
         self.name = name
         self.long_name = long_name
         self.last_active = datetime.utcnow()
         self.connections = {}
         self.notify_presence = False
         self.broadcast_presence_with_user_lists = False
+        # channel sends all user state key changes
         self.notify_state = False
+        # channel sends all user state key changes
         self.salvageable = False
         self.store_history = False
         self.history_size = 10
         self.history = []
-        if not channel_configs:
-            channel_configs = {}
-        self.reconfigure_from_dict(channel_configs.get(self.name))
+        if channel_config:
+            self.reconfigure_from_dict(channel_config)
         log.info('%s created' % self)
 
     def reconfigure_from_dict(self, config):

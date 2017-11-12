@@ -46,15 +46,10 @@ class TestChannel(object):
         ('broadcast_presence_with_user_lists', True)
     ])
     def test_create_set_config(self, prop, value):
-        channel_configs = {'test': {prop: value}}
-        channel = Channel('test', channel_configs=channel_configs)
+        channel_config = {prop: value}
+        channel = Channel('test', channel_config=channel_config)
 
         assert getattr(channel, prop) == value
-
-    def test_create_set_config_diff_name(self):
-        channel_configs = {'test2': {'notify_presence': True}}
-        channel = Channel('test', channel_configs=channel_configs)
-        assert channel.notify_presence is False
 
     def test_add_connection(self):
         connection = Connection('test_user',
@@ -92,9 +87,9 @@ class TestChannel(object):
         channelstream.USERS[user.username] = user
         connection = Connection('test_user', conn_id='A')
         user.add_connection(connection)
-        config = {'test': {'notify_presence': True,
-                           'broadcast_presence_with_user_lists': True}}
-        channel = Channel('test', channel_configs=config)
+        config = {'notify_presence': True,
+                  'broadcast_presence_with_user_lists': True}
+        channel = Channel('test', channel_config=config)
         channel.add_connection(connection)
         channel.remove_connection(connection)
 
@@ -103,9 +98,9 @@ class TestChannel(object):
         channelstream.USERS[user.username] = user
         connection = Connection('test_user', conn_id='A')
         user.add_connection(connection)
-        config = {'test': {'notify_presence': True,
-                           'broadcast_presence_with_user_lists': True}}
-        channel = Channel('test', channel_configs=config)
+        config = {'notify_presence': True,
+                  'broadcast_presence_with_user_lists': True}
+        channel = Channel('test', channel_config=config)
         channel.add_connection(connection)
         assert len(channel.connections['test_user']) == 1
         assert 'test_user' in channel.connections
@@ -136,9 +131,9 @@ class TestChannel(object):
         channelstream.USERS[user2.username] = user2
         connection2 = Connection('test_user2', conn_id='A')
         user2.add_connection(connection2)
-        config = {'test': {'notify_presence': True,
-                           'broadcast_presence_with_user_lists': True}}
-        channel = Channel('test', channel_configs=config)
+        config = {'notify_presence': True,
+                  'broadcast_presence_with_user_lists': True}
+        channel = Channel('test', channel_config=config)
         channel.add_connection(connection)
         channel.add_connection(connection2)
         payload = channel.send_notify_presence_info('test_user', 'join')
@@ -150,10 +145,10 @@ class TestChannel(object):
         ]
 
     def test_history(self):
-        config = {'test': {'store_history': True,
-                           'history_size': 3}}
+        config = {'store_history': True,
+                  'history_size': 3}
         channel = Channel('test', long_name='long name',
-                          channel_configs=config)
+                          channel_config=config)
         channel.add_message({'message': 'test1', 'type': 'message'})
         channel.add_message({'message': 'test2', 'type': 'message'})
         channel.add_message({'message': 'test3', 'type': 'message'})

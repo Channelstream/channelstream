@@ -49,7 +49,7 @@ def connect(username=None,
             # user gets assigned to a channel
             if channel_name not in channelstream.CHANNELS:
                 channel = Channel(channel_name,
-                                  channel_configs=channel_configs)
+                                  channel_config=channel_configs.get(channel_name))
                 channelstream.CHANNELS[channel_name] = channel
             channelstream.CHANNELS[channel_name].add_connection(connection)
         log.info('connecting %s with uuid %s' % (username, connection.id))
@@ -73,7 +73,7 @@ def subscribe(connection=None,
             for channel_name in channels:
                 if channel_name not in channelstream.CHANNELS:
                     channel = Channel(channel_name,
-                                      channel_configs=channel_configs)
+                                      channel_config=channel_configs)
                     channelstream.CHANNELS[channel_name] = channel
                 is_found = channelstream.CHANNELS[
                     channel_name].add_connection(
@@ -144,7 +144,7 @@ def set_channel_config(channel_configs):
         for channel_name, config in channel_configs.items():
             if not channelstream.CHANNELS.get(channel_name):
                 channel = Channel(channel_name,
-                                  channel_configs=channel_configs)
+                                  channel_config=channel_configs)
                 channelstream.CHANNELS[channel_name] = channel
             else:
                 channel = channelstream.CHANNELS[channel_name]
