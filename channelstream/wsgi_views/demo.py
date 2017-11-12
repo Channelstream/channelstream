@@ -3,14 +3,23 @@ import random
 import uuid
 import requests
 import six
+`import gevent
 from pyramid.view import view_config, view_defaults
 from itsdangerous import TimestampSigner
 from requests.auth import HTTPBasicAuth
 
-POSSIBLE_CHANNELS = set(['pub_chan', 'pub_chan2', 'notify'])
+POSSIBLE_CHANNELS = set(['pub_chan', 'second_chanel', 'notify'])
 
 
-def make_request(request, payload, endpoint, auth=None):
+def make_server_request(request, payload, endpoint, auth=None):
+    """
+    makes a json request to channelstream server endpoint signing the request and sending the payload
+    :param request:
+    :param payload:
+    :param endpoint:
+    :param auth:
+    :return:
+    """
     server_port = request.registry.settings['port']
     signer = TimestampSigner(request.registry.settings['secret'])
     sig_for_server = signer.sign(endpoint)
@@ -26,13 +35,55 @@ def make_request(request, payload, endpoint, auth=None):
     return response
 
 
-CHANNEL_CONFIGS = {'pub_chan': {'notify_presence': True,
-                                'store_history': True,
-                                'notify_state': True,
-                                'broadcast_presence_with_user_lists': True},
-                   'notify': {'store_history': True,
-                              'notify_state': True,
-                              'notify_presence': True}}
+CHANNEL_CONFIGS = {
+    'pub_chan': {'notify_presence': True,
+                 'store_history': True,
+                 'history_size': 10,
+                 'broadcast_presence_with_user_lists': True},
+    'notify': {'store_history': True,
+               'notify_state': True,
+               'history_size': 50,
+               'notify_presence': True}}
+
+
+def remove_data_from_demo_response(server_response):
+    """
+    Removes user info from second_channel for demo purpose
+    you do not need this in real application
+    :param server_response:
+    :return:
+    """
+
+    second_channel = server_response['channels_info']['channels'].get('second_channel')
+    if second_channel:
+        second_channel['users'] = []
+    return server_response
+
+
+WELCOME_MESSAGE_TEXT = '''
+This is a welcome message that you see upon creating connection/reconnection. 
+Only you see it (it's not stored to history), and is only sent to your user.
+
+There are 3 channels with different configurations:
+
+- pub_chan: notifies about joins/parts, stores history, doesn't send user state(colors) messages, history size: 10
+- notify: notifies about joins/parts, stores history, sends about user state(colors), history size: 50
+- second_channel: doesn't notify about user presence, doesn't store history, doesn't send user state change messages
+'''
+
+
+def send_welcome_message(request, username):
+    payload = {
+        'type': 'message',
+        "user": 'system',
+        "channel": 'pub_chan',
+        "pm_users": [username],
+        "no_history": True,
+        'message': {
+            'text': WELCOME_MESSAGE_TEXT
+        }
+    }
+    result = make_server_request(request, [payload], '/message')
 
 
 @view_defaults(route_name='section_action', renderer='json')
@@ -68,9 +119,12 @@ class DemoViews(object):
                    'user_state': state,
                    'state_public_keys': ['email', 'status', 'bar', 'color'],
                    'channel_configs': CHANNEL_CONFIGS}
-        result = make_request(self.request, payload, '/connect')
+        result = make_server_request(self.request, payload, '/connect')
         self.request.response.status = result.status_code
-        return result.json()
+        server_response = result.json()
+        server_response = remove_data_from_demo_response(server_response)
+        gevent.spawn_later(5, send_welcome_message, self.request, username)
+        return server_response
 
     @view_config(match_param=['section=demo', 'action=user_state'],
                  request_method="POST")
@@ -80,10 +134,11 @@ class DemoViews(object):
         payload = {
             'user': request_data['username'],
             'user_state': {
-                'color': request_data['update_state']['user_state']['color']
+                'color': request_data['update_state']['user_state']['color'],
+                'private': 'private {}'.format(random.randint(1, 99999))
             }
         }
-        result = make_request(self.request, payload, '/user_state')
+        result = make_server_request(self.request, payload, '/user_state')
         self.request.response.status = result.status_code
         return result.json()
 
@@ -98,9 +153,11 @@ class DemoViews(object):
                    "channels": request_data.get('channels', []),
                    "channel_configs": CHANNEL_CONFIGS
                    }
-        result = make_request(self.request, payload, '/subscribe')
+        result = make_server_request(self.request, payload, '/subscribe')
         self.request.response.status = result.status_code
-        return result.json()
+        server_response = result.json()
+        server_response = remove_data_from_demo_response(server_response)
+        return server_response
 
     @view_config(match_param=['section=demo', 'action=unsubscribe'],
                  request_method="POST")
@@ -110,9 +167,11 @@ class DemoViews(object):
         payload = {"conn_id": request_data.get('conn_id', ''),
                    "channels": request_data.get('channels', [])
                    }
-        result = make_request(self.request, payload, '/unsubscribe')
+        result = make_server_request(self.request, payload, '/unsubscribe')
         self.request.response.status = result.status_code
-        return result.json()
+        server_response = result.json()
+        server_response = remove_data_from_demo_response(server_response)
+        return server_response
 
     @view_config(match_param=['section=demo', 'action=message'],
                  request_method="POST")
@@ -125,7 +184,7 @@ class DemoViews(object):
             "channel": request_data.get('channel', 'unknown_channel'),
             'message': request_data.get('message')
         }
-        result = make_request(self.request, [payload], '/message')
+        result = make_server_request(self.request, [payload], '/message')
         self.request.response.status = result.status_code
         return result.json()
 
@@ -140,11 +199,11 @@ class DemoViews(object):
                 "store_history": True,
                 "history_size": 20
             }),
-            ('pub_chan2', {
-                "notify_presence": True,
+            ('second_channel', {
+                "notify_presence": False,
                 "salvageable": True,
                 "store_history": True,
-                "history_size": 30
+                "history_size": 100
             })
         ]
         url = 'http://127.0.0.1:%s/channel_config' % self.server_port
@@ -158,6 +217,6 @@ class DemoViews(object):
         admin = self.request.registry.settings['admin_user']
         admin_secret = self.request.registry.settings['admin_secret']
         basic_auth = HTTPBasicAuth(admin, admin_secret)
-        result = make_request(self.request, {}, '/admin/admin.json', auth=basic_auth)
+        result = make_server_request(self.request, {}, '/admin/admin.json', auth=basic_auth)
         self.request.response.status = result.status_code
         return result.json()
