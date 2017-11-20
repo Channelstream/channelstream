@@ -1,4 +1,9 @@
-class ChannelStreamAdmin extends Polymer.Element {
+import {ReduxMixin} from './redux/store';
+import {actions as channelsActions} from './redux/server_info/channels';
+import {actions as statsActions} from './redux/server_info/server_stats';
+import {actions as currentActions} from './redux/current_actions';
+
+class ChannelStreamAdmin extends ReduxMixin(Polymer.Element) {
 
     static get is() {
         return 'channelstream-admin';
@@ -6,25 +11,50 @@ class ChannelStreamAdmin extends Polymer.Element {
 
     static get properties() {
         return {
-            urlAdminJson: String,
+            appConfig: {
+                type: Array,
+                value: () => {
+                    return window.AppConf;
+                }
+            },
             channels: {
                 type: Array,
-                value: []
+                statePath: 'serverInfo.channels'
             },
-            loadingAdmin: {
+            serverStats: {
+                type: Object,
+                statePath: 'serverInfo.serverStats'
+            },
+            currentActions: {
+                type: Array,
+                statePath: 'currentActions'
+            },
+            loadingInfo: {
                 type: Boolean,
                 observer: 'loadingChange'
-            },
-            user: Object
+            }
         };
     }
 
-    ready() {
-        super.ready();
+    static get actions() {
+        return {
+            ...currentActions,
+            setChannels: channelsActions.set,
+            setInfo: statsActions.set
+        };
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
         // refresh data when document is attached to dom
-        this.$['ajax-admin-info'].url = this.urlAdminJson;
+        this.$['ajax-admin-info'].url = this.appConfig.urls.jsonUrl;
         this.refresh();
         this._addInterval();
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this._clearInterval();
     }
 
     refresh() {
@@ -32,7 +62,7 @@ class ChannelStreamAdmin extends Polymer.Element {
     }
 
     _addInterval() {
-        this.interval = setInterval(this.refresh.bind(this), 5000)
+        this.interval = setInterval(this.refresh.bind(this), 5000);
     }
 
     _clearInterval() {
@@ -41,8 +71,8 @@ class ChannelStreamAdmin extends Polymer.Element {
         }
     }
 
-    loadingChange(newVal) {
-        if (newVal) {
+    loadingChange() {
+        if (this.loadingInfo) {
             this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', false);
         }
         else {
@@ -50,26 +80,40 @@ class ChannelStreamAdmin extends Polymer.Element {
         }
     }
 
-    setChannels(event) {
-        // changes channels object response to a list for iteration in template
-        var keys = Object.keys(event.detail.response.channels);
-        var channels = [];
-        for (var i = 0; i < keys.length; i++) {
-            var key = keys[i];
-            channels.push(event.detail.response.channels[key])
-        }
-        this.channels = channels;
+    _handleAjaxRequest(event){
+        this.dispatch('currentActionStart', event.target.dataset.type, event.detail);
+    }
+
+    _handleAjaxRequestError(event){
+        this.dispatch('currentActionError', event.target.dataset.type, event.detail.error.message);
+    }
+
+    _handleAjaxResponse(event) {
+        let response = event.detail.response;
+        this.dispatch('currentActionFinish', event.target.dataset.type, response);
+        this.dispatch('setInfo', {
+            "remembered_user_count": response.remembered_user_count,
+            "unique_user_count": response.unique_user_count,
+            "total_connections": response.total_connections,
+            "total_channels": response.total_channels,
+            "total_messages": response.total_messages,
+            "total_unique_messages": response.total_unique_messages,
+            "uptime": response.uptime
+        });
+
+        let channels = Object.values(response.channels);
+        this.dispatch('setChannels', channels);
     }
 
     toggleHistory(event) {
-        var index = event.currentTarget.get('index');
+        let index = event.currentTarget.dataset['index'];
         if (index !== undefined) {
             this.shadowRoot.querySelector('.channel-history-' + index).toggle();
         }
     }
 
     toggleUsers(event) {
-        var index = event.currentTarget.get('index');
+        let index = event.currentTarget.dataset['index'];
         if (index !== undefined) {
             this.shadowRoot.querySelector('.channel-users-' + index).toggle();
         }

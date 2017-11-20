@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Channelstream Demo</title>
-    <base href="{{ request.route_url('index') }}"/>
+    <base href="{{ request.route_url('index')[:-1] }}"/>
     <script>
         var AppConf = {
+            baseUrl: '{{ request.route_url('index')[:-1] }}',
             connectUrl: '{{ request.route_url('section_action',  section='demo', action='connect') }}',
             disconnectUrl: '{{ request.route_url('section_action',  section='demo', action='disconnect') }}',
             subscribeUrl: '{{ request.route_url('section_action',  section='demo', action='subscribe') }}',

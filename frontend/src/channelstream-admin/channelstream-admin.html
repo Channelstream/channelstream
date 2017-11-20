@@ -65,46 +65,49 @@
             }
 
         </style>
+
         <iron-ajax
             id="ajax-admin-info"
             url=""
             handle-as="json"
-            loading="{{loadingAdmin}}"
-            last-response="{{adminResponse}}"
-            on-response="setChannels"
-            debounce-duration="300"></iron-ajax>
+            loading="{{loadingInfo}}"
+            data-type="SERVER_INFO"
+            on-request="_handleAjaxRequest"
+            on-error="_handleAjaxRequestError"
+            on-response="_handleAjaxResponse">
+        </iron-ajax>
 
-        <paper-progress id="admin-page-progress" indeterminate class="transparent"></paper-progress>
+        <paper-progress id="admin-page-progress" indeterminate class="transparent" transparent="[[loadingAdmin]]"></paper-progress>
 
         <div class="server-stat">
-            Uptime [[adminResponse.uptime]]
+            Uptime [[serverStats.uptime]]
         </div>
         <div class="server-stat">
             Unique users remembered
-            <paper-badge label="[[adminResponse.remembered_user_count]]"></paper-badge>
+            <paper-badge label="[[serverStats.remembered_user_count]]"></paper-badge>
         </div>
         <div class="server-stat">
             Unique users connected
-            <paper-badge label="[[adminResponse.unique_user_count]]"></paper-badge>
+            <paper-badge label="[[serverStats.unique_user_count]]"></paper-badge>
         </div>
         <div class="server-stat">
             Total connections
-            <paper-badge label="[[adminResponse.total_connections]]"></paper-badge>
+            <paper-badge label="[[serverStats.total_connections]]"></paper-badge>
         </div>
 
         <div class="server-stat">
             Total channels
-            <paper-badge label="[[adminResponse.total_channels]]"></paper-badge>
+            <paper-badge label="[[serverStats.total_channels]]"></paper-badge>
         </div>
 
         <div class="server-stat">
             Messages since start
-            <paper-badge label="[[adminResponse.total_unique_messages]]"></paper-badge>
+            <paper-badge label="[[serverStats.total_unique_messages]]"></paper-badge>
         </div>
 
         <div class="server-stat">
             All frames sent
-            <paper-badge label="[[adminResponse.total_messages]]"></paper-badge>
+            <paper-badge label="[[serverStats.total_messages]]"></paper-badge>
         </div>
 
 
@@ -117,12 +120,14 @@
                         <li><strong>Total connections</strong>: [[item.total_connections]]</li>
                         <li><strong>Total users</strong>: [[item.total_users]]</li>
                     </ul>
+                    <p><strong>Config</strong></p>
+                    <app-debug data="[[item.settings]]"></app-debug>
 
                     <iron-collapse class$="channel-history-[[index]]">
                         <div class="history-holder">
-                            <strong>History:</strong>
+                            <strong>Message history:</strong>
                             <template is="dom-repeat" items="[[item.history]]">
-                                <div>[[item.user]]: <app-debug data="[[item.message]]"></app-debug></div>
+                                <app-debug data="[[item]]"></app-debug></div>
                             </template>
                         </div>
                     </iron-collapse>
@@ -139,12 +144,12 @@
                 </div>
                 <div class="card-actions">
             <span>
-            <paper-button toggles raised on-tap="toggleHistory" index="[[index]]">
+            <paper-button toggles raised on-tap="toggleHistory" data-channel$="[[item.name]]" data-index$="[[index]]">
                 <iron-icon icon="icons:history"></iron-icon>History</paper-button>
             <paper-tooltip position="top" animation-delay="0">Shows this channels history</paper-tooltip>
             </span>
                     <span>
-            <paper-button toggles raised on-tap="toggleUsers" index="[[index]]">
+            <paper-button toggles raised on-tap="toggleUsers" data-channel$="[[item.name]]" data-index$="[[index]]">
                 <iron-icon icon="social:people-outline"></iron-icon>Users</paper-button>
             <paper-tooltip position="top" animation-delay="0">Shows currently connected users</paper-tooltip>
             </span>

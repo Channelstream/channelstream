@@ -22,7 +22,6 @@
     "paper-button": "polymerelements/paper-button#^2.0.0",
     "iron-signals": "PolymerElements/iron-signals#^1.0.0",
     "paper-tabs": "PolymerElements/paper-tabs#^2.0.0",
-    "app-layout": "PolymerElements/app-layout#^2.0.0",
     "iron-a11y-keys": "PolymerElements/iron-a11y-keys#^2.0.0",
     "iron-form": "PolymerElements/iron-form#^2.0.0",
     "paper-dialog": "PolymerElements/paper-dialog#^2.0.0",
@@ -30,7 +29,9 @@
     "iron-list": "PolymerElements/iron-list#^2.0.0",
     "paper-listbox": "polymerelements/paper-listbox#^2.0.0",
     "paper-dropdown-menu": "polymerelements/paper-dropdown-menu#^2.0.0",
-    "paper-item": "polymerelements/paper-item#^2.0.0"
+    "paper-item": "polymerelements/paper-item#^2.0.0",
+    "polymer-redux": "^1.0.4",
+    "redux": "^3.7.2"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

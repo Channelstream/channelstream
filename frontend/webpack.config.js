@@ -37,8 +37,8 @@ module.exports = {
                 // polymer-webpack-loader, and hand the output to
                 // babel-loader. This let's us transpile JS in our `<script>` elements.
                 use: [
-                    { loader: 'babel-loader' },
-                    { loader: 'polymer-webpack-loader' }
+                    {loader: 'babel-loader'},
+                    {loader: 'polymer-webpack-loader'}
                 ]
             },
             {
@@ -47,6 +47,14 @@ module.exports = {
                 use: 'babel-loader'
                 // Optionally exclude node_modules from transpilation except for polymer-webpack-loader:
                 // exclude: /node_modules\/(?!polymer-webpack-loader\/).*/
+            },
+            {
+                test: /\polymer-redux.html/,
+                use: 'exports-loader?PolymerRedux'
+            },
+            {
+                test: /\polymer-redux.js/,
+                use: 'exports-loader?PolymerRedux'
             }
         ]
     },
@@ -58,17 +66,17 @@ module.exports = {
             from: path.resolve(__dirname, 'bower_components/webcomponentsjs/*.js'),
             to: 'bower_components/webcomponentsjs/[name].[ext]'
         }]),
-        new webpackUglifyJsPlugin({
-            cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),
-            debug: true,
-            minimize: true,
-            sourceMap: false,
-            output: {
-                comments: false
-            },
-            compressor: {
-                warnings: false
-            }
-        })
+        // new webpackUglifyJsPlugin({
+        //     cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),
+        //     debug: true,
+        //     minimize: true,
+        //     sourceMap: false,
+        //     output: {
+        //         comments: false
+        //     },
+        //     compressor: {
+        //         warnings: false
+        //     }
+        // })
     ]
 };

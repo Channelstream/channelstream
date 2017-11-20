@@ -1,4 +1,7 @@
-class ChannelStreamChatDemo extends Polymer.Element {
+import {ReduxMixin} from '../redux/store';
+import {actions as currentActions} from '../../channelstream-admin/redux/current_actions';
+
+class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
     static get is() {
         return 'channelstream-chat-demo';
