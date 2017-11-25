@@ -105,19 +105,6 @@ class ChannelStreamAdmin extends ReduxMixin(Polymer.Element) {
         this.dispatch('setChannels', channels);
     }
 
-    toggleHistory(event) {
-        let index = event.currentTarget.dataset['index'];
-        if (index !== undefined) {
-            this.shadowRoot.querySelector('.channel-history-' + index).toggle();
-        }
-    }
-
-    toggleUsers(event) {
-        let index = event.currentTarget.dataset['index'];
-        if (index !== undefined) {
-            this.shadowRoot.querySelector('.channel-users-' + index).toggle();
-        }
-    }
 }
 
 customElements.define(ChannelStreamAdmin.is, ChannelStreamAdmin);

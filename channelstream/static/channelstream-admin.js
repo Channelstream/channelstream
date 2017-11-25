@@ -21119,27 +21119,15 @@ __webpack_require__(0);
 
 __webpack_require__(34);
 
-__webpack_require__(69);
-
-__webpack_require__(70);
-
-__webpack_require__(71);
-
-__webpack_require__(72);
-
-__webpack_require__(35);
-
-__webpack_require__(75);
-
 __webpack_require__(76);
 
-__webpack_require__(78);
+__webpack_require__(162);
 
 __webpack_require__(80);
 
 var RegisterHtmlTemplate = __webpack_require__(1);
 
-RegisterHtmlTemplate.register("<dom-module id=channelstream-admin> <template> <style>.transparent{opacity:0}#admin-page-progress{width:100%;--paper-progress-indeterminate-cycle-duration:3s;margin-bottom:15px;transition-duration:.5s}.server-stat{padding:0 15px 0 0;margin:0 25px 25px 0;display:inline-block;position:relative}.server-stat>paper-badge{--paper-badge-margin-bottom:-20px}paper-card{width:100%}paper-material{padding:25px}paper-button iron-icon{margin-right:10px}ul{margin:0;padding:0;list-style:none}.users-holder{padding-top:20px}.history-holder{padding-top:20px}</style> <iron-ajax id=ajax-admin-info url=\"\" handle-as=json loading={{loadingInfo}} data-type=SERVER_INFO on-request=_handleAjaxRequest on-error=_handleAjaxRequestError on-response=_handleAjaxResponse> </iron-ajax> <paper-progress id=admin-page-progress indeterminate=\"\" class=transparent transparent=[[loadingAdmin]]></paper-progress> <div class=server-stat> Uptime [[serverStats.uptime]] </div> <div class=server-stat> Unique users remembered <paper-badge label=[[serverStats.remembered_user_count]]></paper-badge> </div> <div class=server-stat> Unique users connected <paper-badge label=[[serverStats.unique_user_count]]></paper-badge> </div> <div class=server-stat> Total connections <paper-badge label=[[serverStats.total_connections]]></paper-badge> </div> <div class=server-stat> Total channels <paper-badge label=[[serverStats.total_channels]]></paper-badge> </div> <div class=server-stat> Messages since start <paper-badge label=[[serverStats.total_unique_messages]]></paper-badge> </div> <div class=server-stat> All frames sent <paper-badge label=[[serverStats.total_messages]]></paper-badge> </div> <template is=dom-repeat items=[[channels]]> <paper-card heading=\"channel: [[item.name]]\"> <div class=card-content> <ul> <li><strong>Long name</strong>: [[item.long_name]]</li> <li><strong>last active</strong>: [[item.last_active]]</li> <li><strong>Total connections</strong>: [[item.total_connections]]</li> <li><strong>Total users</strong>: [[item.total_users]]</li> </ul> <p><strong>Config</strong></p> <app-debug data=[[item.settings]]></app-debug> <iron-collapse class$=channel-history-[[index]]> <div class=history-holder> <strong>Message history:</strong> <template is=dom-repeat items=[[item.history]]> <app-debug data=[[item]]></app-debug> </template> </div> </iron-collapse> <iron-collapse class$=channel-users-[[index]]> <div class=users-holder> <strong>Connected users:</strong> <template is=dom-repeat items=[[item.users]]> <div>[[item]]</div> </template> </div> </iron-collapse> </div> <div class=card-actions> <span> <paper-button toggles=\"\" raised=\"\" on-tap=toggleHistory data-channel$=[[item.name]] data-index$=[[index]]> <iron-icon icon=icons:history></iron-icon>History</paper-button> <paper-tooltip position=top animation-delay=0>Shows this channels history</paper-tooltip> </span> <span> <paper-button toggles=\"\" raised=\"\" on-tap=toggleUsers data-channel$=[[item.name]] data-index$=[[index]]> <iron-icon icon=social:people-outline></iron-icon>Users</paper-button> <paper-tooltip position=top animation-delay=0>Shows currently connected users</paper-tooltip> </span> </div> </paper-card> </template> </template> </dom-module>");
+RegisterHtmlTemplate.register("<dom-module id=channelstream-admin> <template> <style>.transparent{opacity:0}#admin-page-progress{width:100%;--paper-progress-indeterminate-cycle-duration:3s;margin-bottom:15px;transition-duration:.5s}</style> <iron-ajax id=ajax-admin-info url=\"\" handle-as=json loading={{loadingInfo}} data-type=SERVER_INFO on-request=_handleAjaxRequest on-error=_handleAjaxRequestError on-response=_handleAjaxResponse> </iron-ajax> <paper-progress id=admin-page-progress indeterminate=\"\" class=transparent transparent=[[loadingAdmin]]></paper-progress> <server-info channels=[[channels]] server-stats=[[serverStats]]></server-info> </template> </dom-module>");
 
 __webpack_require__(100);
 
@@ -21247,22 +21235,6 @@ var ChannelStreamAdmin = function (_ReduxMixin) {
 
             var channels = Object.values(response.channels);
             this.dispatch('setChannels', channels);
-        }
-    }, {
-        key: 'toggleHistory',
-        value: function toggleHistory(event) {
-            var index = event.currentTarget.dataset['index'];
-            if (index !== undefined) {
-                this.shadowRoot.querySelector('.channel-history-' + index).toggle();
-            }
-        }
-    }, {
-        key: 'toggleUsers',
-        value: function toggleUsers(event) {
-            var index = event.currentTarget.dataset['index'];
-            if (index !== undefined) {
-                this.shadowRoot.querySelector('.channel-users-' + index).toggle();
-            }
         }
     }], [{
         key: 'is',
@@ -21378,6 +21350,168 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var combinedReducers = (0, _redux.combineReducers)({ serverStats: _server_stats2.default, channels: _channels2.default });
 exports.default = combinedReducers;
+
+/***/ }),
+/* 103 */,
+/* 104 */,
+/* 105 */,
+/* 106 */,
+/* 107 */,
+/* 108 */,
+/* 109 */,
+/* 110 */,
+/* 111 */,
+/* 112 */,
+/* 113 */,
+/* 114 */,
+/* 115 */,
+/* 116 */,
+/* 117 */,
+/* 118 */,
+/* 119 */,
+/* 120 */,
+/* 121 */,
+/* 122 */,
+/* 123 */,
+/* 124 */,
+/* 125 */,
+/* 126 */,
+/* 127 */,
+/* 128 */,
+/* 129 */,
+/* 130 */,
+/* 131 */,
+/* 132 */,
+/* 133 */,
+/* 134 */,
+/* 135 */,
+/* 136 */,
+/* 137 */,
+/* 138 */,
+/* 139 */,
+/* 140 */,
+/* 141 */,
+/* 142 */,
+/* 143 */,
+/* 144 */,
+/* 145 */,
+/* 146 */,
+/* 147 */,
+/* 148 */,
+/* 149 */,
+/* 150 */,
+/* 151 */,
+/* 152 */,
+/* 153 */,
+/* 154 */,
+/* 155 */,
+/* 156 */,
+/* 157 */,
+/* 158 */,
+/* 159 */,
+/* 160 */,
+/* 161 */,
+/* 162 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+__webpack_require__(0);
+
+__webpack_require__(69);
+
+__webpack_require__(70);
+
+__webpack_require__(71);
+
+__webpack_require__(72);
+
+__webpack_require__(35);
+
+__webpack_require__(75);
+
+__webpack_require__(78);
+
+__webpack_require__(80);
+
+var RegisterHtmlTemplate = __webpack_require__(1);
+
+RegisterHtmlTemplate.register("<dom-module id=server-info> <template> <style>.server-stat{padding:0 15px 0 0;margin:0 25px 25px 0;display:inline-block;position:relative}.server-stat>paper-badge{--paper-badge-margin-bottom:-20px}paper-card{width:100%}paper-material{padding:25px}paper-button iron-icon{margin-right:10px}ul{margin:0;padding:0;list-style:none}.users-holder{padding-top:20px}.history-holder{padding-top:20px}</style> <div class=server-stat> Uptime [[serverStats.uptime]] </div> <div class=server-stat> Unique users remembered <paper-badge label=[[serverStats.remembered_user_count]]></paper-badge> </div> <div class=server-stat> Unique users connected <paper-badge label=[[serverStats.unique_user_count]]></paper-badge> </div> <div class=server-stat> Total connections <paper-badge label=[[serverStats.total_connections]]></paper-badge> </div> <div class=server-stat> Total channels <paper-badge label=[[serverStats.total_channels]]></paper-badge> </div> <div class=server-stat> Messages since start <paper-badge label=[[serverStats.total_unique_messages]]></paper-badge> </div> <div class=server-stat> All frames sent <paper-badge label=[[serverStats.total_messages]]></paper-badge> </div> <template is=dom-repeat items=[[channels]]> <paper-card heading=\"channel: [[item.name]]\"> <div class=card-content> <ul> <li><strong>Long name</strong>: [[item.long_name]]</li> <li><strong>last active</strong>: [[item.last_active]]</li> <li><strong>Total connections</strong>: [[item.total_connections]]</li> <li><strong>Total users</strong>: [[item.total_users]]</li> </ul> <p><strong>Config</strong></p> <app-debug data=[[item.settings]]></app-debug> <iron-collapse class$=channel-history-[[index]]> <div class=history-holder> <strong>Message history:</strong> <template is=dom-repeat items=[[item.history]]> <app-debug data=[[item]]></app-debug> </template> </div> </iron-collapse> <iron-collapse class$=channel-users-[[index]]> <div class=users-holder> <strong>Connected users:</strong> <template is=dom-repeat items=[[item.users]]> <div>[[item]]</div> </template> </div> </iron-collapse> </div> <div class=card-actions> <span> <paper-button toggles=\"\" raised=\"\" on-tap=toggleHistory data-channel$=[[item.name]] data-index$=[[index]]> <iron-icon icon=icons:history></iron-icon>History</paper-button> <paper-tooltip position=top animation-delay=0>Shows this channels history</paper-tooltip> </span> <span> <paper-button toggles=\"\" raised=\"\" on-tap=toggleUsers data-channel$=[[item.name]] data-index$=[[index]]> <iron-icon icon=social:people-outline></iron-icon>Users</paper-button> <paper-tooltip position=top animation-delay=0>Shows currently connected users</paper-tooltip> </span> </div> </paper-card> </template> </template> </dom-module>");
+
+__webpack_require__(163);
+
+/***/ }),
+/* 163 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _store = __webpack_require__(101);
+
+var _channels = __webpack_require__(85);
+
+var _server_stats = __webpack_require__(86);
+
+var _current_actions = __webpack_require__(40);
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ServerInfo = function (_Polymer$Element) {
+    _inherits(ServerInfo, _Polymer$Element);
+
+    function ServerInfo() {
+        _classCallCheck(this, ServerInfo);
+
+        return _possibleConstructorReturn(this, (ServerInfo.__proto__ || Object.getPrototypeOf(ServerInfo)).apply(this, arguments));
+    }
+
+    _createClass(ServerInfo, [{
+        key: 'toggleHistory',
+        value: function toggleHistory(event) {
+            var index = event.currentTarget.dataset['index'];
+            if (index !== undefined) {
+                this.shadowRoot.querySelector('.channel-history-' + index).toggle();
+            }
+        }
+    }, {
+        key: 'toggleUsers',
+        value: function toggleUsers(event) {
+            var index = event.currentTarget.dataset['index'];
+            if (index !== undefined) {
+                this.shadowRoot.querySelector('.channel-users-' + index).toggle();
+            }
+        }
+    }], [{
+        key: 'is',
+        get: function get() {
+            return 'server-info';
+        }
+    }, {
+        key: 'properties',
+        get: function get() {
+            return {
+                channels: {
+                    type: Array
+                },
+                serverStats: {
+                    type: Object
+                }
+            };
+        }
+    }]);
+
+    return ServerInfo;
+}(Polymer.Element);
+
+customElements.define(ServerInfo.is, ServerInfo);
 
 /***/ })
 /******/ ]);
