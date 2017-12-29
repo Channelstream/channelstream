@@ -10,6 +10,9 @@ class AdminView extends Polymer.Element {
                 type: Array,
                 value: []
             },
+            serverInfo: {
+                type: Object
+            },
             loadingAdmin: {
                 type: Boolean,
                 observer: 'loadingChange'
@@ -64,26 +67,22 @@ class AdminView extends Polymer.Element {
 
     setChannels(event) {
         // changes channels object response to a list for iteration in template
-        var keys = Object.keys(event.detail.response.channels);
+        var response = event.detail.response;
+        var keys = Object.keys(response.channels);
         var channels = [];
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
-            channels.push(event.detail.response.channels[key])
+            channels.push(response.channels[key]);
         }
         this.channels = channels;
-    }
-
-    toggleHistory(event) {
-        var index = event.currentTarget.get('index');
-        if (index !== undefined) {
-            this.shadowRoot.querySelector('.channel-history-' + index).toggle();
-        }
-    }
-
-    toggleUsers(event) {
-        var index = event.currentTarget.get('index');
-        if (index !== undefined) {
-            this.shadowRoot.querySelector('.channel-users-' + index).toggle();
+        this.serverStats = {
+            "remembered_user_count": response.remembered_user_count,
+            "unique_user_count": response.unique_user_count,
+            "total_connections": response.total_connections,
+            "total_channels": response.total_channels,
+            "total_messages": response.total_messages,
+            "total_unique_messages": response.total_unique_messages,
+            "uptime": response.uptime
         }
     }
 }

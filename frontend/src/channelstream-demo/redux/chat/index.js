@@ -1,9 +1,10 @@
 const INITIAL_STATE = {
     user: {},
-    channels: {
-        channels: {},
-        selectedChannel: ''
+    channelView: {
+        list: {},
+        selectedChannel: '',
+        userList: [],
     },
-    users: [],
-    page: ''
+    adminView: {},
+    selectedPage: ''
 };
