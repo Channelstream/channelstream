@@ -1,4 +1,9 @@
-class AdminView extends Polymer.Element {
+import {ReduxMixin} from '../../redux/store';
+import {actions as currentActions} from "../../../channelstream-admin/redux/current_actions";
+import {actions as statsActions} from "../../../channelstream-admin/redux/server_info/server_stats";
+import {actions as channelsActions} from "../../../channelstream-admin/redux/server_info/channels";
+
+class AdminView extends ReduxMixin(Polymer.Element) {
 
     static get is() {
         return 'admin-view';
@@ -6,33 +11,51 @@ class AdminView extends Polymer.Element {
 
     static get properties() {
         return {
+            appConfig: {
+                type: Array,
+                value: () => {
+                    return window.AppConf;
+                }
+            },
             channels: {
                 type: Array,
-                value: []
+                statePath: 'adminView.channels'
             },
-            serverInfo: {
-                type: Object
+            serverStats: {
+                type: Object,
+                statePath: 'adminView.serverStats'
             },
-            loadingAdmin: {
+            currentActions: {
+                type: Array,
+                statePath: 'currentActions'
+            },
+            loadingInfo: {
                 type: Boolean,
-                observer: 'loadingChange'
+                observer: 'adminView.loadingChange'
             },
             ironSelected: {
                 type: Boolean,
                 observer: 'ironChange'
             },
-            user: Object
+        };
+    }
+
+    static get actions() {
+        return {
+            ...currentActions,
+            setChannels: channelsActions.set,
+            setInfo: statsActions.set
         };
     }
 
     ready() {
-        super.ready()
+        super.ready();
         // refresh data when document is attached to dom
         this.refresh();
     }
 
     refresh() {
-        this.$['ajax-admin-info'].url = AppConf.infoUrl;
+        this.$['ajax-admin-info'].url = this.appConfig.infoUrl;
         this.$['ajax-admin-info'].generateRequest();
     }
 
@@ -66,16 +89,9 @@ class AdminView extends Polymer.Element {
     }
 
     setChannels(event) {
-        // changes channels object response to a list for iteration in template
-        var response = event.detail.response;
-        var keys = Object.keys(response.channels);
-        var channels = [];
-        for (var i = 0; i < keys.length; i++) {
-            var key = keys[i];
-            channels.push(response.channels[key]);
-        }
-        this.channels = channels;
-        this.serverStats = {
+        let response = event.detail.response;
+        this.dispatch('currentActionFinish', event.target.dataset.type, response);
+        this.dispatch('setInfo', {
             "remembered_user_count": response.remembered_user_count,
             "unique_user_count": response.unique_user_count,
             "total_connections": response.total_connections,
@@ -83,7 +99,10 @@ class AdminView extends Polymer.Element {
             "total_messages": response.total_messages,
             "total_unique_messages": response.total_unique_messages,
             "uptime": response.uptime
-        }
+        });
+
+        let channels = Object.values(response.channels);
+        this.dispatch('setChannels', channels);
     }
 }
 

@@ -3,9 +3,10 @@ import logger from '../../../node_modules/redux-logger/dist/redux-logger';
 import PolymerRedux from '../../vendor/polymer-redux';
 
 import currentActions from '../../channelstream-admin/redux/current_actions';
+import serverInfoView from '../../channelstream-admin/redux/server_info';
 
 
-const combinedReducers = combineReducers({currentActions});
+const combinedReducers = combineReducers({currentActions, adminView:serverInfoView});
 
 const store = createStore(combinedReducers, {}, applyMiddleware(logger));
 window.ReduxStore = store;
