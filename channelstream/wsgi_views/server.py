@@ -35,7 +35,7 @@ class ServerViews(object):
                           exclude_channels=None):
         """
         Gets channel information for req_channels or all channels
-        if req_channels is not present
+        if req_channels is None
         :param: include_history (bool) will include message history
                 for the channel
         :param: include_connections (bool) will include connection list
@@ -55,7 +55,7 @@ class ServerViews(object):
         users_to_list = set()
 
         # select everything for empty list
-        if not req_channels:
+        if req_channels is None:
             channel_instances = six.itervalues(channelstream.CHANNELS)
         else:
             channel_instances = [channelstream.CHANNELS[c]
@@ -148,10 +148,7 @@ class ServerViews(object):
         # get info config for channel information
         current_channels = get_connection_channels(connection)
         info_config = json_body.get('info') or {}
-        if current_channels:
-            channels_info = self.get_common_info(current_channels, info_config)
-        else:
-            channels_info = {}
+        channels_info = self.get_common_info(current_channels, info_config)
         return {"channels": current_channels,
                 "channels_info": channels_info,
                 "subscribed_to": sorted(subscribed_to)}
@@ -176,10 +173,7 @@ class ServerViews(object):
         # get info config for channel information
         current_channels = get_connection_channels(connection)
         info_config = json_body.get('info') or {}
-        if current_channels:
-            channels_info = self.get_common_info(current_channels, info_config)
-        else:
-            channels_info = {}
+        channels_info = self.get_common_info(current_channels, info_config)
         return {"channels": current_channels,
                 "channels_info": channels_info,
                 "unsubscribed_from": sorted(unsubscribed_from)}

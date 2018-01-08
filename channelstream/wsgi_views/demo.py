@@ -10,6 +10,16 @@ from requests.auth import HTTPBasicAuth
 
 POSSIBLE_CHANNELS = set(['pub_chan', 'second_chanel', 'notify'])
 
+CHANNEL_CONFIGS = {
+    'pub_chan': {'notify_presence': True,
+                 'store_history': True,
+                 'history_size': 10,
+                 'broadcast_presence_with_user_lists': True},
+    'notify': {'store_history': True,
+               'notify_state': True,
+               'history_size': 50,
+               'notify_presence': True}}
+
 
 def make_server_request(request, payload, endpoint, auth=None):
     """
@@ -35,17 +45,6 @@ def make_server_request(request, payload, endpoint, auth=None):
     return response
 
 
-CHANNEL_CONFIGS = {
-    'pub_chan': {'notify_presence': True,
-                 'store_history': True,
-                 'history_size': 10,
-                 'broadcast_presence_with_user_lists': True},
-    'notify': {'store_history': True,
-               'notify_state': True,
-               'history_size': 50,
-               'notify_presence': True}}
-
-
 def remove_data_from_demo_response(server_response):
     """
     Removes user info from second_channel for demo purpose
@@ -53,7 +52,6 @@ def remove_data_from_demo_response(server_response):
     :param server_response:
     :return:
     """
-
     second_channel = server_response['channels_info']['channels'].get('second_channel')
     if second_channel:
         second_channel['users'] = []

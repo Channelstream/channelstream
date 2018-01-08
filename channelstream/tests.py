@@ -540,6 +540,28 @@ class TestUnsubscribeViews(object):
         result = view_cls.unsubscribe()
         assert sorted(result['channels']) == sorted(['a', 'aB', 'aC'])
 
+    def test_no_channels(self, dummy_request):
+        from channelstream.wsgi_views.server import ServerViews
+        dummy_request.json_body = {'username': 'test',
+                                   'conn_id': 'x',
+                                   'fresh_user_state': {'key': 'foo'},
+                                   'user_state': {'bar': 'baz'},
+                                   'state_public_keys': 'bar',
+                                   'channels': ['a'],
+                                   'channel_configs': {
+                                       'a': {'store_history': True,
+                                             'history_size': 2}}}
+        view_cls = ServerViews(dummy_request)
+        view_cls.connect()
+        dummy_request.json_body = {"conn_id": 'x',
+                                   "channels": ['a']
+                                   }
+        view_cls = ServerViews(dummy_request)
+        result = view_cls.unsubscribe()
+        assert len(result['channels']) == 0
+        assert result['channels_info']['users'] == []
+        assert result['channels_info']['channels'] == {}
+
 
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
 class TestInfoView(object):
