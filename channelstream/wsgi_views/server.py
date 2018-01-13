@@ -296,7 +296,7 @@ class ServerViews(object):
         unique_user_count = len(active_users)
         total_connections = sum([len(user.connections)
                                  for user in active_users])
-        channels_info = self.get_common_info([], {
+        channels_info = self.get_common_info(None, {
             'include_history': True,
             'include_users': True,
             'exclude_channels': [],
