@@ -104,7 +104,7 @@ Polymer({
         channels: {
             type: Array,
             value: function () {
-                return []
+                return [];
             },
             notify: true
         },
@@ -215,22 +215,22 @@ Polymer({
      */
     mutators: {
         connect: function () {
-            return []
+            return [];
         }(),
         message: function () {
-            return []
+            return [];
         }(),
         subscribe: function () {
-            return []
+            return [];
         }(),
         unsubscribe: function () {
-            return []
+            return [];
         }(),
         disconnect: function () {
-            return []
+            return [];
         }(),
         userState: function () {
-            return []
+            return [];
         }()
     },
     ready: function () {
@@ -269,7 +269,7 @@ Polymer({
         for (var i = 0; i < this.mutators.connect.length; i++) {
             this.mutators.connect[i](request);
         }
-        request.generateRequest()
+        request.generateRequest();
     },
     /**
      * Overwrite with custom function that will
@@ -327,7 +327,7 @@ Polymer({
         for (var i = 0; i < this.mutators.unsubscribe.length; i++) {
             this.mutators.unsubscribe[i](request);
         }
-        request.generateRequest()
+        request.generateRequest();
     },
 
     /**
@@ -341,7 +341,7 @@ Polymer({
                 toSubscribe.push(channels[i]);
             }
         }
-        return toSubscribe
+        return toSubscribe;
     },
     /**
      * calculates list of channels we should remove user from based difference
@@ -354,7 +354,7 @@ Polymer({
                 toUnsubscribe.push(channels[i]);
             }
         }
-        return toUnsubscribe
+        return toUnsubscribe;
     },
     /**
      * Marks the connection as expired.
@@ -384,7 +384,7 @@ Polymer({
         request.url = this.messageUrl;
         request.body = message;
         for (var i = 0; i < this.mutators.message.length; i++) {
-            this.mutators.message[i](request)
+            this.mutators.message[i](request);
         }
         request.generateRequest();
     },
@@ -395,7 +395,7 @@ Polymer({
     startListening: function (event) {
         this.fire('start-listening', {});
         if (this.noWebsocket === false) {
-            this.noWebsocket = window.WebSocket ? false : true;
+            this.noWebsocket = !window.WebSocket;
         }
         if (this.noWebsocket === false) {
             this.openWebsocket();
@@ -423,7 +423,7 @@ Polymer({
     openLongPoll: function () {
         var request = this.$['ajaxListen'];
         request.url = this.longPollUrl + '?conn_id=' + this.connectionId;
-        request.generateRequest()
+        request.generateRequest();
     },
     /**
      * Retries `connect()` call while incrementing interval between tries up to 1 minute.
@@ -462,9 +462,9 @@ Polymer({
         // do not fire the event if set() didn't mutate anything
         // is this a reliable way to do it?
         if (!this.isReady || event === undefined) {
-            return
+            return;
         }
-        this.fire('channelstream-channels-changed', event)
+        this.fire('channelstream-channels-changed', event);
     },
 
     _handleListenOpen: function (event) {
@@ -474,9 +474,9 @@ Polymer({
     },
 
     createHeartBeats: function () {
-        if (typeof self._heartbeat === 'undefined' && this.websocket !== null
+        if (typeof this._heartbeat === 'undefined' && this.websocket !== null
             && this.heartbeats) {
-            self._heartbeat = setInterval(this._sendHeartBeat.bind(this), 10000);
+            this._heartbeat = setInterval(this._sendHeartBeat.bind(this), 10000);
         }
     },
 
@@ -499,11 +499,11 @@ Polymer({
         var data = null;
         // comes from iron-ajax
         if (event.detail) {
-            data = JSON.parse(event.detail.response)
+            data = JSON.parse(event.detail.response);
             // comes from websocket
             setTimeout(this.openLongPoll.bind(this), 0);
         } else {
-            data = JSON.parse(event.data)
+            data = JSON.parse(event.data);
         }
         this.fire('channelstream-listen-message', data);
 
@@ -517,7 +517,7 @@ Polymer({
 
     _handleListenErrorEvent: function (event) {
         this.connected = false;
-        this.fire('channelstream-listen-error', {})
+        this.fire('channelstream-listen-error', {});
     },
 
     _handleConnect: function (event) {
@@ -561,7 +561,7 @@ Polymer({
     _handleSetUserStateError: function (event) {
         this.fire('channelstream-set-user-state-error', event.detail);
     },
-    
+
     testEvent: function (event) {
         console.debug('launched', event.type, event.detail);
     }

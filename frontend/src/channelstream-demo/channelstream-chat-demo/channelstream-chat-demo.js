@@ -1,5 +1,8 @@
 import {ReduxMixin} from '../redux/store';
 import {actions as currentActions} from '../../channelstream-admin/redux/current_actions';
+import {actions as appActions} from '../redux/app';
+import {actions as userActions} from '../redux/user';
+import {actions as chatViewActions} from '../redux/chat_view';
 
 class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
@@ -9,68 +12,54 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
     static get properties() {
         return {
+            appConfig: {
+                type: Array,
+                value: () => {
+                    return window.AppConf;
+                }
+            },
             isReady: Boolean,
             user: {
                 type: Object,
-                value: function() {
-                    return {
-                        username: 'Anonymous_' + String(Math.floor(Math.random() * 10000)),
-                        email: ''
-                    };
-                }
+                statePath: 'user',
+                observer: 'handleUserChange'
             },
             channels: {
                 type: Array,
-                value: function() {
-                    return ['pub_chan'];
-                }
+                statePath: 'chatView.channels'
             },
-            possibleChannels: {
-                type: Array,
-                value: function() {
-                    return ['notify', 'pub_chan', 'second_channel']
-                }
-            },
-            userState: {
+
+            users: {
                 type: Object,
-                value: function() {
-                    return {};
-                },
-                notify: true
-            },
-            usersStates: {
-                type: Object,
-                value: function() {
-                    return {};
-                },
-                notify: true
-            },
-            channelsStates: {
-                type: Object,
-                value: function() {
-                    return {};
-                },
-                notify: true
+                statePath: 'chatView.users'
             },
             page: {
                 type: String,
-                value: 'chat',
-                notify: true
+                statePath: 'app.selectedPage'
             }
         };
     }
 
-    static get observers() {
-        return [
-            // Observer method name, followed by a list of dependencies, in parenthesis
-            'routePageChanged(routeData.page)',
-            'pageChanged(page)',
-            'handleUserChange(user.*)'
-        ];
+    static get actions() {
+        return {
+            ...currentActions,
+            setPage: appActions.setPage,
+            setUserState: userActions.setState,
+            setUserChannels: userActions.setChannels,
+            setChannelStates: chatViewActions.setChannelStates,
+            setUserStates: chatViewActions.setUserStates,
+            setChannelMessages: chatViewActions.setChannelMessages,
+            delChannelState: chatViewActions.delChannelState
+        };
+    }
+
+    changedTab(event) {
+        this.dispatch('setPage', event.detail.value);
     }
 
     /** mediator pattern pushes events from connection to chat view */
     receivedMessage(event) {
+        return
         var chatView = this.shadowRoot.querySelector('chat-view');
         for (var i = 0; i < event.detail.length; i++) {
             var message = event.detail[i];
@@ -92,54 +81,73 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
                     this.splice(['channelsStates', message.channel, 'users'], ix, 1);
                 }
             }
-            if (message.type === 'user_state_change'){
+            if (message.type === 'user_state_change') {
                 this.set(['usersStates', message.user, 'state'], message.message.state)
             }
         }
     }
+
     /** sends the message via channelstream conn manageer */
     sendMessage(event) {
         this.getConnection().message(event.detail);
     }
-    changeStatus(event){
+
+    changeStatus(event) {
         var stateUpdates = event.detail;
-        this.getConnection().updateUserState({user_state:stateUpdates});
+        this.getConnection().updateUserState({user_state: stateUpdates});
     }
 
     /** kicks off the connection */
-    ready() {
-        super.ready();
+    connectedCallback() {
+        super.connectedCallback();
         this.isReady = true;
         var channelstreamConnection = this.shadowRoot.querySelector('channelstream-connection');
-        channelstreamConnection.connectUrl = AppConf.connectUrl;
-        channelstreamConnection.disconnectUrl = AppConf.disconnectUrl;
-        channelstreamConnection.subscribeUrl = AppConf.subscribeUrl;
-        channelstreamConnection.unsubscribeUrl = AppConf.unsubscribeUrl;
-        channelstreamConnection.messageUrl = AppConf.messageUrl;
-        channelstreamConnection.longPollUrl = AppConf.longPollUrl;
-        channelstreamConnection.websocketUrl = AppConf.websocketUrl;
-        channelstreamConnection.userStateUrl = AppConf.userStateUrl;
+        channelstreamConnection.connectUrl = this.appConfig.connectUrl;
+        channelstreamConnection.disconnectUrl = this.appConfig.disconnectUrl;
+        channelstreamConnection.subscribeUrl = this.appConfig.subscribeUrl;
+        channelstreamConnection.unsubscribeUrl = this.appConfig.unsubscribeUrl;
+        channelstreamConnection.messageUrl = this.appConfig.messageUrl;
+        channelstreamConnection.longPollUrl = this.appConfig.longPollUrl;
+        channelstreamConnection.websocketUrl = this.appConfig.websocketUrl;
+        channelstreamConnection.userStateUrl = this.appConfig.userStateUrl;
 
         // add a mutator for demo purposes - modify the request
         // to inject some state vars to connection json
         channelstreamConnection.addMutator('connect', function (request) {
             request.body.state = {email: this.user.email, status: 'ready'};
         }.bind(this));
-        channelstreamConnection.connect()
+        channelstreamConnection.connect();
+
+        this._boundSubscribe = e => this.subscribeToChannel(e);
+        this._boundChangeStatus = e => this.changeStatus(e);
+        this.addEventListener('channelpicker-subscribe', this._boundSubscribe);
+        this.addEventListener('change-status', this._boundChangeStatus);
+
     }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this.removeEventListener('channelpicker-subscribe', this._boundSubscribe);
+        this.removeEventListener('change-status', this._boundChangeStatus);
+    }
+
     /** creates new connection on name change */
-    handleUserChange() {
+    handleUserChange(newObj, oldObj) {
         if (!this.isReady) {
-            return
+            return;
+        }
+        if (oldObj.username === newObj.username) {
+            return;
         }
         var connection = this.shadowRoot.querySelector('channelstream-connection');
         connection.disconnect();
         connection.connect();
     }
+
     /** subscribes/unsubscribes users from channels in channelstream */
     handleChannelsChange() {
         if (!this.isReady) {
-            return
+            return;
         }
         var connection = this.shadowRoot.querySelector('channelstream-connection');
         var shouldUnsubscribe = connection.calculateUnsubscribe();
@@ -150,6 +158,7 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
             connection.subscribe();
         }
     }
+
     getConnection() {
         return this.$['channelstream-connection'];
     }
@@ -157,20 +166,21 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
     handleConnected(event) {
         var data = event.detail;
         var chatView = this.shadowRoot.querySelector('chat-view');
-        this.set('userState', data.state);
-        this.set('channelsStates', data.channels_info.channels);
-        this.set('channels', data.channels);
-        this.updateUserStates(data.channels_info);
-        for (var i = 0; i < data.channels.length; i++) {
-            var key = data.channels[i];
-            chatView.loadHistory(data.channels_info.channels[key].history, key);
+        this.dispatch('setUserState', data.state);
+        this.dispatch('setUserChannels', data.channels);
+        this.dispatch('setUserStates', data.channels_info.users);
+        this.dispatch('setChannelStates', data.channels_info.channels);
+        let messageMappings = {};
+        for (let channel of Object.entries(data.channels_info.channels)) {
+            messageMappings[channel[0]] = channel[1].history;
         }
+        this.dispatch('setChannelMessages', messageMappings);
     }
 
     subscribeToChannel(event) {
         var connection = this.getConnection();
         var channel = event.detail.channel;
-        var index = this.get('channels').indexOf(channel);
+        var index = this.user.subscribedChannels.indexOf(channel);
         if (index !== -1) {
             var toUnsubscribe = connection.calculateUnsubscribe([channel]);
             connection.unsubscribe(toUnsubscribe);
@@ -186,44 +196,23 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
         var chatView = this.shadowRoot.querySelector('chat-view');
         var channelInfo = event.detail.channels_info;
         var channelKeys = event.detail.subscribed_to;
-        this.set('channels', event.detail.channels);
-        this.updateUserStates(channelInfo);
-        for (var i = 0; i < channelKeys.length; i++) {
-            var key = channelKeys[i];
-            this.set(['channelsStates', key], channelInfo.channels[key]);
-            chatView.loadHistory(channelInfo.channels[key].history, key);
+        this.dispatch('setUserChannels', event.detail.channels);
+        this.dispatch('setUserStates', channelInfo.users);
+        this.dispatch('setChannelStates', channelInfo.channels);
+        let messageMappings = {};
+        for (let channel of Object.entries(channelInfo.channels)) {
+            messageMappings[channel[0]] = channel[1].history;
         }
+        this.dispatch('setChannelMessages', messageMappings);
     }
 
     handleUnsubscribed(event) {
         var channelKeys = event.detail.unsubscribed_from;
         for (var i = 0; i < channelKeys.length; i++) {
             var key = channelKeys[i];
-            this.set(['channelsStates', key], null);
+            this.dispatch('delChannelState', key);
         }
-        this.set('channels', event.detail.channels);
-    }
-
-    /** updates channel states when we get them returned from connection elem */
-    updateUserStates(channels_info) {
-        var channel_data = channels_info.channels;
-        var user_data = channels_info.users;
-        var channels = Object.keys(channel_data);
-        for (var i = 0; i < channels.length; i++) {
-            var channel = channel_data[channels[i]];
-            this.set(['channelsStates', channel.name], channel);
-            for (var j = 0; j < channel.users.length; j++) {
-                this.set(['usersStates', user_data[j].user], user_data[j]);
-            }
-        }
-    }
-
-    routePageChanged(page) {
-        this.page = page || 'chat';
-    }
-
-    pageChanged(page) {
-        this.set('routeData.page', this.page);
+        this.dispatch('setUserChannels', event.detail.channels);
     }
 }
 

@@ -59,7 +59,7 @@
         <div class="layout horizontal">
             <div class="left-column">
                 <paper-tabs selected="{{selectedChannel}}" attr-for-selected="name">
-                    <template is="dom-repeat" items="[[channels]]">
+                    <template is="dom-repeat" items="[[user.subscribedChannels]]">
                         <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
                     </template>
                 </paper-tabs>
@@ -78,13 +78,15 @@
             <paper-input id="message-input" name="message" label="Your message" value="{{message}}"></paper-input>
             <paper-icon-button icon="icons:send" on-tap="sendMessage"></paper-icon-button>
             <br/>
-            <template is="dom-if" if="[[isAnonymous(user.username)]]">
+            <template is="dom-if" if="[[user.anonymous]]">
                 <paper-button on-tap="openDialog" raised>
                     <iron-icon icon="social:person-outline"></iron-icon>
                     Change username
                 </paper-button>
             </template>
-            <chat-channel-picker channels="{{channels}}" possible-channels="[[possibleChannels]]"></chat-channel-picker>
+        <app-debug data="[[user]]"></app-debug>
+            <chat-channel-picker subscribed-channels="[[user.subscribedChannels]]"
+                                 possible-channels="[[possibleChannels]]"></chat-channel-picker>
         </form>
         </iron-form>
 

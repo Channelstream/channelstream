@@ -4,10 +4,10 @@
 
 <dom-module id="chat-channel-picker">
     <template>
-        <template is="dom-repeat" items="[[connectedChannels]]">
-            <paper-button raised on-tap="subscribeToChannel" channel="[[item.channel]]">
-                <iron-icon icon="[[_computedConnectIcon(item.connected)]]"></iron-icon>
-                [[_computedConnectLabel(item.connected, item.channel)]]
+        <template is="dom-repeat" items="[[possibleChannels]]">
+            <paper-button raised on-tap="subscribeToChannel" channel="[[item]]">
+                <iron-icon icon="[[_computedConnectIcon(subscribedChannels, item)]]"></iron-icon>
+                [[_computedConnectLabel(subscribedChannels, item)]]
             </paper-button>
         </template>
     </template>

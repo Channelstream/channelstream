@@ -1,19 +1,30 @@
-class ChatView extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element) {
+import {ReduxMixin} from '../../redux/store';
+import {actions as chatViewActions} from "../../redux/chat_view";
+import {actions as currentActions} from "../../../channelstream-admin/redux/current_actions";
+import {actions as userActions} from '../../redux/user';
+
+class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element)) {
     static get is() {
         return 'chat-view';
     }
 
     static get properties() {
         return {
-            channels: Array,
+            channels: {
+                type: Array,
+                statePath: 'chatView.channels'
+            },
+            possibleChannels: {
+                type: Array,
+                statePath: 'chatView.possibleChannels'
+            },
             selectedChannel: {
-                type: String,
-                value: 'pub_chan',
-                notify: true
+                type: Array,
+                statePath: 'chatView.selectedChannel'
             },
             user: {
-                type: Object,
-                notify: true
+                type: Array,
+                statePath: 'user'
             },
             userState: {
                 type: Object,
@@ -56,6 +67,14 @@ class ChatView extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], P
         };
     }
 
+    static get actions() {
+        return {
+            ...currentActions,
+            setUser: userActions.set,
+            setUserState: userActions.setState
+        };
+    }
+
     attached() {
         this.async(this.notifyResize, 1);
     }
@@ -86,20 +105,16 @@ class ChatView extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], P
         this.set(['messages', channel], messageList);
     }
 
-    isAnonymous(username) {
-        return username.toLowerCase().indexOf('anonymous') !== -1;
-    }
     openDialog() {
         this.$.loginDialog.open();
     }
     changeUser(event) {
         event.preventDefault();
         if (this.$['login-form'].validate()) {
-            this.set('user', {
-                    username: this.loginUsername,
-                    email: this.loginEmail
-                }
-            );
+            this.dispatch('setUser', {
+                username: this.loginUsername,
+                email: this.loginEmail
+            });
             this.$.loginDialog.close();
         }
     }
@@ -132,7 +147,7 @@ class ChatView extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], P
         if (this.messages && this.selectedChannel) {
             return this.messages[this.selectedChannel];
         }
-        return []
+        return [];
     }
     _computeVisibleUsers() {
         this.linkPaths(

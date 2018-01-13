@@ -23,37 +23,28 @@
 
         </style>
         <channelstream-connection
-            id="channelstream-connection"
-            username="{{user.username}}"
-            channels="{{channels}}"
-            on-channelstream-listen-message="receivedMessage"
-            on-channelstream-connected="handleConnected"
-            on-channelstream-subscribed="handleSubscribed"
-            on-channelstream-unsubscribed="handleUnsubscribed"
-            on-channelstream-channels-changed="handleChannelsChange">
+                id="channelstream-connection"
+                username="[[user.username]]"
+                channels="[[user.subscribedChannels]]"
+                on-channelstream-listen-message="receivedMessage"
+                on-channelstream-connected="handleConnected"
+                on-channelstream-subscribed="handleSubscribed"
+                on-channelstream-unsubscribed="handleUnsubscribed"
+                on-channelstream-channels-changed="handleChannelsChange">
         </channelstream-connection>
         <iron-signals on-iron-signal-send-message="sendMessage"></iron-signals>
-        <iron-signals on-iron-signal-change-status="changeStatus"></iron-signals>
-        <iron-signals on-iron-signal-channelpicker-subscribe="subscribeToChannel"></iron-signals>
 
         <app-toolbar>
-            <span class="title">Channelstream Demo - Hello {{user.username}}</span>
+            <span class="title">Channelstream Demo - Hello [[user.username]]</span>
 
-            <paper-tabs selected="{{page}}" attr-for-selected="name">
+            <paper-tabs selected="[[page]]" attr-for-selected="name" on-selected-changed="changedTab">
                 <paper-tab name="chat">Chat</paper-tab>
                 <paper-tab name="admin">Admin Stats</paper-tab>
             </paper-tabs>
         </app-toolbar>
 
-        <iron-pages selected="{{page}}" attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
-            <chat-view name="chat"
-                       user="{{user}}"
-                       channels-states="{{channelsStates}}"
-                       users-states="{{usersStates}}"
-                       user-state="{{userState}}"
-                       channels="{{channels}}"
-                       possible-channels="[[possibleChannels]]">
-            </chat-view>
+        <iron-pages selected="[[page]]" attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
+            <chat-view name="chat"></chat-view>
             <admin-view name="admin"></admin-view>
         </iron-pages>
     </template>

@@ -15,20 +15,9 @@ class ChatStatusSelector extends Polymer.Element {
         };
     }
 
-    ready() {
-        super.ready()
-        this.isReady = true
-    }
-
     _changeColor() {
-        if (!this.isReady) {
-            return;
-        }
-        this.dispatchEvent(new CustomEvent('iron-signal', {
-            detail: {
-                name: 'change-status',
-                data: {color: this.selected}
-            },
+        this.dispatchEvent(new CustomEvent('change-status', {
+            detail: {color: this.selected},
             bubbles: true,
             composed: true
         }));
