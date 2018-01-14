@@ -60,32 +60,31 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
         this.dispatch('setPage', event.detail.value);
     }
 
-    /** mediator pattern pushes events from connection to chat view */
     receivedMessage(event) {
-        return
-        var chatView = this.shadowRoot.querySelector('chat-view');
-        for (var i = 0; i < event.detail.length; i++) {
-            var message = event.detail[i];
+        for (let message of event.detail) {
+            // add message
+            console.log('msg', message)
             if (['message', 'presence'].indexOf(message.type) !== -1) {
-                chatView.addMessage(message);
+                let messageMappings = {};
+                // for (let channel of Object.entries(data.channels_info.channels)) {
+                //     messageMappings[channel[0]] = channel[1].history;
+                // }
+                this.dispatch('setChannelMessages', {[message.channel]: [message]});
+
             }
             // update users on presence message
             if (message.type === 'presence') {
-                // push channel and user states for newly joined user
+                // user joined
                 if (message.message.action === 'joined') {
-                    this.push(['channelsStates',
-                        message.channel, 'users'], message.user);
-                    this.set(
-                        ['usersStates', message.user],
-                        {state: message.state, user: message.user})
+                    this.dispatch('setUserStates', {[message.user]: message.message.state});
                 }
+                // user disconnected
                 else {
-                    var ix = this.channelsStates[message.channel].users.indexOf(message.user);
-                    this.splice(['channelsStates', message.channel, 'users'], ix, 1);
+
                 }
             }
             if (message.type === 'user_state_change') {
-                this.set(['usersStates', message.user, 'state'], message.message.state)
+                this.dispatch('setUserStates', {[message.user]: message.message.state});
             }
         }
     }

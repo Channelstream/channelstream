@@ -13,8 +13,6 @@ const INITIAL_STATE = {
     messages: undefined,
     //mapping of channel configuration
     channels: undefined,
-    //what we can subscribe to
-    possibleChannels: ['notify', 'pub_chan', 'second_channel'],
     //what channel are we looking at now
     ui: undefined
 };

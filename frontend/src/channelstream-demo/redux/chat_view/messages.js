@@ -26,10 +26,14 @@ export const reducer = (state = INITIAL_STATE, action) => {
     }
     switch (action.type) {
         case types.SET_CHANNEL_MESSAGES:
+            let newChannelMessages = {};
+            for (let key in state.channelMessages){
+                newChannelMessages[key] = [...state.channelMessages[key]];
+            }
             state = {
                 messages: {...state.messages},
                 allIds: [...state.allIds],
-                channelMessages: {...state.channelMessages}
+                channelMessages: newChannelMessages
             };
             for (let messageInfo of Object.entries(action.messages)) {
                 for (let msg of messageInfo[1]) {

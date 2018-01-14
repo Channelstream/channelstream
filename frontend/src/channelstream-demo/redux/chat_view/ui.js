@@ -11,7 +11,11 @@ export const actions = {
     })
 };
 
-const INITIAL_STATE = {selectedChannel: 'pub_chan'};
+const INITIAL_STATE = {
+    selectedChannel: 'pub_chan',
+    //what we can subscribe to
+    possibleChannels: ['notify', 'pub_chan', 'second_channel'],
+};
 
 
 export const reducer = (state = INITIAL_STATE, action) => {

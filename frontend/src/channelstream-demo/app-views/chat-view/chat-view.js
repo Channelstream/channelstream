@@ -16,7 +16,7 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
             },
             possibleChannels: {
                 type: Array,
-                statePath: 'chatView.possibleChannels'
+                statePath: 'chatView.ui.possibleChannels'
             },
             selectedChannel: {
                 type: String,
