@@ -63,7 +63,6 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
     receivedMessage(event) {
         for (let message of event.detail) {
             // add message
-            console.log('msg', message)
             if (['message', 'presence'].indexOf(message.type) !== -1) {
                 let messageMappings = {};
                 // for (let channel of Object.entries(data.channels_info.channels)) {
@@ -76,7 +75,7 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
             if (message.type === 'presence') {
                 // user joined
                 if (message.message.action === 'joined') {
-                    this.dispatch('setUserStates', {[message.user]: message.message.state});
+                    this.dispatch('setUserStates', [{[message.user]: message}]);
                 }
                 // user disconnected
                 else {
@@ -84,7 +83,7 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
                 }
             }
             if (message.type === 'user_state_change') {
-                this.dispatch('setUserStates', {[message.user]: message.message.state});
+                this.dispatch('setUserStates', [{[message.user]: message}]);
             }
         }
     }

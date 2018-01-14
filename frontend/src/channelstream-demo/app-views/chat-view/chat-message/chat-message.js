@@ -6,7 +6,7 @@ class ChatMessage extends Polymer.Element {
 
     static get properties() {
         return {
-            message: Object,
+            message: Object
         };
     }
 
@@ -14,6 +14,11 @@ class ChatMessage extends Polymer.Element {
         super();
         // this is just for some debug fun
         this.random = Math.random();
+    }
+
+    _messageText() {
+        let txt = this.message.message.action;
+        return this.message.message.text || `User ${txt}`;
     }
 
     _shortTime() {

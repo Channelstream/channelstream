@@ -51,30 +51,6 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
         this.dispatch('setViewedChannel', event.detail.value);
     }
 
-
-    /** Act only on various message types */
-    addMessage(message) {
-        // create a new key for channel
-        if (typeof this.messages[message.channel] === 'undefined') {
-            this.messages[message.channel] = [];
-        }
-
-        // push message
-        if (message.type === 'message') {
-            this.push(['messages', message.channel], message);
-        }
-        else if (message.type === 'presence') {
-            var text = 'User ' + message.user + ' ' + message.message.action;
-            // set presence text and normalize to format message element expects
-            message.message = {
-                text: text,
-                email: '',
-                action: message.message.action
-            };
-            this.push(['messages', message.channel], message);
-        }
-    }
-
     loadHistory(messageList, channel) {
         this.set(['messages', channel], messageList);
     }

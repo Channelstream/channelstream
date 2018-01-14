@@ -27,7 +27,7 @@ export const reducer = (state = INITIAL_STATE, action) => {
             for (let user of action.states) {
                 state.states[user.user] = {...user.state};
                 if (state.allIds.indexOf(user.user) === -1) {
-                    state.allIds.push(user.user)
+                    state.allIds.push(user.user);
                 }
             }
             break;

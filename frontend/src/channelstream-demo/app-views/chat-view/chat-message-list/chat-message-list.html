@@ -11,7 +11,6 @@
                 width: 100%;
             }
         </style>
-        <app-debug data="[[messages.allIds]]"></app-debug>
         <iron-list items="[[visibleMessages(selectedChannel, messages.allIds)]]" as="message" class="chat-list">
             <template>
                 <chat-message message="[[messageData(message)]]"></chat-message>

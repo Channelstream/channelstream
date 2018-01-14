@@ -35,7 +35,8 @@
         <chat-avatar username="[[message.message.user]]" email="[[message.message.email]]"></chat-avatar>
         <div class$="message [[message.type]]">
             <div>[[[message.channel]]] <strong>[[message.user]]</strong></div>
-            <div><span class="timestamp">[[_shortTime(message.timestamp)]]</span>: <span class="text">[[message.message.text]]</span></div>
+            <div><span class="timestamp">[[_shortTime(message.timestamp)]]</span>:
+                <span class="text">[[_messageText(message.message.text)]]</span></div>
         </div>
     </template>
     <script src="chat-message.js"></script>
