@@ -11,14 +11,9 @@
                 width: 100%;
             }
         </style>
-        <iron-list items="[[messages]]" as="message" class="chat-list">
+        <iron-list items="[[visibleMessages(selectedChannel, messages.allIds)]]" as="message" class="chat-list">
             <template>
-                <chat-message
-                    user="[[message.user]]"
-                    timestamp="[[message.timestamp]]"
-                    message="[[message.message]]"
-                    channel="[[message.channel]]"
-                    type="[[message.type]]"></chat-message>
+                <chat-message message="[[messageData(message)]]"></chat-message>
             </template>
         </iron-list>
     </template>

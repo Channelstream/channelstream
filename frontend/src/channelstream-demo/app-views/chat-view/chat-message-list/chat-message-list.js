@@ -1,28 +1,48 @@
-class ChatMessageList extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element) {
+import {ReduxMixin} from '../../../redux/store';
+
+class ChatMessageList extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element)) {
     static get is() {
         return 'chat-message-list';
     }
 
     static get properties() {
         return {
-            messages: Array
+            messages: {
+                type: Array,
+                statePath: 'chatView.messages'
+            },
+            selectedChannel: {
+                type: String,
+                statePath: 'chatView.ui.selectedChannel'
+            }
         };
     }
 
     static get observers() {
         return [
             // Observer method name, followed by a list of dependencies, in parenthesis
-            '_messagesChanged(messages.splices)'
+            '_messagesChanged(messages.allIds.splices)'
         ]
     }
 
-    attached() {
+    connectedCallback() {
+        super.connectedCallback();
         this.notifyResize();
+    }
+
+    messageData(messageId) {
+        console.log('messageData', this.messages.messages[messageId])
+        return this.messages.messages[messageId];
+    }
+
+    visibleMessages(selectedChannel) {
+        console.log('visibleMessages', selectedChannel);
+        return this.messages.channelMessages[this.selectedChannel] || [];
     }
 
     _messagesChanged() {
         if (this.messages) {
-            this.$$('iron-list').scrollToIndex(this.messages.length - 1);
+            this.$$('iron-list').scrollToIndex(this.$$('iron-list').items.length - 1);
         }
     }
 }

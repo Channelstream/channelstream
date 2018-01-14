@@ -6,16 +6,12 @@ class ChatMessage extends Polymer.Element {
 
     static get properties() {
         return {
-            user: String,
-            timestamp: Object,
-            message: Object,
-            channel: String,
-            type: String
+            message: Object
         };
     }
 
     _shortTime() {
-        return this.timestamp.split('.')[0];
+        return this.message.timestamp.split('.')[0];
     }
 }
 

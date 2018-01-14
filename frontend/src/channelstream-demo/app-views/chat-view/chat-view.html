@@ -58,18 +58,18 @@
 
         <div class="layout horizontal">
             <div class="left-column">
-                <paper-tabs selected="{{selectedChannel}}" attr-for-selected="name">
+                <paper-tabs selected="[[selectedChannel]]" attr-for-selected="name"
+                            on-selected-changed="selectedChannelChanged">
                     <template is="dom-repeat" items="[[user.subscribedChannels]]">
                         <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
                     </template>
                 </paper-tabs>
-                <chat-message-list messages="[[visibleChannelMessages]]"></chat-message-list>
+                <chat-message-list></chat-message-list>
             </div>
             <div class="right-column">
                 <chat-status-selector></chat-status-selector>
                 <chat-user-list users="[[visibleChannelUsers]]" users-states="[[usersStates]]"></chat-user-list>
             </div>
-
 
         </div>
         <iron-form id="message-form">

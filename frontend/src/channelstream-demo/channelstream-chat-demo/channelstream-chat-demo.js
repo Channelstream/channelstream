@@ -3,6 +3,9 @@ import {actions as currentActions} from '../../channelstream-admin/redux/current
 import {actions as appActions} from '../redux/app';
 import {actions as userActions} from '../redux/user';
 import {actions as chatViewActions} from '../redux/chat_view';
+import {actions as chatViewChannelActions} from '../redux/chat_view/channels';
+import {actions as chatViewUsersActions} from '../redux/chat_view/users';
+import {actions as chatViewMessagesActions} from '../redux/chat_view/messages';
 
 class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
@@ -46,10 +49,10 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
             setPage: appActions.setPage,
             setUserState: userActions.setState,
             setUserChannels: userActions.setChannels,
-            setChannelStates: chatViewActions.setChannelStates,
-            setUserStates: chatViewActions.setUserStates,
-            setChannelMessages: chatViewActions.setChannelMessages,
-            delChannelState: chatViewActions.delChannelState
+            setChannelStates: chatViewChannelActions.setChannelStates,
+            delChannelState: chatViewChannelActions.delChannelState,
+            setUserStates: chatViewUsersActions.setUserStates,
+            setChannelMessages: chatViewMessagesActions.setChannelMessages
         };
     }
 

@@ -1,7 +1,7 @@
 import {ReduxMixin} from '../../redux/store';
-import {actions as chatViewActions} from "../../redux/chat_view";
 import {actions as currentActions} from "../../../channelstream-admin/redux/current_actions";
 import {actions as userActions} from '../../redux/user';
+import {actions as channelViewUiActions} from '../../redux/chat_view/ui';
 
 class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element)) {
     static get is() {
@@ -19,51 +19,17 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
                 statePath: 'chatView.possibleChannels'
             },
             selectedChannel: {
-                type: Array,
-                statePath: 'chatView.selectedChannel'
+                type: String,
+                statePath: 'chatView.ui.selectedChannel'
             },
             user: {
                 type: Array,
                 statePath: 'user'
             },
-            userState: {
-                type: Object,
-                value: function() {
-                    return {};
-                },
-                notify: true
-            },
-            usersStates: {
-                type: Object,
-                value: function() {
-                    return {};
-                },
-                notify: true
-            },
-            channelsStates: {
-                type: Object,
-                value: function() {
-                    return {};
-                },
-                notify: true
-            },
-            messages: {
-                type: Object,
-                value: function() {
-                    return {};
-                },
-                notify: true
-            },
-            visibleChannelMessages: {
+            users: {
                 type: Array,
-                computed: '_computeVisibleMessages(messages.*, selectedChannel)',
-                notify: true
+                statePath: 'chatView.users'
             },
-            visibleChannelUsers: {
-                type: Array,
-                computed: '_computeVisibleUsers(channelsStates.*, selectedChannel)',
-                notify: true
-            }
         };
     }
 
@@ -71,13 +37,20 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
         return {
             ...currentActions,
             setUser: userActions.set,
-            setUserState: userActions.setState
+            setUserState: userActions.setState,
+            setViewedChannel: channelViewUiActions.setViewedChannel
         };
     }
 
     attached() {
         this.async(this.notifyResize, 1);
     }
+
+    selectedChannelChanged(event) {
+        console.log('selectedChannelChanged', event.detail.value);
+        this.dispatch('setViewedChannel', event.detail.value);
+    }
+
 
     /** Act only on various message types */
     addMessage(message) {
@@ -101,6 +74,7 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
             this.push(['messages', message.channel], message);
         }
     }
+
     loadHistory(messageList, channel) {
         this.set(['messages', channel], messageList);
     }
@@ -108,6 +82,7 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
     openDialog() {
         this.$.loginDialog.open();
     }
+
     changeUser(event) {
         event.preventDefault();
         if (this.$['login-form'].validate()) {
@@ -118,10 +93,12 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
             this.$.loginDialog.close();
         }
     }
+
     /** stop default form submit because shady dom might fire it twice */
     formPresubmit(event) {
         event.preventDefault();
     }
+
     /** sends the signal that will pass the message to the
      * channelstream-connection element */
     sendMessage(event) {
@@ -138,25 +115,6 @@ class ChatView extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronResizableB
             }
         });
         this.shadowRoot.querySelector('#message-form paper-input').value = '';
-    }
-
-    _computeVisibleMessages() {
-        this.linkPaths(
-            'visibleChannelMessages',
-            'messages.' + this.selectedChannel);
-        if (this.messages && this.selectedChannel) {
-            return this.messages[this.selectedChannel];
-        }
-        return [];
-    }
-    _computeVisibleUsers() {
-        this.linkPaths(
-            'visibleChannelUsers',
-            'channelsStates.' + this.selectedChannel + '.users');
-        if (this.channelsStates[this.selectedChannel]) {
-            return this.channelsStates[this.selectedChannel].users;
-        }
-        return [];
     }
 }
 
