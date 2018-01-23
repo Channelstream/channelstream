@@ -24821,7 +24821,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 var types = exports.types = {
     SET_CHANNEL_STATES: 'chatView/SET_CHANNEL_STATES',
-    DEL_CHANNEL_STATE: 'chatView/DEL_CHANNEL_STATE'
+    DEL_CHANNEL_STATE: 'chatView/DEL_CHANNEL_STATE',
+    ADD_CHANNEL_USERS: 'chatView/ADD_CHANNEL_USERS',
+    DEL_CHANNEL_USERS: 'chatView/DEL_CHANNEL_USERS'
 };
 
 var actions = exports.actions = {
@@ -24836,10 +24838,98 @@ var actions = exports.actions = {
             type: types.DEL_CHANNEL_STATE,
             channel: channel
         };
+    },
+    addChannelUsers: function addChannelUsers(channel, usersList) {
+        return {
+            type: types.ADD_CHANNEL_USERS,
+            channel: channel,
+            users: usersList
+        };
+    },
+    removeChannelUsers: function removeChannelUsers(channel, usersList) {
+        return {
+            type: types.DEL_CHANNEL_USERS,
+            channel: channel,
+            users: usersList
+        };
+    }
+
+};
+
+var addChannelUsers = function addChannelUsers(usersState, channelName, userList) {
+    if (!usersState.hasOwnProperty(channelName)) {
+        usersState[channelName] = [];
+    }
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = userList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var user = _step.value;
+
+            if (usersState[channelName].indexOf(user) === -1) {
+                usersState[channelName].push(user);
+            }
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
+        }
     }
 };
 
-var INITIAL_STATE = { states: {}, allIds: {} };
+var delChannelUsers = function delChannelUsers(usersState, channelName, userList) {
+    if (!usersState.hasOwnProperty(channelName)) {
+        return;
+    }
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+        for (var _iterator2 = userList[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var user = _step2.value;
+
+            var foundIndex = usersState[channelName].indexOf(user);
+            if (foundIndex !== -1) {
+                usersState.splice(foundIndex, 1);
+            }
+        }
+    } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+            }
+        } finally {
+            if (_didIteratorError2) {
+                throw _iteratorError2;
+            }
+        }
+    }
+};
+
+var cloneChannelUsers = function cloneChannelUsers(state) {
+    var channelsUsers = {};
+    for (var key in state) {
+        channelsUsers[key] = [].concat(_toConsumableArray(state[key]));
+    }
+    return channelsUsers;
+};
+
+var INITIAL_STATE = { states: {}, allIds: {}, users: {} };
 
 var reducer = exports.reducer = function reducer() {
     var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : INITIAL_STATE;
@@ -24852,15 +24942,16 @@ var reducer = exports.reducer = function reducer() {
         case types.SET_CHANNEL_STATES:
             state = {
                 states: _extends({}, state.states),
-                allIds: [].concat(_toConsumableArray(state.allIds))
+                allIds: [].concat(_toConsumableArray(state.allIds)),
+                users: cloneChannelUsers(state.users)
             };
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
+            var _iteratorNormalCompletion3 = true;
+            var _didIteratorError3 = false;
+            var _iteratorError3 = undefined;
 
             try {
-                for (var _iterator = Object.entries(action.states)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var channelState = _step.value;
+                for (var _iterator3 = Object.entries(action.states)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                    var channelState = _step3.value;
 
                     state.states[channelState[0]] = {
                         name: channelState[1].name,
@@ -24873,18 +24964,19 @@ var reducer = exports.reducer = function reducer() {
                     if (state.allIds.indexOf(channelState[0]) === -1) {
                         state.allIds.push(channelState[0]);
                     }
+                    addChannelUsers(state.users, channelState[0], channelState[1].users);
                 }
             } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
+                _didIteratorError3 = true;
+                _iteratorError3 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
+                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                        _iterator3.return();
                     }
                 } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
+                    if (_didIteratorError3) {
+                        throw _iteratorError3;
                     }
                 }
             }
@@ -24900,8 +24992,25 @@ var reducer = exports.reducer = function reducer() {
             }
             state = {
                 states: _extends({}, state.states),
+                users: cloneChannelUsers(state.users),
                 allIds: newArray
             };
+            break;
+        case types.ADD_CHANNEL_USERS:
+            state = {
+                states: _extends({}, state.states),
+                allIds: [].concat(_toConsumableArray(state.allIds)),
+                users: cloneChannelUsers(state.users)
+            };
+            addChannelUsers(state.users, action.channel, action.users);
+            break;
+        case types.DEL_CHANNEL_USERS:
+            state = {
+                states: _extends({}, state.states),
+                allIds: [].concat(_toConsumableArray(state.allIds)),
+                users: cloneChannelUsers(state.users)
+            };
+            delChannelUsers(state.users, action.channel, action.users);
             break;
     }
     return state;
@@ -28112,7 +28221,7 @@ __webpack_require__(156);
 
 var RegisterHtmlTemplate = __webpack_require__(1);
 
-RegisterHtmlTemplate.register("<dom-module id=chat-view> <template> <style include=\"iron-flex iron-flex-alignment\">:host>*{--paper-tabs-selection-bar-color:#000000}.right-column{width:250px;margin-left:30px}.left-column{@apply(--layout-flex);}#message-input{display:inline-block;min-width:50%}paper-tabs{display:inline-flex}</style> <paper-dialog id=loginDialog with-backdrop=\"\"> <p>Log in to post messages</p> <iron-form id=login-form> <form method=post on-iron-form-presubmit=formPresubmit> <iron-a11y-keys id=a11y keys=enter on-keys-pressed=changeUser></iron-a11y-keys> <paper-input value={{loginUsername}} label=\"User Name\" min-length=1 auto-validate=\"\" required=\"\"></paper-input> <paper-input value={{loginEmail}} label=Email min-length=1 auto-validate=\"\" required=\"\"></paper-input> </form> </iron-form> <div class=buttons> <paper-button on-tap=changeUser autofocus=\"\">Confirm credentials</paper-button> </div> </paper-dialog> <div class=\"layout horizontal\"> <div class=left-column> <paper-tabs selected=[[selectedChannel]] attr-for-selected=name on-selected-changed=selectedChannelChanged> <template is=dom-repeat items=[[user.subscribedChannels]]> <paper-tab name=[[item]]>Channel: [[item]]</paper-tab> </template> </paper-tabs> <chat-message-list></chat-message-list> </div> <div class=right-column> <chat-status-selector></chat-status-selector> <chat-user-list users=[[visibleChannelUsers]] users-states=[[usersStates]]></chat-user-list> </div> </div> <iron-form id=message-form> <form on-iron-form-presubmit=formPresubmit method=post> <iron-a11y-keys id=a11y keys=enter on-keys-pressed=sendMessage></iron-a11y-keys> <paper-input id=message-input name=message label=\"Your message\" value={{message}}></paper-input> <paper-icon-button icon=icons:send on-tap=sendMessage></paper-icon-button> <br> <template is=dom-if if=[[user.anonymous]]> <paper-button on-tap=openDialog raised=\"\"> <iron-icon icon=social:person-outline></iron-icon> Change username </paper-button> </template> <app-debug data=[[user]]></app-debug> <chat-channel-picker subscribed-channels=[[user.subscribedChannels]] possible-channels=[[possibleChannels]]></chat-channel-picker> </form> </iron-form> </template> </dom-module>");
+RegisterHtmlTemplate.register("<dom-module id=chat-view> <template> <style include=\"iron-flex iron-flex-alignment\">:host>*{--paper-tabs-selection-bar-color:#4285f4;--paper-tab-ink:#4285f4}.right-column{width:250px;margin-left:30px}.left-column{@apply(--layout-flex);}#message-input{display:inline-block;min-width:50%}paper-tabs{display:inline-flex}</style> <paper-dialog id=loginDialog with-backdrop=\"\"> <p>Log in to post messages</p> <iron-form id=login-form> <form method=post on-iron-form-presubmit=formPresubmit> <iron-a11y-keys id=a11y keys=enter on-keys-pressed=changeUser></iron-a11y-keys> <paper-input value={{loginUsername}} label=\"User Name\" min-length=1 auto-validate=\"\" required=\"\"></paper-input> <paper-input value={{loginEmail}} label=Email min-length=1 auto-validate=\"\" required=\"\"></paper-input> </form> </iron-form> <div class=buttons> <paper-button on-tap=changeUser autofocus=\"\">Confirm credentials</paper-button> </div> </paper-dialog> <div class=\"layout horizontal\"> <div class=left-column> <paper-tabs selected=[[selectedChannel]] attr-for-selected=name on-selected-changed=selectedChannelChanged> <template is=dom-repeat items=[[user.subscribedChannels]]> <paper-tab name=[[item]]>Channel: [[item]]</paper-tab> </template> </paper-tabs> <chat-message-list></chat-message-list> </div> <div class=right-column> <chat-status-selector></chat-status-selector> <chat-user-list selected-channel=[[selectedChannel]]></chat-user-list> </div> </div> <iron-form id=message-form> <form on-iron-form-presubmit=formPresubmit method=post> <iron-a11y-keys id=a11y keys=enter on-keys-pressed=sendMessage></iron-a11y-keys> <paper-input id=message-input name=message label=\"Your message\" value={{message}}></paper-input> <paper-icon-button icon=icons:send on-tap=sendMessage></paper-icon-button> <br> <template is=dom-if if=[[user.anonymous]]> <paper-button on-tap=openDialog raised=\"\"> <iron-icon icon=social:person-outline></iron-icon> Change username </paper-button> </template> <app-debug data=[[user]]></app-debug> <chat-channel-picker subscribed-channels=[[user.subscribedChannels]] possible-channels=[[possibleChannels]]></chat-channel-picker> </form> </iron-form> </template> </dom-module>");
 
 __webpack_require__(169);
 
@@ -31618,7 +31727,7 @@ __webpack_require__(147);
 
 var RegisterHtmlTemplate = __webpack_require__(1);
 
-RegisterHtmlTemplate.register("<dom-module id=chat-message-list> <template> <style>iron-list{height:500px;width:100%}</style> <app-debug data=[[messages.allIds]]></app-debug> <iron-list items=\"[[visibleMessages(selectedChannel, messages.allIds)]]\" as=message class=chat-list> <template> <chat-message message=[[messageData(message)]]></chat-message> </template> </iron-list> </template> </dom-module>");
+RegisterHtmlTemplate.register("<dom-module id=chat-message-list> <template> <style>iron-list{height:500px;width:100%}</style> <iron-list items=\"[[visibleMessages(selectedChannel, messages.allIds)]]\" as=message class=chat-list> <template> <chat-message message=[[messageData(message)]]></chat-message> </template> </iron-list> </template> </dom-module>");
 
 __webpack_require__(151);
 
@@ -31891,7 +32000,7 @@ __webpack_require__(109);
 
 var RegisterHtmlTemplate = __webpack_require__(1);
 
-RegisterHtmlTemplate.register("<dom-module id=chat-message> <template> <style>chat-avatar{float:left;margin-right:15px;overflow:hidden;width:40px;height:40px;--chat-avatar-mixin:{width:40px;height:40px};}.message.presence,.timestamp{color:#696969}.message .text{white-space:pre-line}:host>*{padding:5px}</style> <chat-avatar username=[[message.message.user]] email=[[message.message.email]]></chat-avatar> <div class$=\"message [[message.type]]\"> <div>[[[message.channel]]] <strong>[[message.user]]</strong></div> <div><span class=timestamp>[[_shortTime(message.timestamp)]]</span>: <span class=text>[[message.message.text]]</span></div> </div> </template> </dom-module>");
+RegisterHtmlTemplate.register("<dom-module id=chat-message> <template> <style>chat-avatar{float:left;margin-right:15px;overflow:hidden;width:40px;height:40px;--chat-avatar-mixin:{width:40px;height:40px};}.message.presence,.timestamp{color:#696969}.message .text{white-space:pre-line}:host>*{padding:5px}</style> <chat-avatar username=[[message.message.user]] email=[[message.message.email]]></chat-avatar> <div class$=\"message [[message.type]]\"> <div>[[[message.channel]]] <strong>[[message.user]]</strong></div> <div><span class=timestamp>[[_shortTime(message.timestamp)]]</span>: <span class=text>[[_messageText(message.message.text)]]</span></div> </div> </template> </dom-module>");
 
 __webpack_require__(150);
 
@@ -32116,6 +32225,12 @@ var ChatMessage = function (_Polymer$Element) {
     }
 
     _createClass(ChatMessage, [{
+        key: '_messageText',
+        value: function _messageText() {
+            var txt = this.message.message.action;
+            return this.message.message.text || 'User ' + txt;
+        }
+    }, {
         key: '_shortTime',
         value: function _shortTime() {
             return this.message.timestamp.split('.')[0];
@@ -32318,7 +32433,7 @@ __webpack_require__(109);
 
 var RegisterHtmlTemplate = __webpack_require__(1);
 
-RegisterHtmlTemplate.register("<dom-module id=chat-user-list> <template> <style>chat-avatar{float:left;margin-right:10px;width:20px;height:20px;--chat-avatar-mixin:{width:20px;height:20px};}.user{clear:both;margin-bottom:15px}</style> <template is=dom-repeat items=[[users]]> <div class=user tabindex$=[[tabIndex]]> <chat-avatar username=[[item]] email=\"[[_computedEmail(usersStates.*, item)]]\"></chat-avatar> <span style$=\"color:{{_computedColor(usersStates.*, item)}}\">[[item]]</span> </div> </template> </template> </dom-module>");
+RegisterHtmlTemplate.register("<dom-module id=chat-user-list> <template> <style>chat-avatar{float:left;margin-right:10px;width:20px;height:20px;--chat-avatar-mixin:{width:20px;height:20px};}.user{clear:both;margin-bottom:15px}</style> <template is=dom-repeat items=\"[[_visibleUsers(selectedChannel, channelsUsers)]]\"> <div class=user tabindex$=[[tabIndex]]> <chat-avatar username=[[item]] email=\"[[_computedEmail(usersStates, item)]]\"></chat-avatar> <span style$=\"color:{{_computedColor(usersStates, item)}}\">[[item]]</span> </div> </template> </template> </dom-module>");
 
 __webpack_require__(155);
 
@@ -32331,14 +32446,16 @@ __webpack_require__(155);
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _store = __webpack_require__(52);
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var ChatUserList = function (_Polymer$Element) {
-    _inherits(ChatUserList, _Polymer$Element);
+var ChatUserList = function (_ReduxMixin) {
+    _inherits(ChatUserList, _ReduxMixin);
 
     function ChatUserList() {
         _classCallCheck(this, ChatUserList);
@@ -32347,14 +32464,19 @@ var ChatUserList = function (_Polymer$Element) {
     }
 
     _createClass(ChatUserList, [{
+        key: '_visibleUsers',
+        value: function _visibleUsers(selectedChannel) {
+            return this.channelsUsers[selectedChannel];
+        }
+    }, {
         key: '_computedEmail',
         value: function _computedEmail(op, username) {
-            return this.usersStates[username].state.email;
+            return this.users.states[username].email;
         }
     }, {
         key: '_computedColor',
         value: function _computedColor(op, username) {
-            return this.usersStates[username].state.color || 'black';
+            return this.users.states[username].color || 'black';
         }
     }], [{
         key: 'is',
@@ -32365,14 +32487,23 @@ var ChatUserList = function (_Polymer$Element) {
         key: 'properties',
         get: function get() {
             return {
-                users: Array,
-                usersStates: Object
+                selectedChannel: {
+                    type: String
+                },
+                channelsUsers: {
+                    type: Object,
+                    statePath: 'chatView.channels.users'
+                },
+                users: {
+                    type: Object,
+                    statePath: 'chatView.users'
+                }
             };
         }
     }]);
 
     return ChatUserList;
-}(Polymer.Element);
+}((0, _store.ReduxMixin)(Polymer.Element));
 
 customElements.define(ChatUserList.is, ChatUserList);
 
@@ -33685,31 +33816,6 @@ var ChatView = function (_ReduxMixin) {
             console.log('selectedChannelChanged', event.detail.value);
             this.dispatch('setViewedChannel', event.detail.value);
         }
-
-        /** Act only on various message types */
-
-    }, {
-        key: 'addMessage',
-        value: function addMessage(message) {
-            // create a new key for channel
-            if (typeof this.messages[message.channel] === 'undefined') {
-                this.messages[message.channel] = [];
-            }
-
-            // push message
-            if (message.type === 'message') {
-                this.push(['messages', message.channel], message);
-            } else if (message.type === 'presence') {
-                var text = 'User ' + message.user + ' ' + message.message.action;
-                // set presence text and normalize to format message element expects
-                message.message = {
-                    text: text,
-                    email: '',
-                    action: message.message.action
-                };
-                this.push(['messages', message.channel], message);
-            }
-        }
     }, {
         key: 'loadHistory',
         value: function loadHistory(messageList, channel) {
@@ -33871,7 +33977,6 @@ var ChannelStreamChatDemo = function (_ReduxMixin) {
                     var message = _step.value;
 
                     // add message
-                    console.log('msg', message);
                     if (['message', 'presence'].indexOf(message.type) !== -1) {
                         var messageMappings = {};
                         // for (let channel of Object.entries(data.channels_info.channels)) {
@@ -33883,13 +33988,13 @@ var ChannelStreamChatDemo = function (_ReduxMixin) {
                     if (message.type === 'presence') {
                         // user joined
                         if (message.message.action === 'joined') {
-                            this.dispatch('setUserStates', _defineProperty({}, message.user, message.message.state));
+                            this.dispatch('setUserStates', [_defineProperty({}, message.user, message)]);
                         }
                         // user disconnected
                         else {}
                     }
                     if (message.type === 'user_state_change') {
-                        this.dispatch('setUserStates', _defineProperty({}, message.user, message.message.state));
+                        this.dispatch('setUserStates', [_defineProperty({}, message.user, message)]);
                     }
                 }
             } catch (err) {

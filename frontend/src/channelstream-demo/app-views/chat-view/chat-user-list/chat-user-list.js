@@ -1,4 +1,6 @@
-class ChatUserList extends Polymer.Element {
+import {ReduxMixin} from '../../../redux/store';
+
+class ChatUserList extends ReduxMixin(Polymer.Element) {
 
     static get is() {
         return 'chat-user-list';
@@ -6,16 +8,30 @@ class ChatUserList extends Polymer.Element {
 
     static get properties() {
         return {
-            users: Array,
-            usersStates: Object
+            selectedChannel: {
+                type: String
+            },
+            channelsUsers: {
+                type: Object,
+                statePath: 'chatView.channels.users'
+            },
+            users: {
+                type: Object,
+                statePath: 'chatView.users'
+            },
         };
     }
 
-    _computedEmail(op, username) {
-        return this.usersStates[username].state.email;
+    _visibleUsers(selectedChannel) {
+        return this.channelsUsers[selectedChannel];
     }
-    _computedColor(op, username){
-        return this.usersStates[username].state.color || 'black';
+
+    _computedEmail(op, username) {
+        return this.users.states[username].email;
+    }
+
+    _computedColor(op, username) {
+        return this.users.states[username].color || 'black';
     }
 }
 

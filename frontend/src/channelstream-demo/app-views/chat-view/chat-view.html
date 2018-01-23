@@ -18,7 +18,8 @@
     <template>
         <style include="iron-flex iron-flex-alignment">
             :host > *{
-                --paper-tabs-selection-bar-color: #000000;
+                --paper-tabs-selection-bar-color: #4285f4;
+                --paper-tab-ink: #4285f4;
             }
             .right-column {
                 width: 250px;
@@ -68,7 +69,7 @@
             </div>
             <div class="right-column">
                 <chat-status-selector></chat-status-selector>
-                <chat-user-list users="[[visibleChannelUsers]]" users-states="[[usersStates]]"></chat-user-list>
+                <chat-user-list selected-channel="[[selectedChannel]]"></chat-user-list>
             </div>
 
         </div>

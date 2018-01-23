@@ -22,10 +22,10 @@
             }
         </style>
 
-        <template is="dom-repeat" items="[[users]]">
+        <template is="dom-repeat" items="[[_visibleUsers(selectedChannel, channelsUsers)]]">
             <div class="user" tabindex$="[[tabIndex]]">
-                <chat-avatar username="[[item]]" email="[[_computedEmail(usersStates.*, item)]]"></chat-avatar>
-                <span style$="color:{{_computedColor(usersStates.*, item)}}">[[item]]</span>
+                <chat-avatar username="[[item]]" email="[[_computedEmail(usersStates, item)]]"></chat-avatar>
+                <span style$="color:{{_computedColor(usersStates, item)}}">[[item]]</span>
             </div>
         </template>
 
