@@ -31,12 +31,10 @@ class ChatMessageList extends ReduxMixin(Polymer.mixinBehaviors([Polymer.IronRes
     }
 
     messageData(messageId) {
-        console.log('messageData', this.messages.messages[messageId])
         return this.messages.messages[messageId];
     }
 
     visibleMessages(selectedChannel) {
-        console.log('visibleMessages', selectedChannel);
         return this.messages.channelMessages[this.selectedChannel] || [];
     }
 

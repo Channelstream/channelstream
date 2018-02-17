@@ -48,7 +48,7 @@ let delChannelUsers = (usersState, channelName, userList) => {
     for (let user of userList) {
         let foundIndex = usersState[channelName].indexOf(user);
         if (foundIndex !== -1) {
-            usersState.splice(foundIndex, 1);
+            usersState[channelName].splice(foundIndex, 1);
         }
     }
 };

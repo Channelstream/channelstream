@@ -52,7 +52,9 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
             setChannelStates: chatViewChannelActions.setChannelStates,
             delChannelState: chatViewChannelActions.delChannelState,
             setUserStates: chatViewUsersActions.setUserStates,
-            setChannelMessages: chatViewMessagesActions.setChannelMessages
+            setChannelMessages: chatViewMessagesActions.setChannelMessages,
+            addChannelUsers: chatViewChannelActions.addChannelUsers,
+            removeChannelUsers: chatViewChannelActions.removeChannelUsers
         };
     }
 
@@ -63,6 +65,7 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
     receivedMessage(event) {
         for (let message of event.detail) {
             // add message
+            console.info('message', message);
             if (['message', 'presence'].indexOf(message.type) !== -1) {
                 let messageMappings = {};
                 // for (let channel of Object.entries(data.channels_info.channels)) {
@@ -75,15 +78,16 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
             if (message.type === 'presence') {
                 // user joined
                 if (message.message.action === 'joined') {
-                    this.dispatch('setUserStates', [{[message.user]: message}]);
+                    this.dispatch('setUserStates', [{user: message.user, state: message.state}]);
+                    this.dispatch('addChannelUsers', message.channel, [message.user]);
                 }
                 // user disconnected
                 else {
-
+                    this.dispatch('removeChannelUsers', message.channel, [message.user]);
                 }
             }
             if (message.type === 'user_state_change') {
-                this.dispatch('setUserStates', [{[message.user]: message}]);
+                this.dispatch('setUserStates', [{user: message.user, state: message.state}]);
             }
         }
     }

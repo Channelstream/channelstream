@@ -65,12 +65,18 @@ Only you see it (it's not stored to history), and is only sent to your user.
 There are 3 channels with different configurations:
 
 - pub_chan: notifies about joins/parts, stores history, doesn't send user state(colors) messages, history size: 10
-- notify: notifies about joins/parts, stores history, sends about user state(colors), history size: 50
+- notify: notifies about joins/parts, stores history, sends information about user state(colors), history size: 50
 - second_channel: doesn't notify about user presence, doesn't store history, doesn't send user state change messages
 '''
 
 
 def send_welcome_message(request, username):
+    """
+    Sends a private message to specific channel to single user
+    :param request:
+    :param username:
+    :return:
+    """
     payload = {
         'type': 'message',
         "user": 'system',
