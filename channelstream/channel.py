@@ -31,11 +31,12 @@ class Channel(object):
         self.broadcast_presence_with_user_lists = False
         # channel sends all user state key changes
         self.notify_state = False
-        # channel sends all user state key changes
         self.salvageable = False
         self.store_history = False
         self.history_size = 10
         self.history = []
+        # store frames for fetching when long polling connection reconnects
+        self.frames = []
         if channel_config:
             self.reconfigure_from_dict(channel_config)
         log.info('%s created' % self)
@@ -149,6 +150,8 @@ class Channel(object):
         if self.store_history and message['type'] == 'message' and not no_history:
             self.history.append(message)
             self.history = self.history[self.history_size * -1:]
+        if not no_history:
+            self.frames = self.frames[-100:]
         message.update({'channel': self.name})
         # message everyone subscribed except excluded
         total_sent = 0

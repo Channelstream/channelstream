@@ -87,7 +87,7 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
                 }
             }
             if (message.type === 'user_state_change') {
-                this.dispatch('setUserStates', [{user: message.user, state: message.state}]);
+                this.dispatch('setUserStates', [{user: message.user, state: message.message.state}]);
             }
         }
     }

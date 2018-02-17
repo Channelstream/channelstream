@@ -12,11 +12,11 @@ POSSIBLE_CHANNELS = set(['pub_chan', 'second_chanel', 'notify'])
 
 CHANNEL_CONFIGS = {
     'pub_chan': {'notify_presence': True,
+                 'notify_state': True,
                  'store_history': True,
                  'history_size': 10,
                  'broadcast_presence_with_user_lists': True},
     'notify': {'store_history': True,
-               'notify_state': True,
                'history_size': 50,
                'notify_presence': True}}
 
@@ -64,8 +64,8 @@ Only you see it (it's not stored to history), and is only sent to your user.
 
 There are 3 channels with different configurations:
 
-- pub_chan: notifies about joins/parts, stores history, doesn't send user state(colors) messages, history size: 10
-- notify: notifies about joins/parts, stores history, sends information about user state(colors), history size: 50
+- pub_chan: notifies about joins/parts, stores history, history size: 10
+- notify: notifies about joins/parts, stores history, doesn't send user state change messages, history size: 50
 - second_channel: doesn't notify about user presence, doesn't store history, doesn't send user state change messages
 '''
 

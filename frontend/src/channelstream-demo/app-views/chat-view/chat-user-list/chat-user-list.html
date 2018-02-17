@@ -16,7 +16,8 @@
                     height: 20px;
                 }
             }
-            .user{
+
+            .user {
                 clear: both;
                 margin-bottom: 15px;
             }
@@ -25,7 +26,7 @@
         <template is="dom-repeat" items="[[_visibleUsers(selectedChannel, channelsUsers)]]">
             <div class="user" tabindex$="[[tabIndex]]">
                 <chat-avatar username="[[item]]" email="[[_computedEmail(usersStates, item)]]"></chat-avatar>
-                <span style$="color:{{_computedColor(usersStates, item)}}">[[item]]</span>
+                <span style$="color:{{_computedColor(users, item)}}">[[item]]</span>
             </div>
         </template>
 
