@@ -2,6 +2,7 @@ gevent>=1.1
 ws4py>=0.3.5
 pyramid
 pyramid_jinja2
+pyramid_swagger
 itsdangerous
 requests
 six
