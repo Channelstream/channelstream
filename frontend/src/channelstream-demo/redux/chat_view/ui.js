@@ -25,6 +25,7 @@ export const reducer = (state = INITIAL_STATE, action) => {
     switch (action.type) {
         case types.SET_VIEWIED_CHANNEL:
             state = {
+                possibleChannels: [...state.possibleChannels],
                 selectedChannel: action.channel,
             };
             break;
