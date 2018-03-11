@@ -1,13 +1,22 @@
 import six
+import logging
 from itsdangerous import TimestampSigner
 from pyramid.security import (Allow,
                               Everyone,
                               ALL_PERMISSIONS,
                               authenticated_userid)
 
+log = logging.getLogger(__name__)
+
 
 class RequestBasicChallenge(Exception):
     pass
+
+
+def is_allowed_ip(addr, config):
+    if '0.0.0.0' in config['allow_posting_from']:
+        return True
+    return addr in config['allow_posting_from']
 
 
 class APIFactory(object):
@@ -18,8 +27,11 @@ class APIFactory(object):
         req_secret = request.headers.get('x-channelstream-secret',
                                          req_url_secret)
 
-        if request.environ['REMOTE_ADDR'] not in config['allow_posting_from']:
+        addr = request.environ['REMOTE_ADDR']
+        if not is_allowed_ip(addr, config):
+            log.warning('IP: {} is not whitelisted'.format(addr))
             return
+
         if req_secret:
             signer = TimestampSigner(config['secret'])
             unsigned = signer.unsign(req_secret)

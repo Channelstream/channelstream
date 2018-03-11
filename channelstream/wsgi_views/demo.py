@@ -42,6 +42,7 @@ def make_server_request(request, payload, endpoint, auth=None):
     response = requests.post(url, data=json.dumps(payload),
                              headers=secret_headers,
                              auth=auth)
+    response.raise_for_status()
     return response
 
 
