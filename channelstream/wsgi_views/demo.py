@@ -87,7 +87,7 @@ def send_welcome_message(request, username):
             'text': WELCOME_MESSAGE_TEXT
         }
     }
-    result = make_server_request(request, [payload], '/message')
+    make_server_request(request, [payload], '/message')
 
 
 @view_defaults(route_name='section_action', renderer='json')
@@ -108,7 +108,7 @@ class DemoViews(object):
                  request_method="POST")
     def connect(self):
         """handle authorization of users trying to connect"""
-        channels = self.request.json_body['channels']
+        channels = self.request.json_body.get('channels') or []
         if channels:
             POSSIBLE_CHANNELS.intersection(channels)
         random_name = 'anon_%s' % random.randint(1, 999999)
@@ -122,6 +122,7 @@ class DemoViews(object):
                                         'bar': 1},
                    'user_state': state,
                    'state_public_keys': ['email', 'status', 'bar', 'color'],
+                   'info': {'return_public_state': True}, # return only public state keys
                    'channel_configs': CHANNEL_CONFIGS}
         result = make_server_request(self.request, payload, '/connect')
         self.request.response.status = result.status_code

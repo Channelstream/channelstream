@@ -32,7 +32,7 @@ class ServerViews(object):
 
     def _get_channel_info(self, req_channels=None, include_history=True,
                           include_connections=False, include_users=False,
-                          exclude_channels=None):
+                          exclude_channels=None, return_public_state=False):
         """
         Gets channel information for req_channels or all channels
         if req_channels is None
@@ -73,26 +73,38 @@ class ServerViews(object):
             users_to_list.update(channel_info['users'])
 
         for username in users_to_list:
+            user = channelstream.USERS[username]
             json_data['users'].append(
                 {'user': username,
-                 'state': channelstream.USERS[username].state})
+                 'state': user.state if not return_public_state
+                 else user.public_state})
         log.info('info time: %s' % (datetime.utcnow() - start_time))
         return json_data
 
     def get_common_info(self, channels, info_config):
+        """
+        Return channel information based on requirements
+        :param channels:
+        :param info_config:
+        :return:
+        """
         include_history = info_config.get('include_history', True)
         include_users = info_config.get('include_users', True)
         exclude_channels = info_config.get('exclude_channels', [])
         include_connections = info_config.get('include_connections', False)
+        return_public_state = info_config.get('return_public_state', False)
         channels_info = self._get_channel_info(
             channels, include_history=include_history,
             include_connections=include_connections,
-            include_users=include_users, exclude_channels=exclude_channels)
+            include_users=include_users,
+            exclude_channels=exclude_channels,
+            return_public_state=return_public_state)
         return channels_info
 
     @view_config(match_param='action=connect')
     def connect(self):
         """
+        Creates a user object in server registry
         return the id of connected users - will be secured with password string
         for webapp to internally call the server - we combine conn string
         with user id, and we tell which channels the user is allowed to
@@ -120,15 +132,16 @@ class ServerViews(object):
 
         # get info config for channel information
         info_config = json_body.get('info') or {}
-        channels_info = self.get_common_info(channels,
-                                             info_config)
-        return {'conn_id': connection.id, 'state': user.state,
+        channels_info = self.get_common_info(channels, info_config)
+        return {'conn_id': connection.id,
+                'state': user.state,
+                'public_state': user.public_state,
                 'channels': channels,
                 'channels_info': channels_info}
 
     @view_config(match_param='action=subscribe')
     def subscribe(self, *args):
-        """ call this to subscribe specific connection to new channels """
+        """ Dubscribe specific connection to new channels """
         json_body = self.request.json_body
         conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
         connection = channelstream.CONNECTIONS.get(conn_id)
@@ -155,7 +168,7 @@ class ServerViews(object):
 
     @view_config(match_param='action=unsubscribe')
     def unsubscribe(self, *args):
-        """ call this to unsubscribe specific connection from channels """
+        """ Unsubscribe specific connection from channels """
         json_body = self.request.json_body
         conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
         connection = channelstream.CONNECTIONS.get(conn_id)
@@ -180,6 +193,10 @@ class ServerViews(object):
 
     @view_config(match_param='action=listen', permission=NO_PERMISSION_REQUIRED)
     def listen(self):
+        """
+        Handles long-polling connection
+        :return:
+        """
         config = self.request.registry.settings
         self.conn_id = self.request.params.get('conn_id')
         connection = channelstream.CONNECTIONS.get(self.conn_id)
@@ -247,6 +264,10 @@ class ServerViews(object):
 
     @view_config(match_param='action=message')
     def message(self):
+        """
+        Send message to channels and/or users
+        :return:
+        """
         msg_list = self.request.json_body
         for msg in msg_list:
             if not msg.get('channel') and not msg.get('pm_users', []):
@@ -257,6 +278,10 @@ class ServerViews(object):
     @view_config(match_param='action=disconnect',
                  permission=NO_PERMISSION_REQUIRED)
     def disconnect(self):
+        """
+        Permanently remove connection from server
+        :return:
+        """
         json_body = self.request.json_body
         if json_body:
             conn_id = json_body.get('conn_id')
@@ -267,7 +292,7 @@ class ServerViews(object):
 
     @view_config(match_param='action=channel_config')
     def channel_config(self):
-        """ call this to reconfigure channels """
+        """ Set channel configuration """
         json_body = self.request.json_body
         if not json_body:
             self.request.response.status = 400
@@ -282,11 +307,19 @@ class ServerViews(object):
     @view_config(route_name='admin',
                  renderer='templates/admin.jinja2', permission='access')
     def admin(self):
+        """
+        Serve admin page html
+        :return:
+        """
         return {}
 
     @view_config(route_name='admin_json',
                  renderer='json', permission='access')
     def admin_json(self):
+        """
+        Return server information in json format for admin panel purposes
+        :return:
+        """
         uptime = datetime.utcnow() - channelstream.stats['started_on']
         uptime = str(uptime).split('.')[0]
         remembered_user_count = len(
@@ -318,6 +351,10 @@ class ServerViews(object):
 
     @view_config(match_param='action=info')
     def info(self):
+        """
+        Returns channel information in json format
+        :return:
+        """
         if not self.request.body:
             req_channels = channelstream.CHANNELS.keys()
             info_config = {
