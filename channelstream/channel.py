@@ -14,7 +14,8 @@ class Channel(object):
     """ Represents one of our chat channels - has some config options """
 
     config_keys = ['notify_presence', 'store_history', 'history_size',
-                   'broadcast_presence_with_user_lists', 'notify_state']
+                   'broadcast_presence_with_user_lists', 'notify_state',
+                   'store_frames']
 
     def __init__(self, name, long_name=None, channel_config=None):
         """
@@ -33,6 +34,7 @@ class Channel(object):
         self.notify_state = False
         self.salvageable = False
         self.store_history = False
+        self.store_frames = True
         self.history_size = 10
         self.history = []
         # store frames for fetching when long polling connection reconnects
@@ -150,7 +152,8 @@ class Channel(object):
         if self.store_history and message['type'] == 'message' and not no_history:
             self.history.append(message)
             self.history = self.history[self.history_size * -1:]
-        if not no_history:
+        if self.store_frames:
+            self.frames.append(message)
             self.frames = self.frames[-100:]
         message.update({'channel': self.name})
         # message everyone subscribed except excluded
