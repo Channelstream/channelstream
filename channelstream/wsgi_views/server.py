@@ -135,6 +135,7 @@ class ServerViews(object):
         channels_info = self.get_common_info(channels, info_config)
         return {'conn_id': connection.id,
                 'state': user.state,
+                'username': user.username,
                 'public_state': user.public_state,
                 'channels': channels,
                 'channels_info': channels_info}
