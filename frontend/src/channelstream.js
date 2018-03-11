@@ -14,6 +14,8 @@
             console.info('request', request);
             console.info('respText', respText);
         };
+        this.handleRequest = function (request) {
+        };
         this.handleStateChange = function () {
             var result = this.request.responseText;
             try {
@@ -22,11 +24,14 @@
 
             }
             if (this.request.readyState === XMLHttpRequest.DONE) {
-                if (this.request.status <= 400) {
+                if (this.request.status && this.request.status <= 400) {
                     this.handleResponse(this.request, result);
                 } else {
                     this.handleError(this.request, result);
                 }
+            }
+            else {
+                this.handleRequest(this.request);
             }
         };
         this.execute = function () {
@@ -34,7 +39,8 @@
             this.request.onreadystatechange = this.handleStateChange.bind(this);
             if (this.headers) {
                 for (var i = 0; i < this.headers.length; i++) {
-                    request.setRequestHeader(this.headers[i].name, headers[i].value);
+                    this.request.setRequestHeader(
+                        this.headers[i].name, this.headers[i].value);
                 }
             }
             if (this.body) {
@@ -46,7 +52,7 @@
                 this.request.open(this.type, this.url);
             }
         };
-    };
+    }
 
     var ChannelStreamConnection = {
         debug: false,
@@ -103,7 +109,8 @@
         },
 
         /**
-         * Connects user and fetches connection id from the server.
+         * Sends AJAX call that creates user and fetches connection information
+         * from the server.
          *
          */
         connect: function () {
@@ -127,7 +134,7 @@
             this.mutators[type].push(func);
         },
         /**
-         * Updates user state.
+         * Sends AJAX request to update user state.
          *
          */
         updateUserState: function (stateObj) {
@@ -159,9 +166,9 @@
             for (var i = 0; i < this.mutators.subscribe.length; i++) {
                 this.mutators.subscribe[i](request);
             }
-            request.handleError = this._handleSubscribe.bind(this);
-            request.handleResponse = this._handleSubscribeError.bind(this);
-            if (request.body.channels.length) {
+            request.handleError = this._handleSubscribeError.bind(this);
+            request.handleResponse = this._handleSubscribe.bind(this);
+            if (request.body.channels && request.body.channels.length) {
                 request.execute();
             }
         },
@@ -202,6 +209,9 @@
          * between channels property and passed channel list
          */
         calculateUnsubscribe: function (channels) {
+            if (!channels){
+                channels = []
+            };
             var toUnsubscribe = [];
             for (var i = 0; i < channels.length; i++) {
                 if (this.channels.indexOf(channels[i]) !== -1) {
@@ -235,7 +245,7 @@
         message: function (message) {
             var request = new ChannelStreamRequest();
             request.url = this.messageUrl;
-            request.body = messageUrl;
+            request.body = message;
             for (var i = 0; i < this.mutators.message.length; i++) {
                 this.mutators.message[i](request);
             }
@@ -248,7 +258,7 @@
          *
          */
         startListening: function (request, data) {
-            this.startListeningCallback(request, data);
+            this.beforeListeningCallback(request, data);
             if (this.noWebsocket === false) {
                 this.noWebsocket = !window.WebSocket;
             }
@@ -260,11 +270,14 @@
             }
         },
 
-        startListeningCallback: function (request, data) {
+        /**
+         * Fired before connection start listening for messages
+         */
+        beforeListeningCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('startListeningCallback', request, data);
+            console.log('beforeListeningCallback', request, data);
         },
 
         /**
@@ -275,7 +288,7 @@
             var url = this.websocketUrl + '?conn_id=' + this.connectionId;
             this.websocket = new WebSocket(url);
             this.websocket.onopen = this._handleListenOpen.bind(this);
-            this.websocket.onclose = this._handleListenCloseEvent.bind(this);
+            this.websocket.onclose = this._handleWebsocketCloseEvent.bind(this);
             this.websocket.onerror = this._handleListenErrorEvent.bind(this);
             this.websocket.onmessage = this._handleListenMessageEvent.bind(this);
         },
@@ -287,9 +300,13 @@
             var request = new ChannelStreamRequest();
             request.url = this.longPollUrl + '?conn_id=' + this.connectionId;
             request.handleError = this._handleListenErrorEvent.bind(this);
-            request.handleResponse = function(request, data){
+            request.handleRequest = function () {
+                this.connected = true;
+                this.listenOpenedCallback(request);
+            }.bind(this);
+            request.handleResponse = function (request, data) {
                 this._handleListenMessageEvent(data);
-            }.bind(this)
+            }.bind(this);
             request.execute();
             this._ajaxListen = request;
         },
@@ -310,31 +327,37 @@
             setTimeout(this.connect.bind(this), this._currentBounceIv);
         },
         /**
-         * Closes listening connection.
+         * Closes currently listening connection.
          *
          */
         closeConnection: function () {
-            var request = this._ajaxListen.request;
             if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
                 this.websocket.onclose = null;
                 this.websocket.onerror = null;
                 this.websocket.close();
             }
+            var request = this._ajaxListen.request;
             request.abort();
             this.connected = false;
             this.connectionClosedCallback();
         },
 
+        /**
+         * Fired when listening connection is closed
+         */
         connectionClosedCallback: function () {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('connectionClosedCallback');
         },
 
+        /**
+         * Fired when channels property get mutated
+         */
         channelsChangedCallback: function (data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('channelsChangedCallback', data);
         },
@@ -346,16 +369,21 @@
             this.createHeartBeats();
         },
 
+        /**
+         * Fired when client starts listening for messages
+         */
         listenOpenedCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('listenOpenedCallback', request, data);
         },
 
+        /**
+         * Starts sending heartbeats to maintain connection and notify server
+         */
         createHeartBeats: function () {
-            if (typeof this._heartbeat === 'undefined' && this.websocket !== null
-                && this.heartbeats) {
+            if (typeof this._heartbeat === 'undefined' && this.websocket !== null && this.heartbeats) {
                 this._heartbeat = setInterval(this._sendHeartBeat.bind(this), 10000);
             }
         },
@@ -376,9 +404,12 @@
             this.connectErrorCallback(request, data);
         },
 
+        /**
+         * Fired when client fails connect() call
+         */
         connectErrorCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('connectErrorCallback', request, data);
         },
@@ -397,24 +428,30 @@
 
         },
 
+        /**
+         * Fired when messages are received
+         */
         listenMessageCallback: function (data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('listenMessageCallback', data)
         },
 
-        _handleListenCloseEvent: function (request, data) {
+        _handleWebsocketCloseEvent: function (request, data) {
             this.connected = false;
             this.listenCloseCallback(request, data);
             this.retryConnection();
         },
 
+        /**
+         * Fired on websocket connection close event
+         */
         listenCloseCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('listenCloseCallback', request, data)
+            console.log('listenCloseCallback', request, data);
         },
 
         _handleListenErrorEvent: function (request, data) {
@@ -422,68 +459,91 @@
             this.listenErrorCallback(request, data);
         },
 
+        /**
+         * Fired on long-pool/websocket connection error event
+         */
         listenErrorCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('listenErrorCallback', request, data)
+            console.log('listenErrorCallback', request, data);
         },
 
         _handleConnect: function (request, data) {
             this.currentBounceIv = 0;
             this.connectionId = data.conn_id;
+            this.channels = data.channels;
+            this.channelsChangedCallback(this.channels);
+            this.connectCallback(request, data);
             this.startListening(request, data);
-            this.connectedCallback(request, data);
         },
 
-        connectedCallback: function (request, data) {
+        /**
+         * Fired on successful connect() call
+         */
+        connectCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('connectedCallback', request, data)
+            console.log('connectCallback', request, data);
         },
 
         _handleDisconnect: function (request, data) {
             this.connected = false;
-            this.disconnectedCallback(request, data);
+            this.disconnectCallback(request, data);
         },
 
-        disconnectedCallback: function (request, data) {
+
+        /**
+         * Fired after successful disconnect() call
+         */
+        disconnectCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('disconnectedCallback', request, data)
+            console.log('disconnectCallback', request, data);
         },
 
         _handleMessage: function (request, data) {
             this.messageCallback(request, data);
         },
 
+        /**
+         * Fired on successful message() call
+         */
         messageCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('messageCallback', request, data)
+            console.log('messageCallback', request, data);
         },
 
         _handleMessageError: function (request, data) {
             this.messageErrorCallback(request, data);
         },
 
+        /**
+         * Fired on message() call error
+         */
         messageErrorCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('messageErrorCallback', request, data)
         },
 
         _handleSubscribe: function (request, data) {
+            this.channels = data.channels;
+            this.channelsChangedCallback(this.channels);
             this.subscribeCallback(request, data);
         },
 
+        /**
+         * Fired on successful subscribe() call
+         */
         subscribeCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('subscribeCallback', request, data)
         },
@@ -492,31 +552,42 @@
             this.subscribeErrorCallback(request, data);
         },
 
+        /**
+         * Fired on subscribe() call error
+         */
         subscribeErrorCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('subscribeErrorCallback', request, data)
+            console.log('subscribeErrorCallback', request, data);
         },
 
         _handleUnsubscribe: function (request, data) {
+            this.channels = data.channels;
+            this.channelsChangedCallback(this.channels);
             this.unsubscribeCallback(request, data);
         },
 
+        /**
+         * Fired on successful unsubscribe() call
+         */
         unsubscribeCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('unsubscribeCallback', request, data)
+            console.log('unsubscribeCallback', request, data);
         },
 
         _handleUnsubscribeError: function (request, data) {
             this.unsubscribeErrorCallback(request, data);
         },
 
+        /**
+         * Fired on unsubscribe() call error
+         */
         unsubscribeErrorCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('unsubscribeErrorCallback', request, data)
         },
@@ -525,9 +596,12 @@
             this.setUserStateCallback(request, data);
         },
 
+        /**
+         * Fired on successful updateUserState() call
+         */
         setUserStateCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
             console.log('setUserStateCallback', request, data)
         },
@@ -536,11 +610,14 @@
             this.setUserStateErrorCallback(request, data);
         },
 
+        /**
+         * Fired on updateUserState() error
+         */
         setUserStateErrorCallback: function (request, data) {
             if (!this.debug) {
-                return
+                return;
             }
-            console.log('setUserStateErrorCallback', request, data)
+            console.log('setUserStateErrorCallback', request, data);
         },
     };
     window.ChannelStreamConnection = ChannelStreamConnection;

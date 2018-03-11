@@ -170,7 +170,6 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
     handleConnected(event) {
         var data = event.detail;
-        var chatView = this.shadowRoot.querySelector('chat-view');
         this.dispatch('setUserState', data.state);
         this.dispatch('setUserChannels', data.channels);
         this.dispatch('setUserStates', data.channels_info.users);

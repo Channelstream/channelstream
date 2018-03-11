@@ -89,7 +89,7 @@ Polymer({
     /**
      * Fired when listening connection is closed.
      *
-     * @event channelstream-listen-closed
+     * @event channelstream-websocket-closed
      */
 
     /**
@@ -118,11 +118,6 @@ Polymer({
         connectionId: {
             type: String,
             reflectToAttribute: true
-        },
-        /** Websocket instance. */
-        websocket: {
-            type: Object,
-            value: null
         },
         /** Websocket connection url. */
         websocketUrl: {
@@ -179,11 +174,6 @@ Polymer({
             type: Number,
             value: 2000
         },
-        _currentBounceIv: {
-            type: Number,
-            reflectToAttribute: true,
-            value: 0
-        },
         /** Should use websockets or long-polling by default */
         noWebsocket: {
             type: Boolean,
@@ -194,16 +184,13 @@ Polymer({
             type: Boolean,
             reflectToAttribute: true,
             value: false
+        },
+        connection: {
+            type: Object,
+            value: function () {
+                return window.ChannelStreamConnection;
+            }
         }
-    },
-
-    observers: [
-        '_handleChannelsChange(channels.splices)'
-    ],
-
-    listeners: {
-        'channelstream-connected': 'startListening',
-        'channelstream-connect-error': 'retryConnection',
     },
 
     /**
@@ -249,7 +236,7 @@ Polymer({
         this.listen(this, 'channelstream-unsubscribe-error', 'testEvent');
         this.listen(this, 'channelstream-listen-message', 'testEvent');
         this.listen(this, 'channelstream-listen-opened', 'testEvent');
-        this.listen(this, 'channelstream-listen-closed', 'testEvent');
+        this.listen(this, 'channelstream-websocket-closed', 'testEvent');
         this.listen(this, 'channelstream-listen-error', 'testEvent');
         this.listen(this, 'channelstream-set-user-state', 'testEvent');
         this.listen(this, 'channelstream-set-user-state-error', 'testEvent');
@@ -260,74 +247,65 @@ Polymer({
      *
      */
     connect: function () {
-        var request = this.$['ajaxConnect'];
-        request.url = this.connectUrl;
-        request.body = {
-            username: this.username,
-            channels: this.channels
-        };
-        for (var i = 0; i < this.mutators.connect.length; i++) {
-            this.mutators.connect[i](request);
-        }
-        request.generateRequest();
+        this.connection.url = this.connectUrl;
+        this.connection.connectUrl = this.connectUrl;
+        this.connection.disconnectUrl = this.disconnectUrl;
+        this.connection.subscribeUrl = this.subscribeUrl;
+        this.connection.unsubscribeUrl = this.unsubscribeUrl;
+        this.connection.messageUrl = this.messageUrl;
+        this.connection.longPollUrl = this.longPollUrl;
+        this.connection.websocketUrl = this.websocketUrl;
+        this.connection.userStateUrl = this.userStateUrl;
+        this.connection.channels = this.channels;
+        this.connection.noWebsocket = this.noWebsocket;
+        this.connection.username = this.username;
+        this.connection.channelsChangedCallback = this._channelsChangedCallback.bind(this);
+        this.connection.connectCallback = this._connectCallback.bind(this);
+        // this.connection.connectErrorCallback = this._connectErrorCallback.bind(this);
+        //this.connection.connectionClosedCallback
+        this.connection.disconnectCallback = this._disconnectCallback.bind(this);
+        //this.connection.listenCloseCallback
+        this.connection.listenErrorCallback = this._listenErrorCallback.bind(this);
+        this.connection.listenMessageCallback = this._listenMessageCallback.bind(this);
+        this.connection.listenOpenedCallback = this._listenOpenedCallback.bind(this)
+        this.connection.messageCallback = this._messageCallback.bind(this);
+        this.connection.messageErrorCallback = this._messageErrorCallback.bind(this);
+        this.connection.setUserStateCallback = this._setUserStateCallback.bind(this);
+        this.connection.setUserStateErrorCallback = this._setUserStateErrorCallback.bind(this);
+        //this.connection.startListeningCallback
+        this.connection.subscribeCallback = this._subscribeCallback.bind(this);
+        this.connection.subscribeErrorCallback = this._subscribeErrorCallback.bind(this);
+        this.connection.unsubscribeCallback = this._unsubscribeCallback.bind(this);
+        this.connection.unsubscribeErrorCallback = this._unsubscribeErrorCallback.bind(this);
+        this.connection.connect();
+
     },
     /**
      * Overwrite with custom function that will
      */
     addMutator: function (type, func) {
-        this.mutators[type].push(func);
+        this.connection.addMutator(type, func);
     },
     /**
      * Updates user state.
      *
      */
     updateUserState: function (stateObj) {
-        var request = this.$['ajaxSetUserState'];
-        request.url = this.userStateUrl;
-        request.body = {
-            username: this.username,
-            conn_id: this.connectionId,
-            update_state: stateObj
-        };
-        for (var i = 0; i < this.mutators.userState.length; i++) {
-            this.mutators.userState[i](request);
-        }
-        request.generateRequest();
+        this.connection.updateUserState(stateObj);
     },
     /**
      * Subscribes user to channels.
      *
      */
     subscribe: function (channels) {
-        var request = this.$['ajaxSubscribe'];
-        request.url = this.subscribeUrl;
-        request.body = {
-            channels: channels,
-            conn_id: this.connectionId
-        };
-        for (var i = 0; i < this.mutators.subscribe.length; i++) {
-            this.mutators.subscribe[i](request);
-        }
-        if (request.body.channels.length) {
-            request.generateRequest();
-        }
+        this.connection.subscribe(channels);
     },
     /**
      * Unsubscribes user from channels.
      *
      */
     unsubscribe: function (unsubscribe) {
-        var request = this.$['ajaxUnsubscribe'];
-
-        request.url = this.unsubscribeUrl;
-        request.body = {
-            channels: unsubscribe,
-            conn_id: this.connectionId
-        };
-        for (var i = 0; i < this.mutators.unsubscribe.length; i++) {
-            this.mutators.unsubscribe[i](request);
-        }
-        request.generateRequest();
+        this.connection.unsubscribe(unsubscribe);
     },
 
     /**
@@ -335,44 +313,21 @@ Polymer({
      * between channels property and passed channel list
      */
     calculateSubscribe: function (channels) {
-        var toSubscribe = [];
-        for (var i = 0; i < channels.length; i++) {
-            if (this.channels.indexOf(channels[i]) === -1) {
-                toSubscribe.push(channels[i]);
-            }
-        }
-        return toSubscribe;
+        return this.connection.calculateSubscribe(channels);
     },
     /**
      * calculates list of channels we should remove user from based difference
      * between channels property and passed channel list
      */
     calculateUnsubscribe: function (channels) {
-        var toUnsubscribe = [];
-        for (var i = 0; i < channels.length; i++) {
-            if (this.channels.indexOf(channels[i]) !== -1) {
-                toUnsubscribe.push(channels[i]);
-            }
-        }
-        return toUnsubscribe;
+        return this.connection.calculateUnsubscribe(channels);
     },
     /**
      * Marks the connection as expired.
      *
      */
     disconnect: function () {
-        var request = this.$['ajaxDisconnect'];
-        request.url = this.disconnectUrl;
-        request.params = {
-            conn_id: this.connectionId
-        };
-        for (var i = 0; i < this.mutators.disconnect.length; i++) {
-            this.mutators.disconnect[i](request);
-        }
-        // mark connection as expired
-        request.generateRequest();
-        // disconnect existing connection
-        this.closeConnection();
+        return this.connection.disconnect();
     },
 
     /**
@@ -380,189 +335,85 @@ Polymer({
      *
      */
     message: function (message) {
-        var request = this.$['ajaxMessage'];
-        request.url = this.messageUrl;
-        request.body = message;
-        for (var i = 0; i < this.mutators.message.length; i++) {
-            this.mutators.message[i](request);
-        }
-        request.generateRequest();
-    },
-    /**
-     * Opens "long lived" (websocket/longpoll) connection to the channelstream server.
-     *
-     */
-    startListening: function (event) {
-        this.fire('start-listening', {});
-        if (this.noWebsocket === false) {
-            this.noWebsocket = !window.WebSocket;
-        }
-        if (this.noWebsocket === false) {
-            this.openWebsocket();
-        }
-        else {
-            this.openLongPoll();
-        }
-    },
-    /**
-     * Opens websocket connection.
-     *
-     */
-    openWebsocket: function () {
-        var url = this.websocketUrl + '?conn_id=' + this.connectionId;
-        this.websocket = new WebSocket(url);
-        this.websocket.onopen = this._handleListenOpen.bind(this);
-        this.websocket.onclose = this._handleListenCloseEvent.bind(this);
-        this.websocket.onerror = this._handleListenErrorEvent.bind(this);
-        this.websocket.onmessage = this._handleListenMessageEvent.bind(this);
-    },
-    /**
-     * Opens long-poll connection.
-     *
-     */
-    openLongPoll: function () {
-        var request = this.$['ajaxListen'];
-        request.url = this.longPollUrl + '?conn_id=' + this.connectionId;
-        request.generateRequest();
-    },
-    /**
-     * Retries `connect()` call while incrementing interval between tries up to 1 minute.
-     *
-     */
-    retryConnection: function () {
-        if (!this.shouldReconnect) {
-            return;
-        }
-        if (this._currentBounceIv < 60000) {
-            this._currentBounceIv = this._currentBounceIv + this.increaseBounceIv;
-        }
-        else {
-            this._currentBounceIv = 60000;
-        }
-        setTimeout(this.connect.bind(this), this._currentBounceIv);
-    },
-    /**
-     * Closes listening connection.
-     *
-     */
-    closeConnection: function () {
-        var request = this.$['ajaxListen'];
-        if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
-            this.websocket.onclose = null;
-            this.websocket.onerror = null;
-            this.websocket.close();
-        }
-        if (request.loading) {
-            request.lastRequest.abort();
-        }
-        this.connected = false;
+        return this.connection.message(message);
     },
 
-    _handleChannelsChange: function (event) {
+
+    _channelsChangedCallback: function (channels) {
         // do not fire the event if set() didn't mutate anything
         // is this a reliable way to do it?
         if (!this.isReady || event === undefined) {
             return;
         }
-        this.fire('channelstream-channels-changed', event);
+        this.fire('channelstream-channels-changed', this.connection.channels);
     },
 
-    _handleListenOpen: function (event) {
-        this.connected = true;
-        this.fire('channelstream-listen-opened', event);
-        this.createHeartBeats();
+    _listenOpenedCallback: function (request, data) {
+        this.connected = this.connection.connected;
+        this.fire('channelstream-listen-opened', request);
+    },
+    _connectErrorCallback: function (request, data) {
+        this.connected = this.connection.connected;
+        this.fire('channelstream-connect-error', request);
     },
 
-    createHeartBeats: function () {
-        if (typeof this._heartbeat === 'undefined' && this.websocket !== null
-            && this.heartbeats) {
-            this._heartbeat = setInterval(this._sendHeartBeat.bind(this), 10000);
-        }
-    },
-
-    _sendHeartBeat: function () {
-        if (this.websocket.readyState === WebSocket.OPEN && this.heartbeats) {
-            this.websocket.send(JSON.stringify({type: 'heartbeat'}));
-        }
-    },
-
-    _handleListenError: function (event) {
-        this.connected = false;
-        this.retryConnection();
-    },
-    _handleConnectError: function (event) {
-        this.connected = false;
-        this.fire('channelstream-connect-error', event.detail);
-    },
-
-    _handleListenMessageEvent: function (event) {
-        var data = null;
-        // comes from iron-ajax
-        if (event.detail) {
-            data = JSON.parse(event.detail.response);
-            // comes from websocket
-            setTimeout(this.openLongPoll.bind(this), 0);
-        } else {
-            data = JSON.parse(event.data);
-        }
-        this.fire('channelstream-listen-message', data);
+    _listenMessageCallback: function (message) {
+        this.fire('channelstream-listen-message', message);
 
     },
 
-    _handleListenCloseEvent: function (event) {
-        this.connected = false;
-        this.fire('channelstream-listen-closed', event.detail);
-        this.retryConnection();
+    _handleWebsocketCloseEvent: function (event) {
+        this.connected = this.connection.connected;
+        this.fire('channelstream-websocket-closed', event.detail);
     },
 
-    _handleListenErrorEvent: function (event) {
-        this.connected = false;
-        this.fire('channelstream-listen-error', {});
+    _listenErrorCallback: function (request, data) {
+        this.connected = this.connection.connected;
+        this.fire('channelstream-listen-error', request);
     },
 
-    _handleConnect: function (event) {
-        this.currentBounceIv = 0;
-        this.connectionId = event.detail.response.conn_id;
-        this.fire('channelstream-connected', event.detail.response);
+    _connectCallback: function (request, data) {
+        this.connectionId = this.connection.connectionId;
+        this.fire('channelstream-connected', data);
     },
 
-    _handleDisconnect: function (event) {
-        this.connected = false;
-        this.fire('channelstream-disconnected', {});
+    _disconnectCallback: function (request, data) {
+        this.connected = this.connection.connected;
+        this.fire('channelstream-disconnected', request);
     },
 
-    _handleMessage: function (event) {
-        this.fire('channelstream-message-sent', event.detail.response);
+    _messageCallback: function (request, data) {
+        this.fire('channelstream-message-sent', data);
     },
-    _handleMessageError: function (event) {
-        this.fire('channelstream-message-error', event.detail);
-    },
-
-    _handleSubscribe: function (event) {
-        this.fire('channelstream-subscribed', event.detail.response);
+    _messageErrorCallback: function (request, data) {
+        this.fire('channelstream-message-error', request);
     },
 
-    _handleSubscribeError: function (event) {
-        this.fire('channelstream-subscribe-error', event.detail);
+    _subscribeCallback: function (request, data) {
+        this.fire('channelstream-subscribed', data);
     },
 
-    _handleUnsubscribe: function (event) {
-        this.fire('channelstream-unsubscribed', event.detail.response);
+    _subscribeErrorCallback: function (request, data) {
+        this.fire('channelstream-subscribe-error', request);
     },
 
-    _handleUnsubscribeError: function (event) {
-        this.fire('channelstream-unsubscribe-error', event.detail);
+    _unsubscribeCallback: function (request, data) {
+        this.fire('channelstream-unsubscribed', data);
     },
 
-    _handleSetUserState: function (event) {
-        this.fire('channelstream-set-user-state', event.detail.response);
+    _unsubscribeErrorCallback: function (request, data) {
+        this.fire('channelstream-unsubscribe-error', request);
     },
 
-    _handleSetUserStateError: function (event) {
-        this.fire('channelstream-set-user-state-error', event.detail);
+    _setUserStateCallback: function (request, data) {
+        this.fire('channelstream-set-user-state', data);
     },
 
-    testEvent: function (event) {
-        console.debug('launched', event.type, event.detail);
+    _setUserStateErrorCallback: function (request, data) {
+        this.fire('channelstream-set-user-state-error', request);
+    },
+
+    testEvent: function (ev) {
+        console.log('testEvent', ev.type, ev.detail);
     }
 });
