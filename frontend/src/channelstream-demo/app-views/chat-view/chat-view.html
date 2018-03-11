@@ -73,8 +73,8 @@
             </div>
 
         </div>
-        <iron-form id="message-form">
-        <form on-iron-form-presubmit="formPresubmit" method="post">
+        <iron-form id="message-form" on-iron-form-presubmit="formPresubmit">
+        <form method="post">
             <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed="sendMessage"></iron-a11y-keys>
             <paper-input id="message-input" name="message" label="Your message" value="{{message}}"></paper-input>
             <paper-icon-button icon="icons:send" on-tap="sendMessage"></paper-icon-button>

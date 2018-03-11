@@ -2,7 +2,6 @@ import {ReduxMixin} from '../redux/store';
 import {actions as currentActions} from '../../channelstream-admin/redux/current_actions';
 import {actions as appActions} from '../redux/app';
 import {actions as userActions} from '../redux/user';
-import {actions as chatViewActions} from '../redux/chat_view';
 import {actions as chatViewChannelActions} from '../redux/chat_view/channels';
 import {actions as chatViewUsersActions} from '../redux/chat_view/users';
 import {actions as chatViewMessagesActions} from '../redux/chat_view/messages';
@@ -63,9 +62,9 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
     }
 
     receivedMessage(event) {
-        for (let message of event.detail) {
+        for (let message of event.detail.messages) {
             // add message
-            console.info('message', message);
+            // console.info('message', message);
             if (['message', 'presence'].indexOf(message.type) !== -1) {
                 let messageMappings = {};
                 // for (let channel of Object.entries(data.channels_info.channels)) {
@@ -169,7 +168,7 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
     }
 
     handleConnected(event) {
-        var data = event.detail;
+        var data = event.detail.data;
         this.dispatch('setUserState', data.state);
         this.dispatch('setUserChannels', data.channels);
         this.dispatch('setUserStates', data.channels_info.users);
@@ -197,10 +196,9 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
     handleSubscribed(event) {
         console.log('handleSubscribed');
-        var chatView = this.shadowRoot.querySelector('chat-view');
-        var channelInfo = event.detail.channels_info;
-        var channelKeys = event.detail.subscribed_to;
-        this.dispatch('setUserChannels', event.detail.channels);
+        var data = event.detail.data;
+        var channelInfo = data.channels_info;
+        this.dispatch('setUserChannels', data.channels);
         this.dispatch('setUserStates', channelInfo.users);
         this.dispatch('setChannelStates', channelInfo.channels);
         let messageMappings = {};
@@ -211,12 +209,12 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
     }
 
     handleUnsubscribed(event) {
-        var channelKeys = event.detail.unsubscribed_from;
+        var channelKeys = event.detail.data.unsubscribed_from;
         for (var i = 0; i < channelKeys.length; i++) {
             var key = channelKeys[i];
             this.dispatch('delChannelState', key);
         }
-        this.dispatch('setUserChannels', event.detail.channels);
+        this.dispatch('setUserChannels', event.detail.data.channels);
     }
 }
 

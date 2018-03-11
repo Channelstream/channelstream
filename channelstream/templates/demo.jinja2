@@ -8,7 +8,7 @@
         var AppConf = {
             baseUrl: '{{ request.route_url('index')[:-1] }}',
             connectUrl: '{{ request.route_url('section_action',  section='demo', action='connect') }}',
-            disconnectUrl: '{{ request.route_url('section_action',  section='demo', action='disconnect') }}',
+            disconnectUrl: '{{ request.route_url('action',  action='disconnect') }}',
             subscribeUrl: '{{ request.route_url('section_action',  section='demo', action='subscribe') }}',
             unsubscribeUrl: '{{ request.route_url('section_action',  section='demo', action='unsubscribe') }}',
             messageUrl: '{{ request.route_url('section_action',  section='demo', action='message') }}',

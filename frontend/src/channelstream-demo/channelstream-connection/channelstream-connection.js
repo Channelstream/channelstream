@@ -1,5 +1,9 @@
-Polymer({
-    is: 'channelstream-connection',
+import {ReduxMixin} from "../redux/store";
+
+class ChannelStreamConnection extends Polymer.Element {
+    static get is() {
+        return 'channelstream-connection';
+    }
 
     /**
      * Fired when `channels` array changes.
@@ -98,132 +102,129 @@ Polymer({
      * @event channelstream-listen-error
      */
 
-    properties: {
-        isReady: Boolean,
-        /** List of channels user should be subscribed to. */
-        channels: {
-            type: Array,
-            value: function () {
-                return [];
+    static get properties() {
+        return {
+            isReady: Boolean,
+            /** List of channels user should be subscribed to. */
+            channels: {
+                type: Array,
+                value: function () {
+                    return [];
+                },
+                notify: true
             },
-            notify: true
-        },
-        /** Username of connecting user. */
-        username: {
-            type: String,
-            value: 'Anonymous',
-            reflectToAttribute: true
-        },
-        /** Connection identifier. */
-        connectionId: {
-            type: String,
-            reflectToAttribute: true
-        },
-        /** Websocket connection url. */
-        websocketUrl: {
-            type: String,
-            value: ''
-        },
-        /** URL used in `connect()`. */
-        connectUrl: {
-            type: String,
-            value: ''
-        },
-        /** URL used in `disconnect()`. */
-        disconnectUrl: {
-            type: String,
-            value: ''
-        },
-        /** URL used in `subscribe()`. */
-        subscribeUrl: {
-            type: String,
-            value: ''
-        },
-        /** URL used in `unsubscribe()`. */
-        unsubscribeUrl: {
-            type: String,
-            value: ''
-        },
-        /** URL used in `updateUserState()`. */
-        userStateUrl: {
-            type: String,
-            value: ''
-        },
-        /** URL used in `message()`. */
-        messageUrl: {
-            type: String,
-            value: ''
-        },
-        /** Long-polling connection url. */
-        longPollUrl: {
-            type: String,
-            value: ''
-        },
-        /** Long-polling connection url. */
-        shouldReconnect: {
-            type: Boolean,
-            value: true
-        },
-        /** Should send heartbeats. */
-        heartbeats: {
-            type: Boolean,
-            value: true
-        },
-        /** How much should every retry interval increase (in milliseconds) */
-        increaseBounceIv: {
-            type: Number,
-            value: 2000
-        },
-        /** Should use websockets or long-polling by default */
-        noWebsocket: {
-            type: Boolean,
-            reflectToAttribute: true,
-            value: false
-        },
-        connected: {
-            type: Boolean,
-            reflectToAttribute: true,
-            value: false
-        },
-        connection: {
-            type: Object,
-            value: function () {
-                return window.ChannelStreamConnection;
+            /** Username of connecting user. */
+            username: {
+                type: String,
+                value: 'Anonymous',
+                reflectToAttribute: true
+            },
+            /** Connection identifier. */
+            connectionId: {
+                type: String,
+                reflectToAttribute: true
+            },
+            /** Websocket connection url. */
+            websocketUrl: {
+                type: String,
+                value: ''
+            },
+            /** URL used in `connect()`. */
+            connectUrl: {
+                type: String,
+                value: ''
+            },
+            /** URL used in `disconnect()`. */
+            disconnectUrl: {
+                type: String,
+                value: ''
+            },
+            /** URL used in `subscribe()`. */
+            subscribeUrl: {
+                type: String,
+                value: ''
+            },
+            /** URL used in `unsubscribe()`. */
+            unsubscribeUrl: {
+                type: String,
+                value: ''
+            },
+            /** URL used in `updateUserState()`. */
+            userStateUrl: {
+                type: String,
+                value: ''
+            },
+            /** URL used in `message()`. */
+            messageUrl: {
+                type: String,
+                value: ''
+            },
+            /** Long-polling connection url. */
+            longPollUrl: {
+                type: String,
+                value: ''
+            },
+            /** Long-polling connection url. */
+            shouldReconnect: {
+                type: Boolean,
+                value: true
+            },
+            /** Should send heartbeats. */
+            heartbeats: {
+                type: Boolean,
+                value: true
+            },
+            /** How much should every retry interval increase (in milliseconds) */
+            increaseBounceIv: {
+                type: Number,
+                value: 2000
+            },
+            /** Should use websockets or long-polling by default */
+            noWebsocket: {
+                type: Boolean,
+                reflectToAttribute: true,
+                value: false
+            },
+            connected: {
+                type: Boolean,
+                reflectToAttribute: true,
+                value: false
+            },
+            connection: {
+                type: Object,
+                value: function () {
+                    return window.ChannelStreamConnection;
+                }
             }
-        }
-    },
+        };
+    }
 
-    /**
-     * Mutators hold functions that you can set locally to change the data
-     * that the client is sending to all endpoints
-     * you can call it like `elem.mutators('connect', yourFunc())`
-     * mutators will be executed in order they were pushed onto arrays
-     *
-     */
-    mutators: {
-        connect: function () {
-            return [];
-        }(),
-        message: function () {
-            return [];
-        }(),
-        subscribe: function () {
-            return [];
-        }(),
-        unsubscribe: function () {
-            return [];
-        }(),
-        disconnect: function () {
-            return [];
-        }(),
-        userState: function () {
-            return [];
-        }()
-    },
-    ready: function () {
+    constructor(){
+        super();
+        /**
+         * Mutators hold functions that you can set locally to change the data
+         * that the client is sending to all endpoints
+         * you can call it like `elem.mutators('connect', yourFunc())`
+         * mutators will be executed in order they were pushed onto arrays
+         *
+         */
+        this.mutators = {
+            connect: [],
+            message: [],
+            subscribe: [],
+            unsubscribe: [],
+            disconnect: [],
+            userState: []
+        };
+    }
+
+
+
+    ready() {
         this.isReady = true;
-    },
-    created: function () {
+    }
+
+    created() {
         this.listen(this, 'channelstream-channels-changed', 'testEvent');
         this.listen(this, 'channelstream-connected', 'testEvent');
         this.listen(this, 'channelstream-connect-error', 'testEvent');
@@ -240,13 +241,13 @@ Polymer({
         this.listen(this, 'channelstream-listen-error', 'testEvent');
         this.listen(this, 'channelstream-set-user-state', 'testEvent');
         this.listen(this, 'channelstream-set-user-state-error', 'testEvent');
-    },
+    }
 
     /**
      * Connects user and fetches connection id from the server.
      *
      */
-    connect: function () {
+    connect() {
         this.connection.url = this.connectUrl;
         this.connection.connectUrl = this.connectUrl;
         this.connection.disconnectUrl = this.disconnectUrl;
@@ -267,7 +268,7 @@ Polymer({
         //this.connection.listenCloseCallback
         this.connection.listenErrorCallback = this._listenErrorCallback.bind(this);
         this.connection.listenMessageCallback = this._listenMessageCallback.bind(this);
-        this.connection.listenOpenedCallback = this._listenOpenedCallback.bind(this)
+        this.connection.listenOpenedCallback = this._listenOpenedCallback.bind(this);
         this.connection.messageCallback = this._messageCallback.bind(this);
         this.connection.messageErrorCallback = this._messageErrorCallback.bind(this);
         this.connection.setUserStateCallback = this._setUserStateCallback.bind(this);
@@ -278,142 +279,214 @@ Polymer({
         this.connection.unsubscribeCallback = this._unsubscribeCallback.bind(this);
         this.connection.unsubscribeErrorCallback = this._unsubscribeErrorCallback.bind(this);
         this.connection.connect();
+    }
 
-    },
     /**
      * Overwrite with custom function that will
      */
-    addMutator: function (type, func) {
+    addMutator(type, func) {
         this.connection.addMutator(type, func);
-    },
+    }
+
     /**
      * Updates user state.
      *
      */
-    updateUserState: function (stateObj) {
+    updateUserState(stateObj) {
         this.connection.updateUserState(stateObj);
-    },
+    }
+
     /**
      * Subscribes user to channels.
      *
      */
-    subscribe: function (channels) {
+    subscribe(channels) {
         this.connection.subscribe(channels);
-    },
+    }
+
     /**
      * Unsubscribes user from channels.
      *
      */
-    unsubscribe: function (unsubscribe) {
+    unsubscribe(unsubscribe) {
         this.connection.unsubscribe(unsubscribe);
-    },
+    }
 
     /**
      * calculates list of channels we should add user to based on difference
      * between channels property and passed channel list
      */
-    calculateSubscribe: function (channels) {
+    calculateSubscribe(channels) {
         return this.connection.calculateSubscribe(channels);
-    },
+    }
+
     /**
      * calculates list of channels we should remove user from based difference
      * between channels property and passed channel list
      */
-    calculateUnsubscribe: function (channels) {
+    calculateUnsubscribe(channels) {
         return this.connection.calculateUnsubscribe(channels);
-    },
+    }
+
     /**
      * Marks the connection as expired.
      *
      */
-    disconnect: function () {
+    disconnect() {
         return this.connection.disconnect();
-    },
+    }
 
     /**
      * Sends a message to the server.
      *
      */
-    message: function (message) {
+    message(message) {
         return this.connection.message(message);
-    },
+    }
 
-
-    _channelsChangedCallback: function (channels) {
+    _channelsChangedCallback(channels) {
         // do not fire the event if set() didn't mutate anything
         // is this a reliable way to do it?
         if (!this.isReady || event === undefined) {
             return;
         }
-        this.fire('channelstream-channels-changed', this.connection.channels);
-    },
+        this.dispatchEvent(new CustomEvent('channelstream-channels-changed', {
+            detail: {channels:this.connection.channels},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _listenOpenedCallback: function (request, data) {
+    _listenOpenedCallback(request, data) {
         this.connected = this.connection.connected;
-        this.fire('channelstream-listen-opened', request);
-    },
-    _connectErrorCallback: function (request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-listen-opened', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    _connectErrorCallback(request, data) {
         this.connected = this.connection.connected;
-        this.fire('channelstream-connect-error', request);
-    },
+        this.dispatchEvent(new CustomEvent('channelstream-connect-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _listenMessageCallback: function (message) {
-        this.fire('channelstream-listen-message', message);
+    _listenMessageCallback(messages) {
+        this.dispatchEvent(new CustomEvent('channelstream-listen-message', {
+            detail: {messages:messages},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    },
-
-    _handleWebsocketCloseEvent: function (event) {
+    _handleWebsocketCloseEvent(event) {
         this.connected = this.connection.connected;
-        this.fire('channelstream-websocket-closed', event.detail);
-    },
+        this.dispatchEvent(new CustomEvent('channelstream-websocket-closed', {
+            detail: event.detail,
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _listenErrorCallback: function (request, data) {
+    _listenErrorCallback(request, data) {
         this.connected = this.connection.connected;
-        this.fire('channelstream-listen-error', request);
-    },
+        this.dispatchEvent(new CustomEvent('channelstream-listen-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _connectCallback: function (request, data) {
+    _connectCallback(request, data) {
         this.connectionId = this.connection.connectionId;
-        this.fire('channelstream-connected', data);
-    },
+        this.dispatchEvent(new CustomEvent('channelstream-connected', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _disconnectCallback: function (request, data) {
+    _disconnectCallback(request, data) {
         this.connected = this.connection.connected;
-        this.fire('channelstream-disconnected', request);
-    },
+        this.dispatchEvent(new CustomEvent('channelstream-disconnected', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _messageCallback: function (request, data) {
-        this.fire('channelstream-message-sent', data);
-    },
-    _messageErrorCallback: function (request, data) {
-        this.fire('channelstream-message-error', request);
-    },
+    _messageCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-message-sent', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _subscribeCallback: function (request, data) {
-        this.fire('channelstream-subscribed', data);
-    },
+    _messageErrorCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-message-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _subscribeErrorCallback: function (request, data) {
-        this.fire('channelstream-subscribe-error', request);
-    },
+    _subscribeCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-subscribed', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _unsubscribeCallback: function (request, data) {
-        this.fire('channelstream-unsubscribed', data);
-    },
+    _subscribeErrorCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-subscribe-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _unsubscribeErrorCallback: function (request, data) {
-        this.fire('channelstream-unsubscribe-error', request);
-    },
+    _unsubscribeCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-unsubscribed', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _setUserStateCallback: function (request, data) {
-        this.fire('channelstream-set-user-state', data);
-    },
+    _unsubscribeErrorCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-unsubscribe-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    _setUserStateErrorCallback: function (request, data) {
-        this.fire('channelstream-set-user-state-error', request);
-    },
+    _setUserStateCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-set-user-state', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
 
-    testEvent: function (ev) {
+    _setUserStateErrorCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-set-user-state-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    testEvent(ev) {
         console.log('testEvent', ev.type, ev.detail);
     }
-});
+}
+
+
+customElements.define(ChannelStreamConnection.is, ChannelStreamConnection);
