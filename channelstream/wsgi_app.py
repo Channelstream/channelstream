@@ -15,16 +15,10 @@ def datetime_adapter(obj, request):
 
 
 def make_app(server_config):
-    schema_dir = pkg_resources.resource_filename('channelstream', 'api_docs')
-    server_config['pyramid_swagger.schema_directory'] = schema_dir
-    server_config['pyramid_swagger.exclude_paths'] = [
-        '^/static/?',
-        '^/api-docs/?',
-        '^\/demo',
-        '^\/admin',
-        '^/swagger.json']
 
     config = Configurator(settings=server_config, root_factory=APIFactory)
+    config.include('cornice')
+    config.include('pyramid_jinja2')
 
     def check_function(username, password, request):
         if (password == server_config['admin_secret'] and
@@ -35,15 +29,17 @@ def make_app(server_config):
     authn_policy = BasicAuthAuthenticationPolicy(
         check_function, realm='ChannelStream')
     authz_policy = ACLAuthorizationPolicy()
+
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
+
     json_renderer = JSON(serializer=json.dumps, indent=4)
     json_renderer.add_adapter(datetime.datetime, datetime_adapter)
     config.add_renderer('json', json_renderer)
+
     config.add_static_view('static', path='channelstream:static/')
     config.add_request_method('channelstream.utils.handle_cors', 'handle_cors')
-    config.include('pyramid_jinja2')
-    # config.include('pyramid_swagger')
+
     config.include('channelstream.wsgi_views')
     config.scan('channelstream.wsgi_views.server')
     config.scan('channelstream.events')

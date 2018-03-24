@@ -1,8 +1,9 @@
 gevent>=1.1
 ws4py>=0.3.5
+cornice
+colander
 pyramid
 pyramid_jinja2
-pyramid_swagger
 itsdangerous
 requests
 six

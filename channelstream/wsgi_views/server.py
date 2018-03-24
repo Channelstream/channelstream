@@ -3,6 +3,7 @@ from datetime import datetime
 import gevent
 import six
 from gevent.queue import Queue, Empty
+from cornice.resource import Service
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
@@ -24,15 +25,19 @@ def get_connection_channels(connection):
     return sorted(found_channels)
 
 
-@view_defaults(route_name='action', renderer='json', permission='access')
-class ServerViews(object):
+legacy_api = Service(
+    name='legacy_api', path='/{action}', permission='access',
+    description='Legacy API for channelstream')
+
+
+class SharedUtils(object):
+
     def __init__(self, request):
         self.request = request
-        self.request.handle_cors()
 
-    def _get_channel_info(self, req_channels=None, include_history=True,
-                          include_connections=False, include_users=False,
-                          exclude_channels=None, return_public_state=False):
+    def get_channel_info(self, req_channels=None, include_history=True,
+                         include_connections=False, include_users=False,
+                         exclude_channels=None, return_public_state=False):
         """
         Gets channel information for req_channels or all channels
         if req_channels is None
@@ -93,7 +98,7 @@ class ServerViews(object):
         exclude_channels = info_config.get('exclude_channels', [])
         include_connections = info_config.get('include_connections', False)
         return_public_state = info_config.get('return_public_state', False)
-        channels_info = self._get_channel_info(
+        channels_info = self.get_channel_info(
             channels, include_history=include_history,
             include_connections=include_connections,
             include_users=include_users,
@@ -101,209 +106,231 @@ class ServerViews(object):
             return_public_state=return_public_state)
         return channels_info
 
-    @view_config(match_param='action=connect')
-    def connect(self):
-        """
-        Creates a user object in server registry
-        return the id of connected users - will be secured with password string
-        for webapp to internally call the server - we combine conn string
-        with user id, and we tell which channels the user is allowed to
-        subscribe to
-        """
-        json_body = self.request.json_body
-        username = json_body.get('username')
-        fresh_user_state = json_body.get('fresh_user_state', {})
-        update_user_state = json_body.get('user_state', {})
-        channel_configs = json_body.get('channel_configs', {})
-        state_public_keys = json_body.get('state_public_keys', None)
-        conn_id = json_body.get('conn_id')
-        channels = sorted(json_body.get('channels') or [])
-        if username is None:
-            self.request.response.status = 400
-            return {'error': "No username specified"}
-        connection, user = operations.connect(
-            username=username,
-            fresh_user_state=fresh_user_state,
-            state_public_keys=state_public_keys,
-            update_user_state=update_user_state,
-            conn_id=conn_id,
-            channels=channels,
-            channel_configs=channel_configs)
 
-        # get info config for channel information
-        info_config = json_body.get('info') or {}
-        channels_info = self.get_common_info(channels, info_config)
-        return {'conn_id': connection.id,
-                'state': user.state,
-                'username': user.username,
-                'public_state': user.public_state,
-                'channels': channels,
-                'channels_info': channels_info}
 
-    @view_config(match_param='action=subscribe')
-    def subscribe(self, *args):
-        """ Dubscribe specific connection to new channels """
-        json_body = self.request.json_body
-        conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
-        connection = channelstream.CONNECTIONS.get(conn_id)
-        channels = json_body.get('channels')
-        channel_configs = json_body.get('channel_configs', {})
-        if not connection:
-            self.request.response.status = 403
-            return {'error': "Unknown connection"}
-        if not channels:
-            self.request.response.status = 400
-            return {'error': "No channels specified"}
-        subscribed_to = operations.subscribe(
-            connection=connection,
-            channels=channels,
-            channel_configs=channel_configs)
+@legacy_api.post(match_param='action=connect')
+def connect(request):
+    """
+    Creates a user object in server registry
+    return the id of connected users - will be secured with password string
+    for webapp to internally call the server - we combine conn string
+    with user id, and we tell which channels the user is allowed to
+    subscribe to
+    """
+    utils = SharedUtils(request)
+    json_body = request.json_body
+    username = json_body.get('username')
+    fresh_user_state = json_body.get('fresh_user_state', {})
+    update_user_state = json_body.get('user_state', {})
+    channel_configs = json_body.get('channel_configs', {})
+    state_public_keys = json_body.get('state_public_keys', None)
+    conn_id = json_body.get('conn_id')
+    channels = sorted(json_body.get('channels') or [])
+    if username is None:
+        request.response.status = 400
+        return {'error': "No username specified"}
+    connection, user = operations.connect(
+        username=username,
+        fresh_user_state=fresh_user_state,
+        state_public_keys=state_public_keys,
+        update_user_state=update_user_state,
+        conn_id=conn_id,
+        channels=channels,
+        channel_configs=channel_configs)
 
-        # get info config for channel information
-        current_channels = get_connection_channels(connection)
-        info_config = json_body.get('info') or {}
-        channels_info = self.get_common_info(current_channels, info_config)
-        return {"channels": current_channels,
-                "channels_info": channels_info,
-                "subscribed_to": sorted(subscribed_to)}
+    # get info config for channel information
+    info_config = json_body.get('info') or {}
+    channels_info = utils.get_common_info(channels, info_config)
+    return {'conn_id': connection.id,
+            'state': user.state,
+            'username': user.username,
+            'public_state': user.public_state,
+            'channels': channels,
+            'channels_info': channels_info}
 
-    @view_config(match_param='action=unsubscribe')
-    def unsubscribe(self, *args):
-        """ Unsubscribe specific connection from channels """
-        json_body = self.request.json_body
-        conn_id = json_body.get('conn_id', self.request.GET.get('conn_id'))
-        connection = channelstream.CONNECTIONS.get(conn_id)
-        unsubscribe_channels = sorted(json_body.get('channels') or [])
-        if not connection:
-            self.request.response.status = 403
-            return {'error': "Unknown connection"}
-        if not unsubscribe_channels:
-            self.request.response.status = 400
-            return {'error': "No channels specified"}
-        unsubscribed_from = operations.unsubscribe(
-            connection=connection,
-            unsubscribe_channels=unsubscribe_channels)
 
-        # get info config for channel information
-        current_channels = get_connection_channels(connection)
-        info_config = json_body.get('info') or {}
-        channels_info = self.get_common_info(current_channels, info_config)
-        return {"channels": current_channels,
-                "channels_info": channels_info,
-                "unsubscribed_from": sorted(unsubscribed_from)}
+@legacy_api.post(match_param='action=subscribe')
+def subscribe(request, *args):
+    """ Dubscribe specific connection to new channels """
+    utils = SharedUtils(request)
+    json_body = request.json_body
+    conn_id = json_body.get('conn_id', request.GET.get('conn_id'))
+    connection = channelstream.CONNECTIONS.get(conn_id)
+    channels = json_body.get('channels')
+    channel_configs = json_body.get('channel_configs', {})
+    if not connection:
+        request.response.status = 403
+        return {'error': "Unknown connection"}
+    if not channels:
+        request.response.status = 400
+        return {'error': "No channels specified"}
+    subscribed_to = operations.subscribe(
+        connection=connection,
+        channels=channels,
+        channel_configs=channel_configs)
 
-    @view_config(match_param='action=listen', permission=NO_PERMISSION_REQUIRED)
-    def listen(self):
-        """
-        Handles long-polling connection
-        :return:
-        """
-        config = self.request.registry.settings
-        self.conn_id = self.request.params.get('conn_id')
-        connection = channelstream.CONNECTIONS.get(self.conn_id)
-        if not connection:
-            raise HTTPUnauthorized()
-        # mark the conn active
-        connection.last_active = datetime.utcnow()
-        # attach a queue to connection
-        connection.queue = Queue()
+    # get info config for channel information
+    current_channels = get_connection_channels(connection)
+    info_config = json_body.get('info') or {}
+    channels_info = utils.get_common_info(current_channels, info_config)
+    return {"channels": current_channels,
+            "channels_info": channels_info,
+            "subscribed_to": sorted(subscribed_to)}
 
-        def yield_response():
-            # for chrome issues
-            # yield ' ' * 1024
-            # wait for this to wake up
-            messages = []
-            # block for first message - wake up after a while
+
+@legacy_api.get(match_param='action=unsubscribe')
+def unsubscribe(request, *args):
+    """ Unsubscribe specific connection from channels """
+    utils = SharedUtils(request)
+    json_body = request.json_body
+    conn_id = json_body.get('conn_id', request.GET.get('conn_id'))
+    connection = channelstream.CONNECTIONS.get(conn_id)
+    unsubscribe_channels = sorted(json_body.get('channels') or [])
+    if not connection:
+        request.response.status = 403
+        return {'error': "Unknown connection"}
+    if not unsubscribe_channels:
+        request.response.status = 400
+        return {'error': "No channels specified"}
+    unsubscribed_from = operations.unsubscribe(
+        connection=connection,
+        unsubscribe_channels=unsubscribe_channels)
+
+    # get info config for channel information
+    current_channels = get_connection_channels(connection)
+    info_config = json_body.get('info') or {}
+    channels_info = utils.get_common_info(current_channels, info_config)
+    return {"channels": current_channels,
+            "channels_info": channels_info,
+            "unsubscribed_from": sorted(unsubscribed_from)}
+
+
+@legacy_api.get(match_param='action=listen',
+                permission=NO_PERMISSION_REQUIRED)
+def listen(request):
+    """
+    Handles long-polling connection
+    :return:
+    """
+    config = request.registry.settings
+    conn_id = request.params.get('conn_id')
+    connection = channelstream.CONNECTIONS.get(conn_id)
+    if not connection:
+        raise HTTPUnauthorized()
+    # mark the conn active
+    connection.last_active = datetime.utcnow()
+    # attach a queue to connection
+    connection.queue = Queue()
+
+    def yield_response():
+        # for chrome issues
+        # yield ' ' * 1024
+        # wait for this to wake up
+        messages = []
+        # block for first message - wake up after a while
+        try:
+            messages.extend(connection.queue.get(
+                timeout=config['wake_connections_after']))
+        except Empty:
+            pass
+        # get more messages if enqueued takes up total 0.25s
+        while True:
             try:
-                messages.extend(connection.queue.get(
-                    timeout=config['wake_connections_after']))
+                messages.extend(connection.queue.get(timeout=0.25))
             except Empty:
-                pass
-            # get more messages if enqueued takes up total 0.25s
-            while True:
-                try:
-                    messages.extend(connection.queue.get(timeout=0.25))
-                except Empty:
-                    break
-            cb = self.request.params.get('callback')
-            if cb:
-                resp = cb + '(' + json.dumps(messages) + ')'
-            else:
-                resp = json.dumps(messages)
-            if six.PY2:
-                yield resp
-            else:
-                yield resp.encode('utf8')
-
-        self.request.response.app_iter = yield_response()
-        return self.request.response
-
-    @view_config(match_param='action=user_state')
-    def user_state(self):
-        """ set the status of specific user """
-        json_body = self.request.json_body
-        username = json_body.get('user')
-        user_state = json_body.get('user_state')
-        state_public_keys = json_body.get('state_public_keys', None)
-        if not username:
-            self.request.response.status = 400
-            return {'error': "No username specified"}
-
-        user_inst = channelstream.USERS.get(username)
-        if not user_inst:
-            self.request.response.status = 404
-            return {'error': "User not found"}
-        if state_public_keys is not None:
-            user_inst.state_public_keys = state_public_keys
-        changed = operations.change_user_state(
-            user_inst=user_inst, user_state=user_state)
-        return {
-            'user_state': user_inst.state,
-            'changed_state': changed,
-            'public_keys': user_inst.state_public_keys
-        }
-
-    @view_config(match_param='action=message')
-    def message(self):
-        """
-        Send message to channels and/or users
-        :return:
-        """
-        msg_list = self.request.json_body
-        for msg in msg_list:
-            if not msg.get('channel') and not msg.get('pm_users', []):
-                continue
-            gevent.spawn(operations.pass_message, msg, channelstream.stats)
-        return True
-
-    @view_config(match_param='action=disconnect',
-                 permission=NO_PERMISSION_REQUIRED)
-    def disconnect(self):
-        """
-        Permanently remove connection from server
-        :return:
-        """
-        json_body = self.request.json_body
-        if json_body:
-            conn_id = json_body.get('conn_id')
+                break
+        cb = request.params.get('callback')
+        if cb:
+            resp = cb + '(' + json.dumps(messages) + ')'
         else:
-            conn_id = self.request.params.get('conn_id')
+            resp = json.dumps(messages)
+        if six.PY2:
+            yield resp
+        else:
+            yield resp.encode('utf8')
 
-        return operations.disconnect(conn_id=conn_id)
+    request.response.app_iter = yield_response()
+    return request.response
 
-    @view_config(match_param='action=channel_config')
-    def channel_config(self):
-        """ Set channel configuration """
-        json_body = self.request.json_body
-        if not json_body:
-            self.request.response.status = 400
-            return {'error': "No channels specified"}
 
-        operations.set_channel_config(channel_configs=json_body)
-        channels_info = self._get_channel_info(json_body.keys(),
-                                               include_history=False,
-                                               include_users=False)
-        return channels_info
+@legacy_api.post(match_param='action=user_state')
+def user_state(request):
+    """ set the status of specific user """
+    json_body = request.json_body
+    username = json_body.get('user')
+    user_state = json_body.get('user_state')
+    state_public_keys = json_body.get('state_public_keys', None)
+    if not username:
+        request.response.status = 400
+        return {'error': "No username specified"}
+
+    user_inst = channelstream.USERS.get(username)
+    if not user_inst:
+        request.response.status = 404
+        return {'error': "User not found"}
+    if state_public_keys is not None:
+        user_inst.state_public_keys = state_public_keys
+    changed = operations.change_user_state(
+        user_inst=user_inst, user_state=user_state)
+    return {
+        'user_state': user_inst.state,
+        'changed_state': changed,
+        'public_keys': user_inst.state_public_keys
+    }
+
+
+@legacy_api.post(match_param='action=message')
+def message(request):
+    """
+    Send message to channels and/or users
+    :return:
+    """
+    msg_list = request.json_body
+    for msg in msg_list:
+        if not msg.get('channel') and not msg.get('pm_users', []):
+            continue
+        gevent.spawn(operations.pass_message, msg, channelstream.stats)
+    return True
+
+
+@legacy_api.get(match_param='action=disconnect',
+                permission=NO_PERMISSION_REQUIRED)
+def disconnect(request):
+    """
+    Permanently remove connection from server
+    :return:
+    """
+    json_body = request.json_body
+    if json_body:
+        conn_id = json_body.get('conn_id')
+    else:
+        conn_id = request.params.get('conn_id')
+
+    return operations.disconnect(conn_id=conn_id)
+
+
+@legacy_api.post(match_param='action=channel_config')
+def channel_config(request):
+    """ Set channel configuration """
+    utils = SharedUtils(request)
+    json_body = request.json_body
+    if not json_body:
+        request.response.status = 400
+        return {'error': "No channels specified"}
+
+    operations.set_channel_config(channel_configs=json_body)
+    channels_info = utils.get_channel_info(json_body.keys(),
+                                           include_history=False,
+                                           include_users=False)
+    return channels_info
+
+
+@view_defaults(route_name='action', renderer='json', permission='access')
+class ServerViews(object):
+    def __init__(self, request):
+        self.request = request
+        self.request.handle_cors()
+        self.utils = SharedUtils(request)
 
     @view_config(route_name='admin',
                  renderer='templates/admin.jinja2', permission='access')
@@ -330,7 +357,7 @@ class ServerViews(object):
         unique_user_count = len(active_users)
         total_connections = sum([len(user.connections)
                                  for user in active_users])
-        channels_info = self.get_common_info(None, {
+        channels_info = self.utils.get_common_info(None, {
             'include_history': True,
             'include_users': True,
             'exclude_channels': [],
@@ -350,7 +377,8 @@ class ServerViews(object):
             "uptime": uptime
         }
 
-    @view_config(match_param='action=info')
+    @legacy_api.post(match_param='action=info')
+    @legacy_api.get(match_param='action=info')
     def info(self):
         """
         Returns channel information in json format
@@ -371,7 +399,7 @@ class ServerViews(object):
             req_channels = info_config.get('channels', None)
             info_config['include_connections'] = info_config.get(
                 'include_connections', True)
-        channels_info = self.get_common_info(req_channels, info_config)
+        channels_info = self.utils.get_common_info(req_channels, info_config)
         return channels_info
 
 
