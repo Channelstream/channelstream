@@ -65,7 +65,12 @@ module.exports = {
         new CopyWebpackPlugin([{
             from: path.resolve(__dirname, 'bower_components/webcomponentsjs/*.js'),
             to: 'bower_components/webcomponentsjs/[name].[ext]'
-        }]),
+        },
+            {
+                from: path.resolve(__dirname, 'src/channelstream.js'),
+                to: '[name].[ext]'
+            },
+        ]),
         // new webpackUglifyJsPlugin({
         //     cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),
         //     debug: true,
