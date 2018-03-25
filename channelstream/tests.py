@@ -551,15 +551,14 @@ class TestUnsubscribeViews(object):
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
 class TestInfoView(object):
     def test_empty_json(self, dummy_request):
-        from channelstream.wsgi_views.server import ServerViews
+        from channelstream.wsgi_views.server import info
         dummy_request.json_body = {}
-        view_cls = ServerViews(dummy_request)
-        result = view_cls.info()
+        result = info(dummy_request)
         assert result['channels'] == {}
         assert result['users'] == []
 
     def test_subscribed_json(self, dummy_request):
-        from channelstream.wsgi_views.server import connect, ServerViews
+        from channelstream.wsgi_views.server import connect, info
         dummy_request.json_body = {'username': 'test1',
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
@@ -579,9 +578,8 @@ class TestInfoView(object):
                                    'channel_configs': {
                                        'c': {'store_history': True,
                                              'history_size': 2}}}
-        view_cls = ServerViews(dummy_request)
         connect(dummy_request)
-        result = view_cls.info()
+        result = info(dummy_request)
         assert sorted(('a', 'aB', 'c')) == sorted(result['channels'].keys())
         assert result['users']
         compA = sorted(result['channels']['a']['users'])
@@ -602,7 +600,6 @@ class TestInfoView(object):
         assert compA == compB
         dummy_request.body = 'NOTEMPTY'
         dummy_request.json_body = {'info': {'channels': ['a']}}
-        view_cls = ServerViews(dummy_request)
-        result = view_cls.info()
+        result = info(dummy_request)
         assert 'a' in result['channels']
         assert 'aB' not in result['channels']

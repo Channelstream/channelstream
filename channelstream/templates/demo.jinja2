@@ -8,13 +8,13 @@
         var AppConf = {
             baseUrl: '{{ request.route_url('index')[:-1] }}',
             connectUrl: '{{ request.route_url('section_action',  section='demo', action='connect') }}',
-            disconnectUrl: '{{ request.route_url('legacy_api',  action='disconnect') }}',
+            disconnectUrl: '{{ request.route_url('legacy_disconnect_api',  action='disconnect') }}',
             subscribeUrl: '{{ request.route_url('section_action',  section='demo', action='subscribe') }}',
             unsubscribeUrl: '{{ request.route_url('section_action',  section='demo', action='unsubscribe') }}',
             messageUrl: '{{ request.route_url('section_action',  section='demo', action='message') }}',
             userStateUrl: '{{ request.route_url('section_action',  section='demo', action='user_state') }}',
-            longPollUrl: '{{ request.route_url('legacy_api', action='listen') }}',
-            websocketUrl: '{{ request.route_url('legacy_api', action='ws').replace('http', 'ws') }}',
+            longPollUrl: '{{ request.route_url('listen_api', action='listen') }}',
+            websocketUrl: '{{ request.route_url('listen_ws_api').replace('http', 'ws') }}',
             infoUrl: '{{ request.route_url('section_action', section='demo', action='info') }}'
         }
     </script>

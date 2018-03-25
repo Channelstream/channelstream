@@ -1,6 +1,7 @@
 gevent>=1.1
 ws4py>=0.3.5
 cornice
+cornice_swagger
 colander
 pyramid
 pyramid_jinja2

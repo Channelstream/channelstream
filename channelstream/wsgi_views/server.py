@@ -3,6 +3,8 @@ from datetime import datetime
 import gevent
 import six
 from gevent.queue import Queue, Empty
+import cornice
+import cornice_swagger
 from cornice.resource import Service
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
@@ -25,9 +27,50 @@ def get_connection_channels(connection):
     return sorted(found_channels)
 
 
-legacy_api = Service(
-    name='legacy_api', path='/{action}', permission='access',
-    description='Legacy API for channelstream')
+
+listen_api = Service(
+    name='listen_api', path='/listen', permission=NO_PERMISSION_REQUIRED,
+    description='Listen API for channelstream')
+
+listen_ws_api = Service(
+    name='listen_ws_api', path='/ws', permission=NO_PERMISSION_REQUIRED,
+    description='Websocket API for channelstream')
+
+
+legacy_connect_api = Service(
+    name='legacy_connect_api', path='/connect', permission='access',
+    description='Legacy connect API for channelstream')
+
+legacy_subscribe_api = Service(
+    name='legacy_subscribe_api', path='/subscribe', permission='access',
+    description='Legacy subscribe API for channelstream')
+
+legacy_unsubscribe_api = Service(
+    name='legacy_unsubscribe_api', path='/unsubscribe', permission='access',
+    description='Legacy unsubscribe API for channelstream')
+
+legacy_user_state_api = Service(
+    name='legacy_user_state_api', path='/user_state', permission='access',
+    description='Legacy user state API for channelstream')
+
+legacy_message_api = Service(
+    name='legacy_message_api', path='/message', permission='access',
+    description='Legacy message API for channelstream')
+
+legacy_disconnect_api = Service(
+    name='legacy_disconnect_api', path='/disconnect',
+    permission=NO_PERMISSION_REQUIRED,
+    description='Legacy disconnect API for channelstream')
+
+legacy_channel_config_api = Service(
+    name='legacy_channel_config_api', path='/channel_config',
+    permission=NO_PERMISSION_REQUIRED,
+    description='Legacy channel config API for channelstream')
+
+legacy_info_api = Service(
+    name='legacy_info_api', path='/info',
+    permission=NO_PERMISSION_REQUIRED,
+    description='Legacy info API for channelstream')
 
 
 class SharedUtils(object):
@@ -107,8 +150,7 @@ class SharedUtils(object):
         return channels_info
 
 
-
-@legacy_api.post(match_param='action=connect')
+@legacy_connect_api.post()
 def connect(request):
     """
     Creates a user object in server registry
@@ -149,7 +191,7 @@ def connect(request):
             'channels_info': channels_info}
 
 
-@legacy_api.post(match_param='action=subscribe')
+@legacy_subscribe_api.post()
 def subscribe(request, *args):
     """ Dubscribe specific connection to new channels """
     utils = SharedUtils(request)
@@ -178,7 +220,7 @@ def subscribe(request, *args):
             "subscribed_to": sorted(subscribed_to)}
 
 
-@legacy_api.get(match_param='action=unsubscribe')
+@legacy_unsubscribe_api.get()
 def unsubscribe(request, *args):
     """ Unsubscribe specific connection from channels """
     utils = SharedUtils(request)
@@ -205,8 +247,7 @@ def unsubscribe(request, *args):
             "unsubscribed_from": sorted(unsubscribed_from)}
 
 
-@legacy_api.get(match_param='action=listen',
-                permission=NO_PERMISSION_REQUIRED)
+@listen_api.get(permission=NO_PERMISSION_REQUIRED)
 def listen(request):
     """
     Handles long-polling connection
@@ -253,7 +294,7 @@ def listen(request):
     return request.response
 
 
-@legacy_api.post(match_param='action=user_state')
+@legacy_user_state_api.post()
 def user_state(request):
     """ set the status of specific user """
     json_body = request.json_body
@@ -279,7 +320,7 @@ def user_state(request):
     }
 
 
-@legacy_api.post(match_param='action=message')
+@legacy_message_api.post()
 def message(request):
     """
     Send message to channels and/or users
@@ -293,8 +334,7 @@ def message(request):
     return True
 
 
-@legacy_api.get(match_param='action=disconnect',
-                permission=NO_PERMISSION_REQUIRED)
+@legacy_disconnect_api.get()
 def disconnect(request):
     """
     Permanently remove connection from server
@@ -309,7 +349,7 @@ def disconnect(request):
     return operations.disconnect(conn_id=conn_id)
 
 
-@legacy_api.post(match_param='action=channel_config')
+@legacy_channel_config_api.post()
 def channel_config(request):
     """ Set channel configuration """
     utils = SharedUtils(request)
@@ -322,6 +362,33 @@ def channel_config(request):
     channels_info = utils.get_channel_info(json_body.keys(),
                                            include_history=False,
                                            include_users=False)
+    return channels_info
+
+
+@legacy_info_api.post(match_param='action=info')
+@legacy_info_api.get(match_param='action=info')
+def info(request):
+    """
+    Returns channel information in json format
+    :return:
+    """
+    utils = SharedUtils(request)
+    if not request.body:
+        req_channels = channelstream.CHANNELS.keys()
+        info_config = {
+            'include_history': True,
+            'include_users': True,
+            'exclude_channels': [],
+            'include_connections': True
+        }
+    else:
+        json_body = request.json_body
+        # get info config for channel information
+        info_config = json_body.get('info') or {}
+        req_channels = info_config.get('channels', None)
+        info_config['include_connections'] = info_config.get(
+            'include_connections', True)
+    channels_info = utils.get_common_info(req_channels, info_config)
     return channels_info
 
 
@@ -377,30 +444,19 @@ class ServerViews(object):
             "uptime": uptime
         }
 
-    @legacy_api.post(match_param='action=info')
-    @legacy_api.get(match_param='action=info')
-    def info(self):
+
+    @view_config(route_name='section_action',
+                 match_param=('section=swagger', 'action=swagger.json'),
+                 renderer='json', permission=NO_PERMISSION_REQUIRED)
+    def swagger_info(self):
         """
-        Returns channel information in json format
+        Serve admin page html
         :return:
         """
-        if not self.request.body:
-            req_channels = channelstream.CHANNELS.keys()
-            info_config = {
-                'include_history': True,
-                'include_users': True,
-                'exclude_channels': [],
-                'include_connections': True
-            }
-        else:
-            json_body = self.request.json_body
-            # get info config for channel information
-            info_config = json_body.get('info') or {}
-            req_channels = info_config.get('channels', None)
-            info_config['include_connections'] = info_config.get(
-                'include_connections', True)
-        channels_info = self.utils.get_common_info(req_channels, info_config)
-        return channels_info
+        doc = cornice_swagger.CorniceSwagger(
+            cornice.service.get_services())
+        my_spec = doc.generate('Channelstream API', '0.7.0')
+        return my_spec
 
 
 @view_config(
