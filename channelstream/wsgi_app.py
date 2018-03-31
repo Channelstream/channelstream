@@ -15,9 +15,10 @@ def datetime_adapter(obj, request):
 
 
 def make_app(server_config):
-
-    config = Configurator(settings=server_config, root_factory=APIFactory)
+    config = Configurator(settings=server_config, root_factory=APIFactory,
+                          default_permission='access')
     config.include('cornice')
+    config.include('cornice_swagger')
     config.include('pyramid_jinja2')
 
     def check_function(username, password, request):
@@ -38,6 +39,11 @@ def make_app(server_config):
     config.add_renderer('json', json_renderer)
 
     config.add_request_method('channelstream.utils.handle_cors', 'handle_cors')
+    config.cornice_enable_openapi_view()
+    config.cornice_enable_openapi_explorer(
+        title='MyAPI',
+        description="OpenAPI documentation",
+        version='1.0.0')
 
     config.include('channelstream.wsgi_views')
     config.scan('channelstream.wsgi_views.server')

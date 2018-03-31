@@ -18,7 +18,20 @@ def includeme(config):
     config.add_route('admin_json', '/admin/admin.json',
                      factory='channelstream.wsgi_views.'
                              'wsgi_security:BasicAuthFactory')
-    # config.add_route('action', '/{action}')
+    # legacy API
+    config.add_route('legacy_connect', '/connect')
+    config.add_route('legacy_subscribe', '/subscribe')
+    config.add_route('legacy_unsubscribe', '/unsubscribe')
+    config.add_route('legacy_user_state', '/user_state')
+    config.add_route('legacy_message', '/message')
+    config.add_route('legacy_channel_config', '/channel_config')
+    config.add_route('legacy_info', '/info')
+
+    # listening API
+    config.add_route('api_listen', '/listen')
+    config.add_route('api_listen_ws', '/ws')
+    config.add_route('api_disconnect', '/disconnect')
+
     config.add_route('section_action', '/{section}/{action}')
 
 

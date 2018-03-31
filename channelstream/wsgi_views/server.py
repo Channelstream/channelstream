@@ -27,49 +27,47 @@ def get_connection_channels(connection):
     return sorted(found_channels)
 
 
-
 listen_api = Service(
-    name='listen_api', path='/listen', permission=NO_PERMISSION_REQUIRED,
+    name='listen_api', pyramid_route='api_listen',
+    permission=NO_PERMISSION_REQUIRED,
     description='Listen API for channelstream')
 
 listen_ws_api = Service(
-    name='listen_ws_api', path='/ws', permission=NO_PERMISSION_REQUIRED,
+    name='listen_ws_api', pyramid_route='api_ws',
+    permission=NO_PERMISSION_REQUIRED,
     description='Websocket API for channelstream')
 
-
 legacy_connect_api = Service(
-    name='legacy_connect_api', path='/connect', permission='access',
+    name='legacy_connect_api', pyramid_route='legacy_connect',
     description='Legacy connect API for channelstream')
 
 legacy_subscribe_api = Service(
-    name='legacy_subscribe_api', path='/subscribe', permission='access',
+    name='legacy_subscribe_api', pyramid_route='legacy_subscribe',
     description='Legacy subscribe API for channelstream')
 
 legacy_unsubscribe_api = Service(
-    name='legacy_unsubscribe_api', path='/unsubscribe', permission='access',
+    name='legacy_unsubscribe_api', pyramid_route='legacy_unsubscribe',
     description='Legacy unsubscribe API for channelstream')
 
 legacy_user_state_api = Service(
-    name='legacy_user_state_api', path='/user_state', permission='access',
+    name='legacy_user_state_api', pyramid_route='legacy_user_state',
     description='Legacy user state API for channelstream')
 
 legacy_message_api = Service(
-    name='legacy_message_api', path='/message', permission='access',
+    name='legacy_message_api', pyramid_route='legacy_message',
     description='Legacy message API for channelstream')
 
 legacy_disconnect_api = Service(
-    name='legacy_disconnect_api', path='/disconnect',
+    name='disconnect_api', pyramid_route='api_disconnect',
     permission=NO_PERMISSION_REQUIRED,
-    description='Legacy disconnect API for channelstream')
+    description='Disconnect API for channelstream')
 
 legacy_channel_config_api = Service(
-    name='legacy_channel_config_api', path='/channel_config',
-    permission=NO_PERMISSION_REQUIRED,
+    name='legacy_channel_config_api', pyramid_route='legacy_channel_config',
     description='Legacy channel config API for channelstream')
 
 legacy_info_api = Service(
-    name='legacy_info_api', path='/info',
-    permission=NO_PERMISSION_REQUIRED,
+    name='legacy_info_api',  pyramid_route='legacy_info',
     description='Legacy info API for channelstream')
 
 
@@ -443,20 +441,6 @@ class ServerViews(object):
                       for user in active_users],
             "uptime": uptime
         }
-
-
-    @view_config(route_name='section_action',
-                 match_param=('section=swagger', 'action=swagger.json'),
-                 renderer='json', permission=NO_PERMISSION_REQUIRED)
-    def swagger_info(self):
-        """
-        Serve admin page html
-        :return:
-        """
-        doc = cornice_swagger.CorniceSwagger(
-            cornice.service.get_services())
-        my_spec = doc.generate('Channelstream API', '0.7.0')
-        return my_spec
 
 
 @view_config(

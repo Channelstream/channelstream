@@ -5,6 +5,7 @@ import requests
 import six
 import gevent
 from pyramid.view import view_config, view_defaults
+from pyramid.security import NO_PERMISSION_REQUIRED
 from itsdangerous import TimestampSigner
 from requests.auth import HTTPBasicAuth
 
@@ -91,7 +92,8 @@ def send_welcome_message(request, username):
     make_server_request(request, [payload], '/message')
 
 
-@view_defaults(route_name='section_action', renderer='json')
+@view_defaults(route_name='section_action', renderer='json',
+               permission=NO_PERMISSION_REQUIRED)
 class DemoViews(object):
     def __init__(self, request):
         self.request = request
