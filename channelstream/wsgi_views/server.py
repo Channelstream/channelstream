@@ -33,7 +33,7 @@ listen_api = Service(
     description='Listen API for channelstream')
 
 listen_ws_api = Service(
-    name='listen_ws_api', pyramid_route='api_ws',
+    name='listen_ws_api', pyramid_route='api_listen_ws',
     permission=NO_PERMISSION_REQUIRED,
     description='Websocket API for channelstream')
 
