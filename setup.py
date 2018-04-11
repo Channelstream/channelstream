@@ -12,7 +12,7 @@ def parse_req(req):
     return compiled.search(req).group(1).strip()
 
 
-requires = [_f for _f in map(parse_req, REQUIREMENTS) if _f]
+requires = [_f for _f in REQUIREMENTS if _f]
 
 setup(name='channelstream',
       version='0.6.1',
