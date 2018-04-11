@@ -6,6 +6,7 @@ import pytest
 import mock
 from datetime import datetime, timedelta
 from gevent.queue import Queue, Empty
+import marshmallow
 from pyramid import testing
 import channelstream
 import channelstream.gc
@@ -373,8 +374,12 @@ class TestConnectViews(object):
     def test_bad_json(self, dummy_request):
         from channelstream.wsgi_views.server import connect
         dummy_request.json_body = {}
-        result = connect(dummy_request)
-        assert result == {'error': 'No username specified'}
+        try:
+            connect(dummy_request)
+        except marshmallow.exceptions.ValidationError as exc:
+            assert exc.messages == {'username': [
+                'Missing data for required field.'
+            ]}
 
     def test_good_json(self, dummy_request):
         from channelstream.wsgi_views.server import connect
@@ -382,7 +387,7 @@ class TestConnectViews(object):
                                    'conn_id': 'X',
                                    'fresh_user_state': {'key': 'foo'},
                                    'user_state': {'bar': 'baz'},
-                                   'state_public_keys': 'bar',
+                                   'state_public_keys': ['bar'],
                                    'channels': ['a', 'aB'],
                                    'channel_configs': {
                                        'a': {'store_history': True,
@@ -425,7 +430,7 @@ class TestUserStateViews(object):
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
                                    'user_state': {'bar': 'baz'},
-                                   'state_public_keys': 'bar',
+                                   'state_public_keys': ['bar'],
                                    'channels': ['a', 'aB'],
                                    'channel_configs': {
                                        'a': {'store_history': True,
@@ -457,7 +462,7 @@ class TestSubscribeViews(object):
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
                                    'user_state': {'bar': 'baz'},
-                                   'state_public_keys': 'bar',
+                                   'state_public_keys': ['bar'],
                                    'channels': ['a', 'aB'],
                                    'channel_configs': {
                                        'a': {'store_history': True,
@@ -496,7 +501,7 @@ class TestUnsubscribeViews(object):
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
                                    'user_state': {'bar': 'baz'},
-                                   'state_public_keys': 'bar',
+                                   'state_public_keys': ['bar'],
                                    'channels': ['a', 'aB', 'aC'],
                                    'channel_configs': {
                                        'a': {'store_history': True,
@@ -514,7 +519,7 @@ class TestUnsubscribeViews(object):
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
                                    'user_state': {'bar': 'baz'},
-                                   'state_public_keys': 'bar',
+                                   'state_public_keys': ['bar'],
                                    'channels': ['a', 'aB', 'aC'],
                                    'channel_configs': {
                                        'a': {'store_history': True,
@@ -533,7 +538,7 @@ class TestUnsubscribeViews(object):
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
                                    'user_state': {'bar': 'baz'},
-                                   'state_public_keys': 'bar',
+                                   'state_public_keys': ['bar'],
                                    'channels': ['a'],
                                    'channel_configs': {
                                        'a': {'store_history': True,
@@ -563,7 +568,7 @@ class TestInfoView(object):
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
                                    'user_state': {'bar': 'baz'},
-                                   'state_public_keys': 'bar',
+                                   'state_public_keys': ['bar'],
                                    'channels': ['a', 'aB'],
                                    'channel_configs': {
                                        'a': {'store_history': True,
@@ -573,7 +578,7 @@ class TestInfoView(object):
                                    'conn_id': 'y',
                                    'fresh_user_state': {'key': 'foo1'},
                                    'user_state': {'bar': 'baz1'},
-                                   'state_public_keys': 'key',
+                                   'state_public_keys': ['key'],
                                    'channels': ['a', 'c'],
                                    'channel_configs': {
                                        'c': {'store_history': True,

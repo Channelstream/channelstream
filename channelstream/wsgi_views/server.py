@@ -105,8 +105,8 @@ class SharedUtils(object):
 
 
 @view_config(route_name='legacy_connect', request_method='POST',
+             decorator=doc_utils.openapi_doc_view('legacy_connect'),
              renderer='json')
-@doc_utils.openapi_doc_view('legacy_connect')
 def connect(request):
     """
     Connect view
@@ -392,11 +392,11 @@ class ServerViews(object):
         return {}
 
     @view_config(route_name='admin_json',
+                 decorator=doc_utils.openapi_doc_view('admin_json'),
                  renderer='json', permission='access')
-    @doc_utils.openapi_doc_view('admin_json')
     def admin_json(self):
         """
-        Connect view
+        Admin json
         ---
         post:
           tags:
@@ -456,8 +456,7 @@ class ServerViews(object):
             title='Channelstream API',
             version='0.7.0',
             plugins=[
-                'apispec.ext.marshmallow',
-                'channelstream.pyramid_spec',
+                'apispec.ext.marshmallow'
             ],
         )
         for item in doc_utils.SCHEMA_REGISTRY:

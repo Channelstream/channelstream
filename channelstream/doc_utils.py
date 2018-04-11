@@ -35,7 +35,7 @@ def openapi_doc_view(route_name, **kwargs):
     """
     def r_decorator(f):
         VIEW_REGISTRY.append({'name': route_name, 'item': f,
-                              '__doc__':f.__doc__})
+                              '__doc__': f.__doc__})
 
         @functools.wraps(f)
         def wrapper(context, request):
