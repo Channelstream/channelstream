@@ -39,15 +39,9 @@ def make_app(server_config):
     config.add_renderer('json', json_renderer)
 
     config.add_request_method('channelstream.utils.handle_cors', 'handle_cors')
-    config.cornice_enable_openapi_view(
-        title='Channelstream API',
-        description="Channelstream documentation",
-        version='0.7.0'
-    )
-    config.cornice_enable_openapi_explorer()
-
     config.include('channelstream.wsgi_views')
     config.scan('channelstream.wsgi_views.server')
+    config.scan('channelstream.wsgi_views.error_handlers')
     config.scan('channelstream.events')
     if config.registry.settings['demo']:
         config.scan('channelstream.wsgi_views.demo')

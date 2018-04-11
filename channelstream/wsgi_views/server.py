@@ -3,9 +3,6 @@ from datetime import datetime
 import gevent
 import six
 from gevent.queue import Queue, Empty
-import cornice
-import cornice_swagger
-from cornice.resource import Service
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
@@ -13,7 +10,10 @@ from pyramid.security import forget, NO_PERMISSION_REQUIRED
 import channelstream
 
 from channelstream import operations
+from channelstream import validation
+from channelstream import doc_utils
 from ..ext_json import json
+from apispec import APISpec, utils
 
 log = logging.getLogger(__name__)
 
@@ -25,50 +25,6 @@ def get_connection_channels(connection):
         if connection in user_conns:
             found_channels.append(channel.name)
     return sorted(found_channels)
-
-
-listen_api = Service(
-    name='listen_api', pyramid_route='api_listen',
-    permission=NO_PERMISSION_REQUIRED,
-    description='Listen API for channelstream')
-
-listen_ws_api = Service(
-    name='listen_ws_api', pyramid_route='api_listen_ws',
-    permission=NO_PERMISSION_REQUIRED,
-    description='Websocket API for channelstream')
-
-legacy_connect_api = Service(
-    name='legacy_connect_api', pyramid_route='legacy_connect',
-    description='Legacy connect API for channelstream')
-
-legacy_subscribe_api = Service(
-    name='legacy_subscribe_api', pyramid_route='legacy_subscribe',
-    description='Legacy subscribe API for channelstream')
-
-legacy_unsubscribe_api = Service(
-    name='legacy_unsubscribe_api', pyramid_route='legacy_unsubscribe',
-    description='Legacy unsubscribe API for channelstream')
-
-legacy_user_state_api = Service(
-    name='legacy_user_state_api', pyramid_route='legacy_user_state',
-    description='Legacy user state API for channelstream')
-
-legacy_message_api = Service(
-    name='legacy_message_api', pyramid_route='legacy_message',
-    description='Legacy message API for channelstream')
-
-legacy_disconnect_api = Service(
-    name='disconnect_api', pyramid_route='api_disconnect',
-    permission=NO_PERMISSION_REQUIRED,
-    description='Disconnect API for channelstream')
-
-legacy_channel_config_api = Service(
-    name='legacy_channel_config_api', pyramid_route='legacy_channel_config',
-    description='Legacy channel config API for channelstream')
-
-legacy_info_api = Service(
-    name='legacy_info_api',  pyramid_route='legacy_info',
-    description='Legacy info API for channelstream')
 
 
 class SharedUtils(object):
@@ -148,17 +104,40 @@ class SharedUtils(object):
         return channels_info
 
 
-@legacy_connect_api.post()
+@view_config(route_name='legacy_connect', request_method='POST',
+             renderer='json')
+@doc_utils.openapi_doc_view('legacy_connect')
 def connect(request):
     """
-    Creates a user object in server registry
-    return the id of connected users - will be secured with password string
-    for webapp to internally call the server - we combine conn string
-    with user id, and we tell which channels the user is allowed to
-    subscribe to
+    Connect view
+    ---
+    post:
+      tags:
+      - "legacy"
+      summary: "connects users to the server"
+      description: ""
+      operationId: "connect"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        required: true
+        schema:
+          $ref: "#/definitions/ConnectBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          schema:
+            $ref: '#/definitions/ConnectBody'
     """
     utils = SharedUtils(request)
-    json_body = request.json_body
+    schema = validation.ConnectBodySchema()
+    json_body = schema.load(request.json_body).data
     username = json_body.get('username')
     fresh_user_state = json_body.get('fresh_user_state', {})
     update_user_state = json_body.get('user_state', {})
@@ -189,7 +168,8 @@ def connect(request):
             'channels_info': channels_info}
 
 
-@legacy_subscribe_api.post()
+@view_config(route_name='legacy_subscribe', request_method='POST',
+             renderer='json')
 def subscribe(request, *args):
     """ Dubscribe specific connection to new channels """
     utils = SharedUtils(request)
@@ -218,7 +198,8 @@ def subscribe(request, *args):
             "subscribed_to": sorted(subscribed_to)}
 
 
-@legacy_unsubscribe_api.get()
+@view_config(route_name='legacy_unsubscribe', request_method='GET',
+             renderer='json')
 def unsubscribe(request, *args):
     """ Unsubscribe specific connection from channels """
     utils = SharedUtils(request)
@@ -245,7 +226,8 @@ def unsubscribe(request, *args):
             "unsubscribed_from": sorted(unsubscribed_from)}
 
 
-@listen_api.get(permission=NO_PERMISSION_REQUIRED)
+@view_config(route_name='api_listen', request_method='GET',
+             renderer='json')
 def listen(request):
     """
     Handles long-polling connection
@@ -292,7 +274,8 @@ def listen(request):
     return request.response
 
 
-@legacy_user_state_api.post()
+@view_config(route_name='legacy_user_state', request_method='POST',
+             renderer='json')
 def user_state(request):
     """ set the status of specific user """
     json_body = request.json_body
@@ -318,7 +301,8 @@ def user_state(request):
     }
 
 
-@legacy_message_api.post()
+@view_config(route_name='legacy_message', request_method='POST',
+             renderer='json')
 def message(request):
     """
     Send message to channels and/or users
@@ -332,7 +316,8 @@ def message(request):
     return True
 
 
-@legacy_disconnect_api.get()
+@view_config(route_name='api_disconnect', request_method='POST',
+             renderer='json')
 def disconnect(request):
     """
     Permanently remove connection from server
@@ -347,7 +332,8 @@ def disconnect(request):
     return operations.disconnect(conn_id=conn_id)
 
 
-@legacy_channel_config_api.post()
+@view_config(route_name='legacy_channel_config', request_method='POST',
+             renderer='json')
 def channel_config(request):
     """ Set channel configuration """
     utils = SharedUtils(request)
@@ -363,8 +349,7 @@ def channel_config(request):
     return channels_info
 
 
-@legacy_info_api.post(match_param='action=info')
-@legacy_info_api.get(match_param='action=info')
+@view_config(route_name='legacy_info', renderer='json')
 def info(request):
     """
     Returns channel information in json format
@@ -408,11 +393,28 @@ class ServerViews(object):
 
     @view_config(route_name='admin_json',
                  renderer='json', permission='access')
+    @doc_utils.openapi_doc_view('admin_json')
     def admin_json(self):
         """
-        Return server information in json format for admin panel purposes
-        :return:
+        Connect view
+        ---
+        post:
+          tags:
+          - "legacy"
+          summary: "Return server information in json format for admin panel
+          purposes"
+          description: ""
+          operationId: "admin_json"
+          consumes:
+          - "application/json"
+          produces:
+          - "application/json"
+          parameters:
+          - in: "body"
+            name: "body"
+            description: "Response info configuration"
         """
+
         uptime = datetime.utcnow() - channelstream.stats['started_on']
         uptime = str(uptime).split('.')[0]
         remembered_user_count = len(
@@ -441,6 +443,32 @@ class ServerViews(object):
                       for user in active_users],
             "uptime": uptime
         }
+
+    @view_config(route_name='api_explorer', permission=NO_PERMISSION_REQUIRED,
+                 renderer='templates/explorer.jinja2')
+    def api_explorer(self):
+        return {}
+
+    @view_config(route_name='openapi_spec', permission=NO_PERMISSION_REQUIRED,
+                 renderer='json')
+    def api_spec(self):
+        openapi_spec = APISpec(
+            title='Channelstream API',
+            version='0.7.0',
+            plugins=[
+                'apispec.ext.marshmallow',
+                'channelstream.pyramid_spec',
+            ],
+        )
+        for item in doc_utils.SCHEMA_REGISTRY:
+            openapi_spec.definition(item['name'], schema=item['item'])
+
+        for item in doc_utils.VIEW_REGISTRY:
+            openapi_spec.add_path(
+                self.request.route_path(item['name']),
+                operations=utils.load_operations_from_docstring(
+                    item['__doc__']))
+        return openapi_spec.to_dict()
 
 
 @view_config(
