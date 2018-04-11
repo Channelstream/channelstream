@@ -12,6 +12,7 @@ def openapi_doc_schema(schema_name, **kwargs):
 
     Gathers marshmallow schema information
     """
+
     def r_decorator(f):
         SCHEMA_REGISTRY.append({'name': schema_name, 'item': f})
 
@@ -24,23 +25,5 @@ def openapi_doc_schema(schema_name, **kwargs):
     return r_decorator
 
 
-def openapi_doc_view(route_name, **kwargs):
-    """
-    :param route_name:
-    :param kwargs:
-    :return:
-
-    Gathers pyramid view information
-
-    """
-    def r_decorator(f):
-        VIEW_REGISTRY.append({'name': route_name, 'item': f,
-                              '__doc__': f.__doc__})
-
-        @functools.wraps(f)
-        def wrapper(context, request):
-            return f(request)
-
-        return wrapper
-
-    return r_decorator
+def openapi_doc_view(route_name, f, **kwargs):
+    VIEW_REGISTRY.append({'name': route_name, 'item': f, '__doc__': f.__doc__})

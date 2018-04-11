@@ -105,7 +105,6 @@ class SharedUtils(object):
 
 
 @view_config(route_name='legacy_connect', request_method='POST',
-             decorator=doc_utils.openapi_doc_view('legacy_connect'),
              renderer='json')
 def connect(request):
     """
@@ -392,7 +391,6 @@ class ServerViews(object):
         return {}
 
     @view_config(route_name='admin_json',
-                 decorator=doc_utils.openapi_doc_view('admin_json'),
                  renderer='json', permission='access')
     def admin_json(self):
         """
@@ -469,10 +467,13 @@ class ServerViews(object):
                     item['__doc__']))
         return openapi_spec.to_dict()
 
-
 @view_config(
     context='channelstream.wsgi_views.wsgi_security:RequestBasicChallenge')
 def admin_challenge(request):
     response = HTTPUnauthorized()
     response.headers.update(forget(request))
     return response
+
+
+doc_utils.openapi_doc_view('admin_json', ServerViews.admin_json)
+doc_utils.openapi_doc_view('legacy_connect', connect)
