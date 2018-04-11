@@ -1,6 +1,6 @@
 gevent>=1.1
 ws4py>=0.3.5
-marshmallow
+marshmallow==2.15.0
 apispec
 colander
 pyramid
