@@ -4,10 +4,13 @@ import uuid
 import requests
 import six
 import gevent
+import logging
 from pyramid.view import view_config, view_defaults
 from pyramid.security import NO_PERMISSION_REQUIRED
 from itsdangerous import TimestampSigner
 from requests.auth import HTTPBasicAuth
+
+log = logging.getLogger(__name__)
 
 POSSIBLE_CHANNELS = set(['pub_chan', 'second_chanel', 'notify'])
 
@@ -43,6 +46,8 @@ def make_server_request(request, payload, endpoint, auth=None):
     response = requests.post(url, data=json.dumps(payload),
                              headers=secret_headers,
                              auth=auth)
+    if response.status_code >= 400:
+        log.error(response.text)
     response.raise_for_status()
     return response
 
@@ -54,7 +59,8 @@ def remove_data_from_demo_response(server_response):
     :param server_response:
     :return:
     """
-    second_channel = server_response['channels_info']['channels'].get('second_channel')
+    channels = server_response['channels_info']['channels']
+    second_channel = channels.get('second_channel')
     if second_channel:
         second_channel['users'] = []
     return server_response
@@ -117,16 +123,17 @@ class DemoViews(object):
         random_name = 'anon_%s' % random.randint(1, 999999)
         username = self.request.json_body.get('username', random_name)
         state = self.request.json_body.get('state', {})
-        payload = {'username': username,
-                   'conn_id': str(uuid.uuid4()),
-                   'channels': channels,
-                   'fresh_user_state': {'email': None, 'status': None,
-                                        'private': 'is private',
-                                        'bar': 1},
-                   'user_state': state,
-                   'state_public_keys': ['email', 'status', 'bar', 'color'],
-                   'info': {'return_public_state': True}, # return only public state keys
-                   'channel_configs': CHANNEL_CONFIGS}
+        payload = {
+            'username': username,
+            # 'conn_id': str(uuid.uuid4()),
+            'channels': channels,
+            'fresh_user_state': {'email': None, 'status': None,
+                                 'private': 'is private',
+                                 'bar': 1},
+            'user_state': state,
+            'state_public_keys': ['email', 'status', 'bar', 'color'],
+            'info': {'return_public_state': True},  # return only public state
+            'channel_configs': CHANNEL_CONFIGS}
         result = make_server_request(self.request, payload, '/connect')
         self.request.response.status = result.status_code
         server_response = result.json()
@@ -225,6 +232,7 @@ class DemoViews(object):
         admin = self.request.registry.settings['admin_user']
         admin_secret = self.request.registry.settings['admin_secret']
         basic_auth = HTTPBasicAuth(admin, admin_secret)
-        result = make_server_request(self.request, {}, '/admin/admin.json', auth=basic_auth)
+        result = make_server_request(
+            self.request, {}, '/admin/admin.json', auth=basic_auth)
         self.request.response.status = result.status_code
         return result.json()
