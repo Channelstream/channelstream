@@ -13,7 +13,7 @@ from channelstream import operations
 from channelstream import validation
 from channelstream import doc_utils
 from ..ext_json import json
-from apispec import APISpec, utils
+from apispec import APISpec
 
 log = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ def connect(request):
     ---
     post:
       tags:
-      - "legacy"
+      - "Legacy API"
       summary: "connects users to the server"
       description: ""
       operationId: "connect"
@@ -170,7 +170,25 @@ def connect(request):
 @view_config(route_name='legacy_subscribe', request_method='POST',
              renderer='json')
 def subscribe(request, *args):
-    """ Dubscribe specific connection to new channels """
+    """
+    Subscrive view
+    ---
+    post:
+      tags:
+      - "Legacy API"
+      summary: "Subscribes user to new channels"
+      description: ""
+      operationId: "subscribe"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        required: true
+    """
     utils = SharedUtils(request)
     json_body = request.json_body
     conn_id = json_body.get('conn_id', request.GET.get('conn_id'))
@@ -398,7 +416,7 @@ class ServerViews(object):
         ---
         post:
           tags:
-          - "legacy"
+          - "Admin API"
           summary: "Return server information in json format for admin panel
           purposes"
           description: ""
@@ -450,22 +468,31 @@ class ServerViews(object):
     @view_config(route_name='openapi_spec', permission=NO_PERMISSION_REQUIRED,
                  renderer='json')
     def api_spec(self):
-        openapi_spec = APISpec(
+        spec = APISpec(
             title='Channelstream API',
             version='0.7.0',
             plugins=[
                 'apispec.ext.marshmallow'
             ],
         )
-        for item in doc_utils.SCHEMA_REGISTRY:
-            openapi_spec.definition(item['name'], schema=item['item'])
+        doc_utils.add_schemas_to_spec(spec)
 
-        for item in doc_utils.VIEW_REGISTRY:
-            openapi_spec.add_path(
-                self.request.route_path(item['name']),
-                operations=utils.load_operations_from_docstring(
-                    item['__doc__']))
-        return openapi_spec.to_dict()
+        doc_utils.add_pyramid_paths(spec, 'legacy_connect', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_subscribe', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_unsubscribe', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_user_state', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_message', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_channel_config', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_info', request=self.request)
+
+        doc_utils.add_pyramid_paths(spec, 'api_listen', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'api_listen_ws', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'api_disconnect', request=self.request)
+
+        doc_utils.add_pyramid_paths(spec, 'admin_json', request=self.request)
+
+        return spec.to_dict()
+
 
 @view_config(
     context='channelstream.wsgi_views.wsgi_security:RequestBasicChallenge')
@@ -473,7 +500,3 @@ def admin_challenge(request):
     response = HTTPUnauthorized()
     response.headers.update(forget(request))
     return response
-
-
-doc_utils.openapi_doc_view('admin_json', ServerViews.admin_json)
-doc_utils.openapi_doc_view('legacy_connect', connect)
