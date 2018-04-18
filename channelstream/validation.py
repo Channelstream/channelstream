@@ -31,21 +31,15 @@ class ConnectBodySchema(ChannelstreamSchema):
         validate=validate.Length(min=1, max=256))
 
     channels = fields.List(fields.String(
-        missing=lambda: [],
         description='List of channels user should be subscribed to',
-        validate=validate.Length(min=1, max=256)))
+        validate=validate.Length(min=1, max=256)),
+        missing=lambda: [])
 
     state_public_keys = fields.List(fields.String(
         many=True,
-        missing=lambda: [],
         description='',
-        validate=validate.Length(min=1, max=256)))
-
-    state_public_keys = fields.List(fields.String(
-        many=True,
-        missing=lambda: [],
-        description='',
-        validate=validate.Length(min=1, max=512)))
+        validate=validate.Length(min=1, max=256)),
+        missing=lambda: [])
 
     fresh_user_state = fields.Dict(missing=lambda: {})
     user_state = fields.Dict(missing=lambda: {})
