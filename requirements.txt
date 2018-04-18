@@ -3,7 +3,7 @@ ws4py>=0.3.5
 marshmallow==2.15.0
 apispec
 colander
-pyramid
+pyramid>=1.8
 pyramid_jinja2
 itsdangerous
 requests
