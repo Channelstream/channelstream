@@ -24,8 +24,8 @@ class APIFactory(object):
         self.__acl__ = []
         config = request.registry.settings
         req_url_secret = request.params.get('secret')
-        req_secret = request.headers.get('x-channelstream-secret',
-                                         req_url_secret)
+        req_secret = request.headers.get(
+            'x-channelstream-secret', req_url_secret)
 
         addr = request.environ['REMOTE_ADDR']
         if not is_allowed_ip(addr, config):
@@ -34,11 +34,7 @@ class APIFactory(object):
 
         if req_secret:
             signer = TimestampSigner(config['secret'])
-            unsigned = signer.unsign(req_secret)
-            if not six.PY2:
-                unsigned = unsigned.decode('utf8')
-            if request.path != unsigned:
-                return
+            signer.unsign(req_secret, max_age=60)
         else:
             return
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]
