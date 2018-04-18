@@ -1,11 +1,17 @@
 import uuid
 
+import channelstream
 import marshmallow
 from marshmallow import validate, fields
-from channelstream import doc_utils
+
 
 def gen_uuid():
     return str(uuid.uuid4())
+
+
+def validate_connection_id(conn_id):
+    if conn_id not in channelstream.CONNECTIONS:
+        raise marshmallow.ValidationError('Unknown connection')
 
 
 class ChannelstreamSchema(marshmallow.Schema):
@@ -49,8 +55,9 @@ class ConnectBodySchema(ChannelstreamSchema):
 
 class SubscribeBodySchema(ChannelstreamSchema):
     conn_id = fields.String(
-        missing=gen_uuid,
-        validate=validate.Length(min=1, max=256))
+        required=True,
+        validate=[validate.Length(min=1, max=256),
+                  validate_connection_id])
 
     channels = fields.List(fields.String(
         description='List of channels user should be subscribed to',
@@ -59,6 +66,11 @@ class SubscribeBodySchema(ChannelstreamSchema):
         validate=validate.Length(min=1))
     info = fields.Dict(missing=lambda: {})
 
+    @marshmallow.pre_load
+    def get_connection(self, in_data):
+        in_data.setdefault('conn_id',
+                           self.context['request'].GET.get('conn_id'))
+        return in_data
 
 class UnsubscribeBodySchema(SubscribeBodySchema):
     pass

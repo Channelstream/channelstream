@@ -137,30 +137,20 @@ def connect(request):
             $ref: '#/definitions/ConnectBody'
     """
     utils = SharedUtils(request)
-    schema = validation.ConnectBodySchema()
+    schema = validation.ConnectBodySchema(context={'request': request})
     json_body = schema.load(request.json_body).data
-    username = json_body.get('username')
-    fresh_user_state = json_body.get('fresh_user_state', {})
-    update_user_state = json_body.get('user_state', {})
-    channel_configs = json_body.get('channel_configs', {})
-    state_public_keys = json_body.get('state_public_keys', None)
-    conn_id = json_body.get('conn_id')
-    channels = sorted(json_body.get('channels') or [])
-    if username is None:
-        request.response.status = 400
-        return {'error': "No username specified"}
+    channels = sorted(json_body['channels'])
     connection, user = operations.connect(
-        username=username,
-        fresh_user_state=fresh_user_state,
-        state_public_keys=state_public_keys,
-        update_user_state=update_user_state,
-        conn_id=conn_id,
+        username=json_body['username'],
+        fresh_user_state=json_body['fresh_user_state'],
+        state_public_keys=json_body['state_public_keys'],
+        update_user_state=json_body['user_state'],
+        conn_id=json_body['conn_id'],
         channels=channels,
-        channel_configs=channel_configs)
+        channel_configs=json_body['channel_configs'])
 
     # get info config for channel information
-    info_config = json_body.get('info') or {}
-    channels_info = utils.get_common_info(channels, info_config)
+    channels_info = utils.get_common_info(channels, json_body['info'])
     return {'conn_id': connection.id,
             'state': user.state,
             'username': user.username,
@@ -196,15 +186,11 @@ def subscribe(request, *args):
           $ref: "#/definitions/SubscribeBody"
     """
     utils = SharedUtils(request)
-    schema = validation.SubscribeBodySchema()
+    schema = validation.SubscribeBodySchema(context={'request': request})
     json_body = schema.load(request.json_body).data
-    conn_id = json_body.get('conn_id', request.GET.get('conn_id'))
-    connection = channelstream.CONNECTIONS.get(conn_id)
+    connection = channelstream.CONNECTIONS.get(json_body['conn_id'])
     channels = json_body['channels']
     channel_configs = json_body.get('channel_configs', {})
-    if not connection:
-        request.response.status = 403
-        return {'error': "Unknown connection"}
     subscribed_to = operations.subscribe(
         connection=connection,
         channels=channels,
@@ -212,8 +198,7 @@ def subscribe(request, *args):
 
     # get info config for channel information
     current_channels = get_connection_channels(connection)
-    info_config = json_body.get('info') or {}
-    channels_info = utils.get_common_info(current_channels, info_config)
+    channels_info = utils.get_common_info(current_channels, json_body['info'])
     return {"channels": current_channels,
             "channels_info": channels_info,
             "subscribed_to": sorted(subscribed_to)}
@@ -246,21 +231,16 @@ def unsubscribe(request, *args):
           $ref: "#/definitions/UnsubscribeBody"
     """
     utils = SharedUtils(request)
-    schema = validation.UnsubscribeBodySchema()
+    schema = validation.UnsubscribeBodySchema(context={'request': request})
     json_body = schema.load(request.json_body).data
-    conn_id = json_body.get('conn_id', request.GET.get('conn_id'))
-    connection = channelstream.CONNECTIONS.get(conn_id)
-    if not connection:
-        request.response.status = 403
-        return {'error': "Unknown connection"}
+    connection = channelstream.CONNECTIONS.get(json_body['conn_id'])
     unsubscribed_from = operations.unsubscribe(
         connection=connection,
         unsubscribe_channels=json_body['channels'])
 
     # get info config for channel information
     current_channels = get_connection_channels(connection)
-    info_config = json_body.get('info') or {}
-    channels_info = utils.get_common_info(current_channels, info_config)
+    channels_info = utils.get_common_info(current_channels, json_body['info'])
     return {"channels": current_channels,
             "channels_info": channels_info,
             "unsubscribed_from": sorted(unsubscribed_from)}

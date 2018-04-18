@@ -453,8 +453,10 @@ class TestSubscribeViews(object):
     def test_bad_json(self, dummy_request):
         from channelstream.wsgi_views.server import subscribe
         dummy_request.json_body = {}
-        result = subscribe(dummy_request)
-        assert result == {'error': 'Unknown connection'}
+        try:
+            subscribe(dummy_request)
+        except marshmallow.exceptions.ValidationError as exc:
+            assert list(sorted(exc.messages.keys())) == ['channels', 'conn_id']
 
     def test_good_json(self, dummy_request):
         from channelstream.wsgi_views.server import connect, subscribe
@@ -492,8 +494,10 @@ class TestUnsubscribeViews(object):
     def test_bad_json(self, dummy_request):
         from channelstream.wsgi_views.server import unsubscribe
         dummy_request.json_body = {}
-        result = unsubscribe(dummy_request)
-        assert result == {'error': 'Unknown connection'}
+        try:
+            unsubscribe(dummy_request)
+        except marshmallow.exceptions.ValidationError as exc:
+            assert list(sorted(exc.messages.keys())) == ['channels', 'conn_id']
 
     def test_good_json(self, dummy_request):
         from channelstream.wsgi_views.server import connect, unsubscribe
