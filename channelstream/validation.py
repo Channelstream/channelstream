@@ -15,7 +15,6 @@ class ChannelstreamSchema(marshmallow.Schema):
         preserve = True
 
 
-@doc_utils.openapi_doc_schema('ConnectBody')
 class ConnectBodySchema(ChannelstreamSchema):
     username = fields.String(
         required=True,
@@ -46,3 +45,20 @@ class ConnectBodySchema(ChannelstreamSchema):
     user_state = fields.Dict(missing=lambda: {})
     channel_configs = fields.Dict(missing=lambda: {})
     info = fields.Dict(missing=lambda: {})
+
+
+class SubscribeBodySchema(ChannelstreamSchema):
+    conn_id = fields.String(
+        missing=gen_uuid,
+        validate=validate.Length(min=1, max=256))
+
+    channels = fields.List(fields.String(
+        description='List of channels user should be subscribed to',
+        validate=validate.Length(min=1, max=256)),
+        required=True,
+        validate=validate.Length(min=1))
+    info = fields.Dict(missing=lambda: {})
+
+
+class UnsubscribeBodySchema(SubscribeBodySchema):
+    pass

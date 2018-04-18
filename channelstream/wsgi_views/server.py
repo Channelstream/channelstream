@@ -111,6 +111,8 @@ def connect(request):
     Connect view
     ---
     post:
+      security:
+        - APIKeyHeader: []
       tags:
       - "Legacy API"
       summary: "connects users to the server"
@@ -171,12 +173,14 @@ def connect(request):
              renderer='json')
 def subscribe(request, *args):
     """
-    Subscrive view
+    Subscribe view
     ---
     post:
+      security:
+        - APIKeyHeader: []
       tags:
       - "Legacy API"
-      summary: "Subscribes user to new channels"
+      summary: "Subscribes connection to new channels"
       description: ""
       operationId: "subscribe"
       consumes:
@@ -188,19 +192,19 @@ def subscribe(request, *args):
         name: "body"
         description: "Foo bar"
         required: true
+        schema:
+          $ref: "#/definitions/SubscribeBody"
     """
     utils = SharedUtils(request)
-    json_body = request.json_body
+    schema = validation.SubscribeBodySchema()
+    json_body = schema.load(request.json_body).data
     conn_id = json_body.get('conn_id', request.GET.get('conn_id'))
     connection = channelstream.CONNECTIONS.get(conn_id)
-    channels = json_body.get('channels')
+    channels = json_body['channels']
     channel_configs = json_body.get('channel_configs', {})
     if not connection:
         request.response.status = 403
         return {'error': "Unknown connection"}
-    if not channels:
-        request.response.status = 400
-        return {'error': "No channels specified"}
     subscribed_to = operations.subscribe(
         connection=connection,
         channels=channels,
@@ -215,24 +219,43 @@ def subscribe(request, *args):
             "subscribed_to": sorted(subscribed_to)}
 
 
-@view_config(route_name='legacy_unsubscribe', request_method='GET',
+@view_config(route_name='legacy_unsubscribe', request_method='POST',
              renderer='json')
 def unsubscribe(request, *args):
-    """ Unsubscribe specific connection from channels """
+    """
+    Unsubscribe view
+    ---
+    post:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "Legacy API"
+      summary: "Removes connection from channels"
+      description: ""
+      operationId: "subscribe"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        required: true
+        schema:
+          $ref: "#/definitions/UnsubscribeBody"
+    """
     utils = SharedUtils(request)
-    json_body = request.json_body
+    schema = validation.UnsubscribeBodySchema()
+    json_body = schema.load(request.json_body).data
     conn_id = json_body.get('conn_id', request.GET.get('conn_id'))
     connection = channelstream.CONNECTIONS.get(conn_id)
-    unsubscribe_channels = sorted(json_body.get('channels') or [])
     if not connection:
         request.response.status = 403
         return {'error': "Unknown connection"}
-    if not unsubscribe_channels:
-        request.response.status = 400
-        return {'error': "No channels specified"}
     unsubscribed_from = operations.unsubscribe(
         connection=connection,
-        unsubscribe_channels=unsubscribe_channels)
+        unsubscribe_channels=json_body['channels'])
 
     # get info config for channel information
     current_channels = get_connection_channels(connection)
@@ -475,23 +498,40 @@ class ServerViews(object):
                 'apispec.ext.marshmallow'
             ],
         )
-        doc_utils.add_schemas_to_spec(spec)
+        spec.definition('ConnectBody', schema=validation.ConnectBodySchema)
+        spec.definition('SubscribeBody', schema=validation.SubscribeBodySchema)
+        spec.definition('UnsubscribeBody',
+                        schema=validation.UnsubscribeBodySchema)
 
-        doc_utils.add_pyramid_paths(spec, 'legacy_connect', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_subscribe', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_unsubscribe', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_user_state', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_message', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_channel_config', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_connect',
+                                    request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_subscribe',
+                                    request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_unsubscribe',
+                                    request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_user_state',
+                                    request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_message',
+                                    request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'legacy_channel_config',
+                                    request=self.request)
         doc_utils.add_pyramid_paths(spec, 'legacy_info', request=self.request)
 
         doc_utils.add_pyramid_paths(spec, 'api_listen', request=self.request)
         doc_utils.add_pyramid_paths(spec, 'api_listen_ws', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'api_disconnect', request=self.request)
+        doc_utils.add_pyramid_paths(spec, 'api_disconnect',
+                                    request=self.request)
 
         doc_utils.add_pyramid_paths(spec, 'admin_json', request=self.request)
-
-        return spec.to_dict()
+        spec_dict = spec.to_dict()
+        spec_dict['securityDefinitions'] = {
+            "APIKeyHeader": {
+                "type": "apiKey",
+                "name": "X-Channelstream-Secret",
+                "in": "header"
+            }
+        }
+        return spec_dict
 
 
 @view_config(

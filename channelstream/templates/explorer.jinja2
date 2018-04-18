@@ -82,10 +82,21 @@
             plugins: [
                 SwaggerUIBundle.plugins.DownloadUrl
             ],
-            layout: "StandaloneLayout"
-        })
+            requestInterceptor: (req) => {
+                console.log(req);
+                var secret = req.headers['X-Channelstream-Secret'];
+                console.log('s',secret);
+                if (secret){
+                    req.headers['X-Channelstream-Secret'] = "OVERWRITE";
+                }
+                return req;
+            },
 
-        window.ui = ui
+            layout: "StandaloneLayout"
+        });
+        window.ui = ui;
+
+
     }
 </script>
 </body>
