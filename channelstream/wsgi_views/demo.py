@@ -36,7 +36,7 @@ def make_server_request(request, payload, endpoint, auth=None):
     """
     server_port = request.registry.settings['port']
     signer = TimestampSigner(request.registry.settings['secret'])
-    sig_for_server = signer.sign(endpoint)
+    sig_for_server = signer.sign('channelstream')
     if not six.PY2:
         sig_for_server = sig_for_server.decode('utf8')
     secret_headers = {'x-channelstream-secret': sig_for_server,

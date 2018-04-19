@@ -67,7 +67,43 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.12.9/swagger-ui-bundle.js"> </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.12.9/swagger-ui-standalone-preset.js"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.3.1/sha.js"> </script>
+
 <script>
+
+    function intToBytes(x){
+        var bytes = [];
+        while ( x > 0 ){
+            bytes.push(String.fromCharCode(x & 255));
+            x = x>>8;
+        }
+        return bytes.reverse().join('');
+    }
+
+    function hashStrip(input){
+        return input.replace('=', '').replace('+', '-').replace('/', '_');
+    }
+
+
+    function signRequest(secret){
+        var EPOCH = 1293840000;
+        var salt = 'itsdangerous.Signer';
+        var derived_key = salt + 'signer' + secret;
+        var shaObj = new jsSHA("SHA-1", "TEXT");
+        shaObj.update(derived_key)
+        derived_key = shaObj.getHash("BYTES");
+        // seconds since 1/1/2011
+        var timestamp = Math.floor(Date.now()/1000) - EPOCH;
+        timestamp = intToBytes(timestamp);
+        var value = 'channelstream' + '.' + hashStrip(window.btoa(timestamp));
+        var shaObj = new jsSHA("SHA-1", "TEXT");
+        shaObj.setHMACKey(derived_key, "BYTES");
+        shaObj.update(value);
+        var hmac = shaObj.getHMAC("B64");
+        return value + '.' + hashStrip(hmac);
+    }
+
+
     window.onload = function() {
 
         // Build a system
@@ -83,11 +119,9 @@
                 SwaggerUIBundle.plugins.DownloadUrl
             ],
             requestInterceptor: (req) => {
-                console.log(req);
                 var secret = req.headers['X-Channelstream-Secret'];
-                console.log('s',secret);
                 if (secret){
-                    req.headers['X-Channelstream-Secret'] = "OVERWRITE";
+                    req.headers['X-Channelstream-Secret'] = signRequest(secret);
                 }
                 return req;
             },
