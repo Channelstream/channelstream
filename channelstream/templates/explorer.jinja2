@@ -77,7 +77,7 @@
             bytes.push(String.fromCharCode(x & 255));
             x = x>>8;
         }
-        return bytes.reverse().join('');
+        return window.btoa(bytes.reverse().join(''));
     }
 
     function hashStrip(input){
@@ -89,18 +89,18 @@
         var EPOCH = 1293840000;
         var salt = 'itsdangerous.Signer';
         var derived_key = salt + 'signer' + secret;
+        var sep = '.';
         var shaObj = new jsSHA("SHA-1", "TEXT");
         shaObj.update(derived_key)
         derived_key = shaObj.getHash("BYTES");
         // seconds since 1/1/2011
         var timestamp = Math.floor(Date.now()/1000) - EPOCH;
-        timestamp = intToBytes(timestamp);
-        var value = 'channelstream' + '.' + hashStrip(window.btoa(timestamp));
+        var value = 'channelstream' + sep + hashStrip(intToBytes(timestamp));
         var shaObj = new jsSHA("SHA-1", "TEXT");
         shaObj.setHMACKey(derived_key, "BYTES");
         shaObj.update(value);
         var hmac = shaObj.getHMAC("B64");
-        return value + '.' + hashStrip(hmac);
+        return value + sep + hashStrip(hmac);
     }
 
 
