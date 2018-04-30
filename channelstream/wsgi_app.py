@@ -17,8 +17,6 @@ def datetime_adapter(obj, request):
 def make_app(server_config):
     config = Configurator(settings=server_config, root_factory=APIFactory,
                           default_permission='access')
-    config.include('cornice')
-    config.include('cornice_swagger')
     config.include('pyramid_jinja2')
 
     def check_function(username, password, request):
