@@ -93,3 +93,5 @@ bower_components
 node_modules
 frontend/build
 /frontend/public/
+/.idea/
+/.pytest_cache/
