@@ -27,6 +27,8 @@
         "copy-webpack-plugin": "^4.4.2",
         "exports-loader": "^0.6.4",
         "html-webpack-plugin": "^2.30.1",
+        "polymer-cli": "^1.7.1",
+        "polymer-modulizer": "https://github.com/Polymer/polymer-modulizer.git",
         "polymer-webpack-loader": "^2.0.1",
         "webpack": "^4.0.0",
         "webpack-cli": "^2.0.9",
