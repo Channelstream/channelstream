@@ -5,7 +5,7 @@
   ],
   "private": true,
   "dependencies": {
-    "polymer": "^2.5.0",
+    "polymer": "^2.6.0",
     "app-layout": "^2.0.4",
     "iron-flex-layout": "^2.0.1",
     "iron-icon": "^2.0.1",
@@ -38,8 +38,6 @@
   },
   "resolutions": {
     "polymer": "2",
-    "webcomponentsjs": "^v1.0.2",
-    "mocha": "^3.1.2",
-    "test-fixture": "^3.0.0"
+    "webcomponentsjs": "^v1.1.0"
   }
 }
