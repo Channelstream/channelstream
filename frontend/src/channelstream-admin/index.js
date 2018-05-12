@@ -1,1 +1,1 @@
-import './channelstream-admin.html';
+import './channelstream-admin.js';

@@ -67,6 +67,11 @@ module.exports = {
             to: 'bower_components/webcomponentsjs/[name].[ext]'
         },
             {
+                from: '**/*.js',
+                context: path.resolve(__dirname, 'node_modules/@webcomponents/webcomponentsjs'),
+                to: 'webcomponentsjs'
+            },
+            {
                 from: path.resolve(__dirname, 'src/channelstream.js'),
                 to: '[name].[ext]'
             },

@@ -1,9 +1,47 @@
-import {ReduxMixin} from './redux/store';
+import {PolymerElement, html} from '@polymer/polymer/polymer-element.js'
+import '@polymer/iron-ajax/iron-ajax.js';
+import '@polymer/paper-progress/paper-progress.js';
+import './server-info.js';
+//import '../debug.js';
+import { connect } from 'pwa-helpers/connect-mixin.js';
+import {store} from './redux/store.js';
 import {actions as channelsActions} from './redux/server_info/channels';
 import {actions as statsActions} from './redux/server_info/server_stats';
 import {actions as currentActions} from './redux/current_actions';
 
-class ChannelStreamAdmin extends ReduxMixin(Polymer.Element) {
+class ChannelStreamAdmin extends connect(store)(PolymerElement) {
+
+    static get template() {
+        return html`
+        <style>
+            .transparent {
+                opacity: 0;
+            }
+
+            #admin-page-progress {
+                width: 100%;
+                --paper-progress-indeterminate-cycle-duration: 3s;
+                margin-bottom: 15px;
+                transition-duration: 500ms;
+            }
+        </style>
+
+        <iron-ajax
+            id="ajax-admin-info"
+            url=""
+            handle-as="json"
+            loading="{{loadingInfo}}"
+            data-type="SERVER_INFO"
+            on-request="_handleAjaxRequest"
+            on-error="_handleAjaxRequestError"
+            on-response="_handleAjaxResponse">
+        </iron-ajax>
+
+        <paper-progress id="admin-page-progress" indeterminate class="transparent" transparent="[[loadingAdmin]]"></paper-progress>
+
+        <server-info channels="[[channels]]" server-stats="[[serverStats]]"></server-info>
+        `;
+    }
 
     static get is() {
         return 'channelstream-admin';
@@ -18,16 +56,13 @@ class ChannelStreamAdmin extends ReduxMixin(Polymer.Element) {
                 }
             },
             channels: {
-                type: Array,
-                statePath: 'serverInfo.channels'
+                type: Array
             },
             serverStats: {
-                type: Object,
-                statePath: 'serverInfo.serverStats'
+                type: Object
             },
             currentActions: {
-                type: Array,
-                statePath: 'currentActions'
+                type: Array
             },
             loadingInfo: {
                 type: Boolean,
@@ -35,6 +70,13 @@ class ChannelStreamAdmin extends ReduxMixin(Polymer.Element) {
             }
         };
     }
+
+    _stateChanged(state) {
+        this.channels = state.serverInfo.channels;
+        this.serverStats = state.serverInfo.serverStats;
+        this.currentActions = state.serverInfo.currentActions;
+    }
+
 
     static get actions() {
         return {
@@ -81,17 +123,20 @@ class ChannelStreamAdmin extends ReduxMixin(Polymer.Element) {
     }
 
     _handleAjaxRequest(event){
-        this.dispatch('currentActionStart', event.target.dataset.type, event.detail);
+        store.dispatch(currentActions.currentActionStart(
+            event.target.dataset.type, event.detail));
     }
 
     _handleAjaxRequestError(event){
-        this.dispatch('currentActionError', event.target.dataset.type, event.detail.error.message);
+        store.dispatch(currentActions.currentActionError(
+            event.target.dataset.type, event.detail.error.message));
     }
 
     _handleAjaxResponse(event) {
         let response = event.detail.response;
-        this.dispatch('currentActionFinish', event.target.dataset.type, response);
-        this.dispatch('setInfo', {
+        store.dispatch(currentActions.currentActionFinish(
+            event.target.dataset.type, response));
+        store.dispatch(statsActions.set({
             "remembered_user_count": response.remembered_user_count,
             "unique_user_count": response.unique_user_count,
             "total_connections": response.total_connections,
@@ -99,10 +144,10 @@ class ChannelStreamAdmin extends ReduxMixin(Polymer.Element) {
             "total_messages": response.total_messages,
             "total_unique_messages": response.total_unique_messages,
             "uptime": response.uptime
-        });
+        }));
 
         let channels = Object.values(response.channels);
-        this.dispatch('setChannels', channels);
+        store.dispatch(channelsActions.set(channels));
     }
 
 }
