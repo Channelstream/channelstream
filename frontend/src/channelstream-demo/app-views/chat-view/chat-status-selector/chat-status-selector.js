@@ -1,5 +1,5 @@
 import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
-// import 'web-animations-js/web-animations.min.js';
+// import 'web-animations-js/web-animations-next-lite.min.js';
 import '@polymer/paper-listbox/paper-listbox.js';
 import '@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '@polymer/paper-item/paper-item.js';
