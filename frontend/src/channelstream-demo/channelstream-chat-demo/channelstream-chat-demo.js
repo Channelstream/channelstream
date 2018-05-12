@@ -1,4 +1,14 @@
-import {ReduxMixin} from '../redux/store';
+import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {connect} from 'pwa-helpers/connect-mixin.js';
+import '@polymer/iron-pages/iron-pages.js';
+import '@polymer/paper-tabs/paper-tabs.js';
+import '@polymer/app-layout/app-toolbar/app-toolbar.js';
+import '../../debug.js';
+import '../channelstream-connection/channelstream-connection.js';
+import '../app-views/admin-view/admin-view.js';
+import '../app-views/chat-view/chat-view.js';
+
+import {store} from '../redux/store.js';
 import {actions as currentActions} from '../../channelstream-admin/redux/current_actions';
 import {actions as appActions} from '../redux/app';
 import {actions as userActions} from '../redux/user';
@@ -6,7 +16,48 @@ import {actions as chatViewChannelActions} from '../redux/chat_view/channels';
 import {actions as chatViewUsersActions} from '../redux/chat_view/users';
 import {actions as chatViewMessagesActions} from '../redux/chat_view/messages';
 
-class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
+class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
+
+    static get template() {
+        return html`
+        <style>
+            .pad-content {
+                padding: 20px;
+            }
+
+            app-toolbar {
+                background-color: #4285f4;
+                color: #fff;
+                margin: 0 0 20px 0;
+            }
+
+        </style>
+        <channelstream-connection
+                id="channelstream-connection"
+                username="[[user.username]]"
+                channels="[[user.subscribedChannels]]"
+                on-channelstream-listen-message="receivedMessage"
+                on-channelstream-connected="handleConnected"
+                on-channelstream-subscribed="handleSubscribed"
+                on-channelstream-unsubscribed="handleUnsubscribed"
+                on-channelstream-channels-changed="handleChannelsChange">
+        </channelstream-connection>
+
+        <app-toolbar>
+            <span class="title">Channelstream Demo - Hello [[user.username]]</span>
+
+            <paper-tabs selected="[[page]]" attr-for-selected="name" on-selected-changed="changedTab">
+                <paper-tab name="chat">Chat</paper-tab>
+                <paper-tab name="admin">Admin Stats</paper-tab>
+            </paper-tabs>
+        </app-toolbar>
+
+        <iron-pages selected="[[page]]" attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
+            <chat-view name="chat"></chat-view>
+            <admin-view name="admin"></admin-view>
+        </iron-pages>
+        `
+    }
 
     static get is() {
         return 'channelstream-chat-demo';
@@ -23,42 +74,30 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
             isReady: Boolean,
             user: {
                 type: Object,
-                statePath: 'user',
                 observer: 'handleUserChange'
             },
             channels: {
-                type: Array,
-                statePath: 'chatView.channels'
+                type: Array
             },
 
             users: {
-                type: Object,
-                statePath: 'chatView.users'
+                type: Object
             },
             page: {
-                type: String,
-                statePath: 'app.selectedPage'
+                type: String
             }
         };
     }
 
-    static get actions() {
-        return {
-            ...currentActions,
-            setPage: appActions.setPage,
-            setUserState: userActions.setState,
-            setUserChannels: userActions.setChannels,
-            setChannelStates: chatViewChannelActions.setChannelStates,
-            delChannelState: chatViewChannelActions.delChannelState,
-            setUserStates: chatViewUsersActions.setUserStates,
-            setChannelMessages: chatViewMessagesActions.setChannelMessages,
-            addChannelUsers: chatViewChannelActions.addChannelUsers,
-            removeChannelUsers: chatViewChannelActions.removeChannelUsers
-        };
+    _stateChanged(state) {
+        this.user = state.user;
+        this.channels = state.chatView.channels;
+        this.users = state.chatView.users;
+        this.page = state.app.selectedPage;
     }
 
     changedTab(event) {
-        this.dispatch('setPage', event.detail.value);
+        store.dispatch(appActions.setPage(event.detail.value));
     }
 
     receivedMessage(event) {
@@ -70,23 +109,23 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
                 // for (let channel of Object.entries(data.channels_info.channels)) {
                 //     messageMappings[channel[0]] = channel[1].history;
                 // }
-                this.dispatch('setChannelMessages', {[message.channel]: [message]});
+                store.dispatch(chatViewMessagesActions.setChannelMessages({[message.channel]: [message]}));
 
             }
             // update users on presence message
             if (message.type === 'presence') {
                 // user joined
                 if (message.message.action === 'joined') {
-                    this.dispatch('setUserStates', [{user: message.user, state: message.state}]);
-                    this.dispatch('addChannelUsers', message.channel, [message.user]);
+                    store.dispatch(chatViewUsersActions.setUserStates([{user: message.user, state: message.state}]));
+                    store.dispatch(chatViewChannelActions.addChannelUsers(message.channel, [message.user]));
                 }
                 // user disconnected
                 else {
-                    this.dispatch('removeChannelUsers', message.channel, [message.user]);
+                    store.dispatch(chatViewChannelActions.removeChannelUsers(message.channel, [message.user]));
                 }
             }
             if (message.type === 'user_state_change') {
-                this.dispatch('setUserStates', [{user: message.user, state: message.message.state}]);
+                store.dispatch(chatViewUsersActions.setUserStates([{user: message.user, state: message.message.state}]));
             }
         }
     }
@@ -124,8 +163,10 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
         this._boundSubscribe = e => this.subscribeToChannel(e);
         this._boundChangeStatus = e => this.changeStatus(e);
+        this._boundSendMessage = e => this.sendMessage(e);
         this.addEventListener('channelpicker-subscribe', this._boundSubscribe);
         this.addEventListener('change-status', this._boundChangeStatus);
+        this.addEventListener('send-message', this._boundSendMessage);
 
     }
 
@@ -169,15 +210,15 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
 
     handleConnected(event) {
         var data = event.detail.data;
-        this.dispatch('setUserState', data.state);
-        this.dispatch('setUserChannels', data.channels);
-        this.dispatch('setUserStates', data.channels_info.users);
-        this.dispatch('setChannelStates', data.channels_info.channels);
+        store.dispatch(userActions.setState(data.state));
+        store.dispatch(userActions.setChannels(data.channels));
+        store.dispatch(chatViewUsersActions.setUserStates(data.channels_info.users));
+        store.dispatch(chatViewChannelActions.setChannelStates(data.channels_info.channels));
         let messageMappings = {};
         for (let channel of Object.entries(data.channels_info.channels)) {
             messageMappings[channel[0]] = channel[1].history;
         }
-        this.dispatch('setChannelMessages', messageMappings);
+        store.dispatch(chatViewMessagesActions.setChannelMessages(messageMappings));
     }
 
     subscribeToChannel(event) {
@@ -198,23 +239,23 @@ class ChannelStreamChatDemo extends ReduxMixin(Polymer.Element) {
         console.log('handleSubscribed');
         var data = event.detail.data;
         var channelInfo = data.channels_info;
-        this.dispatch('setUserChannels', data.channels);
-        this.dispatch('setUserStates', channelInfo.users);
-        this.dispatch('setChannelStates', channelInfo.channels);
+        store.dispatch(userActions.setChannels(data.channels));
+        store.dispatch(chatViewUsersActions.setUserStates(channelInfo.users));
+        store.dispatch(chatViewChannelActions.setChannelStates(channelInfo.channels));
         let messageMappings = {};
         for (let channel of Object.entries(channelInfo.channels)) {
             messageMappings[channel[0]] = channel[1].history;
         }
-        this.dispatch('setChannelMessages', messageMappings);
+        store.dispatch(chatViewMessagesActions.setChannelMessages(messageMappings));
     }
 
     handleUnsubscribed(event) {
         var channelKeys = event.detail.data.unsubscribed_from;
         for (var i = 0; i < channelKeys.length; i++) {
             var key = channelKeys[i];
-            this.dispatch('delChannelState', key);
+            store.dispatch(chatViewChannelActions.delChannelState(key));
         }
-        this.dispatch('setUserChannels', event.detail.data.channels);
+        store.dispatch(userActions.setChannels(event.detail.data.channels));
     }
 }
 

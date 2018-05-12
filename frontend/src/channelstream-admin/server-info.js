@@ -1,4 +1,4 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js'
+import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
 import '@polymer/iron-collapse/iron-collapse.js';
 import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-icons/social-icons.js';
@@ -7,7 +7,7 @@ import '@polymer/paper-button/paper-button.js';
 import '@polymer/paper-card/paper-card.js';
 import '@polymer/paper-tooltip/paper-tooltip.js';
 import '@polymer/iron-collapse/iron-collapse.js';
-//import '../debug.js';
+import '../debug.js';
 
 import {ReduxMixin} from './redux/store';
 import {actions as channelsActions} from './redux/server_info/channels';

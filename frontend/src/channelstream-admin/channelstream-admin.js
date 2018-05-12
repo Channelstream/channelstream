@@ -1,8 +1,8 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js'
+import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
 import '@polymer/iron-ajax/iron-ajax.js';
 import '@polymer/paper-progress/paper-progress.js';
 import './server-info.js';
-//import '../debug.js';
+import '../debug.js';
 import { connect } from 'pwa-helpers/connect-mixin.js';
 import {store} from './redux/store.js';
 import {actions as channelsActions} from './redux/server_info/channels';
@@ -75,15 +75,6 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
         this.channels = state.serverInfo.channels;
         this.serverStats = state.serverInfo.serverStats;
         this.currentActions = state.serverInfo.currentActions;
-    }
-
-
-    static get actions() {
-        return {
-            ...currentActions,
-            setChannels: channelsActions.set,
-            setInfo: statsActions.set
-        };
     }
 
     connectedCallback() {

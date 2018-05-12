@@ -1,6 +1,22 @@
-class ChatChannelPicker extends Polymer.mixinBehaviors([Polymer.IronResizableBehavior], Polymer.Element) {
+import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import '@polymer/paper-button/paper-button.js';
+import '@polymer/iron-icon/iron-icon.js';
+
+
+class ChatChannelPicker extends PolymerElement {
     static get is() {
         return 'chat-channel-picker';
+    }
+
+    static get template(){
+        return html`
+        <template is="dom-repeat" items="[[possibleChannels]]">
+            <paper-button raised on-tap="subscribeToChannel" channel="[[item]]">
+                <iron-icon icon="[[_computedConnectIcon(subscribedChannels, item)]]"></iron-icon>
+                [[_computedConnectLabel(subscribedChannels, item)]]
+            </paper-button>
+        </template>
+        `
     }
 
     static get properties() {

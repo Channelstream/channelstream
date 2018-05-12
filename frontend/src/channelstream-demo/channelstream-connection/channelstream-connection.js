@@ -1,6 +1,35 @@
-import {ReduxMixin} from "../redux/store";
+import {PolymerElement} from '@polymer/polymer/polymer-element.js'
+import '../../channelstream.js';
 
-class ChannelStreamConnection extends Polymer.Element {
+/**
+ *
+ `<channelstream-connection>` allows you to connect and interact with channelstream server
+ abstracting websocket/long-polling connections from you.
+
+ In typical use, just slap some `<channelstream-connection>` at the top of your body:
+
+ <body>
+ <channelstream-connection
+ username="{{user.username}}"
+ connect-url="http://127.0.0.1:8000/demo/connect"
+ disconnect-url="http://127.0.0.1:8000/disconnect"
+ subscribe-url="http://127.0.0.1:8000/demo/subscribe"
+ message-url="http://127.0.0.1:8000/demo/message"
+ long-poll-url="http://127.0.0.1:8000/listen"
+ websocket-url="http://127.0.0.1:8000/ws"
+ channels-url='["channel1", "channel2"]' />
+
+ Then you can do `channelstreamElem.connect()` to kick off your connection.
+ This element also handles automatic reconnections.
+
+ ## Default handlers
+
+ By default element has a listener attached that will fire `startListening()` handler on `channelstream-connected` event.
+
+ By default element has a listener attached that will fire `retryConnection()` handler on `channelstream-connect-error` event,
+ this handler will forever try to re-establish connection to the server incrementing intervals between retries up to 1 minute.
+ */
+class ChannelStreamConnection extends PolymerElement {
     static get is() {
         return 'channelstream-connection';
     }
