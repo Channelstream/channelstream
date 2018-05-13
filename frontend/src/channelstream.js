@@ -336,8 +336,10 @@
                 this.websocket.onerror = null;
                 this.websocket.close();
             }
-            var request = this._ajaxListen.request;
-            request.abort();
+            if(this._ajaxListen){
+                var request = this._ajaxListen.request;
+                request.abort();
+            }
             this.connected = false;
             this.connectionClosedCallback();
         },
