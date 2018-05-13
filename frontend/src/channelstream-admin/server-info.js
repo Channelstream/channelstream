@@ -93,7 +93,6 @@ class ServerInfo extends LitElement {
             ${repeat(channels, (channel) => channel.name, (channel, index) => html`
             <paper-card heading="channel: ${channel.name}" class$="channel-${channel.uuid}">
                 <div class="card-content">
-                ${index}
                     <ul>
                         <li><strong>Long name</strong>: ${channel.long_name}</li>
                         <li><strong>last active</strong>: ${channel.last_active}</li>
