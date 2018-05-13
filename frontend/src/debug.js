@@ -1,9 +1,9 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
 
 
-class AppDebug extends PolymerElement {
+class AppDebug extends LitElement {
 
-    static get template() {
+    _render({data}) {
         return html`
         <style>
             pre{
@@ -11,7 +11,7 @@ class AppDebug extends PolymerElement {
                 border: 1px solid;
             }
         </style>
-        <pre>[[output]]</pre>
+        <pre>${JSON.stringify(data, null, 4)}</pre>
         `
     }
 
@@ -25,16 +25,6 @@ class AppDebug extends PolymerElement {
                 type: Object
             }
         };
-    }
-
-    static get observers() {
-        return [
-            '_dumpOut(data.*)'
-        ];
-    }
-
-    _dumpOut() {
-        this.output = JSON.stringify(this.data, null, 4);
     }
 }
 
