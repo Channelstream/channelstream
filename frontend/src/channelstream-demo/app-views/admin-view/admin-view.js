@@ -5,7 +5,7 @@ import {store} from '../../redux/store.js';
 import '@polymer/iron-ajax/iron-ajax.js';
 import '@polymer/paper-progress/paper-progress.js';
 import '../../../channelstream-admin/server-info.js';
-
+import {fetchServerInfo} from '../../../channelstream-admin/channelstream-admin';
 import {actions as currentActions} from "../../../channelstream-admin/redux/current_actions";
 import {actions as statsActions} from "../../../channelstream-admin/redux/server_info/server_stats";
 import {actions as channelsActions} from "../../../channelstream-admin/redux/server_info/channels";
@@ -27,13 +27,6 @@ class AdminView extends connect(store)(PolymerElement) {
             }
 
         </style>
-        <iron-ajax
-            id="ajax-admin-info"
-            handle-as="json"
-            loading="{{loadingAdmin}}"
-            last-response="{{adminResponse}}"
-            on-response="setChannels"
-            debounce-duration="300"></iron-ajax>
 
         <paper-progress id="admin-page-progress" indeterminate class="transparent"></paper-progress>
 
@@ -62,9 +55,6 @@ class AdminView extends connect(store)(PolymerElement) {
             currentActions: {
                 type: Array
             },
-            loadingInfo: {
-                type: Boolean
-            },
             ironSelected: {
                 type: Boolean,
                 observer: 'ironChange'
@@ -77,7 +67,6 @@ class AdminView extends connect(store)(PolymerElement) {
         this.channels = state.adminView.channels;
         this.serverStats = state.adminView.serverStats;
         this.currentActions = state.currentActions;
-        this.loadingInfo = state.adminView.loadingChange;
     }
 
     ready() {
@@ -87,8 +76,7 @@ class AdminView extends connect(store)(PolymerElement) {
     }
 
     refresh() {
-        this.$['ajax-admin-info'].url = this.appConfig.infoUrl;
-        this.$['ajax-admin-info'].generateRequest();
+        fetchServerInfo(this.appConfig.infoUrl, store);
     }
 
     _addInterval() {
@@ -120,23 +108,7 @@ class AdminView extends connect(store)(PolymerElement) {
         }
     }
 
-    setChannels(event) {
-        let response = event.detail.response;
-        store.dispatch(currentActions.currentActionFinish(
-            event.target.dataset.type, response));
-        store.dispatch(statsActions.set({
-            "remembered_user_count": response.remembered_user_count,
-            "unique_user_count": response.unique_user_count,
-            "total_connections": response.total_connections,
-            "total_channels": response.total_channels,
-            "total_messages": response.total_messages,
-            "total_unique_messages": response.total_unique_messages,
-            "uptime": response.uptime
-        }));
 
-        let channels = Object.values(response.channels);
-        store.dispatch(channelsActions.set(channels));
-    }
 }
 
 customElements.define(AdminView.is, AdminView);

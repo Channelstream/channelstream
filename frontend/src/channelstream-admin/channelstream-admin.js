@@ -9,6 +9,42 @@ import {actions as channelsActions} from './redux/server_info/channels';
 import {actions as statsActions} from './redux/server_info/server_stats';
 import {actions as currentActions} from './redux/current_actions';
 
+
+const fetchServerInfo = (url, store) => {
+    const action_type = 'SERVER_INFO';
+    store.dispatch(currentActions.currentActionStart(
+        action_type, {url}));
+
+    fetch(url, {
+        method: 'get',
+        credentials: 'same-origin'
+    }).then(function(response) {
+        return response.json();
+    }).then(function(response) {
+        // let response = event.detail.response;
+        console.log('x',response)
+        store.dispatch(currentActions.currentActionFinish(
+            action_type, response));
+        store.dispatch(statsActions.set({
+            "remembered_user_count": response.remembered_user_count,
+            "unique_user_count": response.unique_user_count,
+            "total_connections": response.total_connections,
+            "total_channels": response.total_channels,
+            "total_messages": response.total_messages,
+            "total_unique_messages": response.total_unique_messages,
+            "uptime": response.uptime
+        }));
+
+        let channels = Object.values(response.channels);
+        store.dispatch(channelsActions.set(channels));
+
+    }).catch(function(err) {
+        store.dispatch(currentActions.currentActionError(
+            action_type, err));
+    });
+
+};
+
 class ChannelStreamAdmin extends connect(store)(PolymerElement) {
 
     static get template() {
@@ -25,17 +61,6 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
                 transition-duration: 500ms;
             }
         </style>
-
-        <iron-ajax
-            id="ajax-admin-info"
-            url=""
-            handle-as="json"
-            loading="{{loadingInfo}}"
-            data-type="SERVER_INFO"
-            on-request="_handleAjaxRequest"
-            on-error="_handleAjaxRequestError"
-            on-response="_handleAjaxResponse">
-        </iron-ajax>
 
         <paper-progress id="admin-page-progress" indeterminate class="transparent" transparent="[[loadingAdmin]]"></paper-progress>
 
@@ -62,10 +87,7 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
                 type: Object
             },
             currentActions: {
-                type: Array
-            },
-            loadingInfo: {
-                type: Boolean,
+                type: Object,
                 observer: 'loadingChange'
             }
         };
@@ -74,13 +96,11 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
     _stateChanged(state) {
         this.channels = state.serverInfo.channels;
         this.serverStats = state.serverInfo.serverStats;
-        this.currentActions = state.serverInfo.currentActions;
+        this.currentActions = state.currentActions;
     }
 
     connectedCallback() {
         super.connectedCallback();
-        // refresh data when document is attached to dom
-        this.$['ajax-admin-info'].url = this.appConfig.urls.jsonUrl;
         this.refresh();
         this._addInterval();
     }
@@ -91,7 +111,7 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
     }
 
     refresh() {
-        this.$['ajax-admin-info'].generateRequest();
+        fetchServerInfo(this.appConfig.urls.jsonUrl, store);
     }
 
     _addInterval() {
@@ -105,7 +125,7 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
     }
 
     loadingChange() {
-        if (this.loadingInfo) {
+        if (this.currentActions.active.length) {
             this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', false);
         }
         else {
@@ -118,29 +138,8 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
             event.target.dataset.type, event.detail));
     }
 
-    _handleAjaxRequestError(event){
-        store.dispatch(currentActions.currentActionError(
-            event.target.dataset.type, event.detail.error.message));
-    }
-
-    _handleAjaxResponse(event) {
-        let response = event.detail.response;
-        store.dispatch(currentActions.currentActionFinish(
-            event.target.dataset.type, response));
-        store.dispatch(statsActions.set({
-            "remembered_user_count": response.remembered_user_count,
-            "unique_user_count": response.unique_user_count,
-            "total_connections": response.total_connections,
-            "total_channels": response.total_channels,
-            "total_messages": response.total_messages,
-            "total_unique_messages": response.total_unique_messages,
-            "uptime": response.uptime
-        }));
-
-        let channels = Object.values(response.channels);
-        store.dispatch(channelsActions.set(channels));
-    }
-
 }
 
 customElements.define(ChannelStreamAdmin.is, ChannelStreamAdmin);
+
+export {fetchServerInfo};

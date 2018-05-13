@@ -6,7 +6,6 @@ import '@polymer/paper-badge/paper-badge.js';
 import '@polymer/paper-button/paper-button.js';
 import '@polymer/paper-card/paper-card.js';
 import '@polymer/paper-tooltip/paper-tooltip.js';
-import '@polymer/iron-collapse/iron-collapse.js';
 import '../debug.js';
 
 import {ReduxMixin} from './redux/store';
