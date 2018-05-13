@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from datetime import datetime
 
@@ -12,6 +13,7 @@ class User(object):
     """ represents a unique user of the system """
 
     def __init__(self, username):
+        self.id = str(uuid.uuid4()).replace('-', '')
         self.username = username
         self.state = {}
         self.state_public_keys = []
@@ -58,7 +60,8 @@ class User(object):
 
     def get_info(self, include_connections=False):
         info = {'state': self.public_state,
-                'user': self.username}
+                'user': self.username,
+                'id': self.id}
         if include_connections:
             info['connections'] = [c.id for c in self.connections]
         return info
