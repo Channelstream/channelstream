@@ -1,4 +1,5 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
+import { repeat } from 'lit-html/lib/repeat.js';
 import '@polymer/iron-collapse/iron-collapse.js';
 import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-icons/social-icons.js';
@@ -13,9 +14,9 @@ import {actions as channelsActions} from './redux/server_info/channels';
 import {actions as statsActions} from './redux/server_info/server_stats';
 import {actions as currentActions} from './redux/current_actions';
 
-class ServerInfo extends PolymerElement {
+class ServerInfo extends LitElement {
 
-    static get template() {
+    _render({channels, serverStats}) {
         return html`
         <style>
             .server-stat {
@@ -59,81 +60,83 @@ class ServerInfo extends PolymerElement {
         </style>
 
         <div class="server-stat">
-            Uptime [[serverStats.uptime]]
+            Uptime ${serverStats.uptime}
         </div>
         <div class="server-stat">
             Unique users remembered
-            <paper-badge label="[[serverStats.remembered_user_count]]"></paper-badge>
+            <paper-badge label="${serverStats.remembered_user_count}"></paper-badge>
         </div>
         <div class="server-stat">
             Unique users connected
-            <paper-badge label="[[serverStats.unique_user_count]]"></paper-badge>
+            <paper-badge label="${serverStats.unique_user_count}"></paper-badge>
         </div>
         <div class="server-stat">
             Total connections
-            <paper-badge label="[[serverStats.total_connections]]"></paper-badge>
+            <paper-badge label="${serverStats.total_connections}"></paper-badge>
         </div>
 
         <div class="server-stat">
             Total channels
-            <paper-badge label="[[serverStats.total_channels]]"></paper-badge>
+            <paper-badge label="${serverStats.total_channels}"></paper-badge>
         </div>
 
         <div class="server-stat">
             Messages since start
-            <paper-badge label="[[serverStats.total_unique_messages]]"></paper-badge>
+            <paper-badge label="${serverStats.total_unique_messages}"></paper-badge>
         </div>
 
         <div class="server-stat">
             All frames sent
-            <paper-badge label="[[serverStats.total_messages]]"></paper-badge>
+            <paper-badge label="${serverStats.total_messages}"></paper-badge>
         </div>
 
-
-        <template is="dom-repeat" items="[[channels]]">
-            <paper-card heading="channel: [[item.name]]">
+            ${repeat(channels, (channel) => channel.name, (channel, index) => html`
+            <paper-card heading="channel: ${channel.name}" class$="channel-${channel.id}">
                 <div class="card-content">
+                ${index}
                     <ul>
-                        <li><strong>Long name</strong>: [[item.long_name]]</li>
-                        <li><strong>last active</strong>: [[item.last_active]]</li>
-                        <li><strong>Total connections</strong>: [[item.total_connections]]</li>
-                        <li><strong>Total users</strong>: [[item.total_users]]</li>
+                        <li><strong>Long name</strong>: ${channel.long_name}</li>
+                        <li><strong>last active</strong>: ${channel.last_active}</li>
+                        <li><strong>Total connections</strong>: ${channel.total_connections}</li>
+                        <li><strong>Total users</strong>: ${channel.total_users}</li>
                     </ul>
                     <p><strong>Config</strong></p>
-                    <app-debug data="[[item.settings]]"></app-debug>
+                    <app-debug data="${channel.settings}"></app-debug>
 
-                    <iron-collapse class$="channel-history-[[index]]">
+                    <iron-collapse class$="channel-history-${channel.id}">
                         <div class="history-holder">
                             <strong>Message history:</strong>
-                            <template is="dom-repeat" items="[[item.history]]">
-                                <app-debug data="[[item]]"></app-debug></div>
-        </template>
-        </div>
-        </iron-collapse>
+                            ${channel.history.map((item) => html`
+                            <app-debug data="${item}"></app-debug>
+                            `)}
+                        </div>
+                    </iron-collapse>
 
-        <iron-collapse class$="channel-users-[[index]]">
-            <div class="users-holder">
-                <strong>Connected users:</strong>
-                <template is="dom-repeat" items="[[item.users]]">
-                    <div>[[item]]</div>
-                </template>
+                    <iron-collapse class$="channel-users-${channel.id}">
+                        <div class="users-holder">
+                            <strong>Connected users:</strong>
+                            ${channel.users.map((item) => html`
+                            <div>${item}</div>
+                            `)}
+                        </div>
+                    </iron-collapse>
+
             </div>
-        </iron-collapse>
+            <div class="card-actions">
+                <span>
+                <paper-button raised toggles on-tap=${(e) => this.toggleHistory(channel.id)}">
+                    <iron-icon icon="icons:history"></iron-icon>History</paper-button>
+                <paper-tooltip position="top" animation-delay="0">Shows this channels history</paper-tooltip>
+                </span>
+                <span>
+                <paper-button raised toggles on-tap=${(e) => this.toggleUsers(channel.id)}">
+                    <iron-icon icon="social:people-outline"></iron-icon>Users</paper-button>
+                <paper-tooltip position="top" animation-delay="0">Shows currently connected users</paper-tooltip>
+                </span>
+            </div>
+            </paper-card>
+            `)}
 
-        </div>
-        <div class="card-actions">
-            <span>
-            <paper-button toggles raised on-tap="toggleHistory" data-channel$="[[item.name]]" data-index$="[[index]]">
-                <iron-icon icon="icons:history"></iron-icon>History</paper-button>
-            <paper-tooltip position="top" animation-delay="0">Shows this channels history</paper-tooltip>
-            </span>
-            <span>
-            <paper-button toggles raised on-tap="toggleUsers" data-channel$="[[item.name]]" data-index$="[[index]]">
-                <iron-icon icon="social:people-outline"></iron-icon>Users</paper-button>
-            <paper-tooltip position="top" animation-delay="0">Shows currently connected users</paper-tooltip>
-            </span>
-        </div>
-        </paper-card>
         `;
     }
 
@@ -152,15 +155,13 @@ class ServerInfo extends PolymerElement {
         };
     }
 
-    toggleHistory(event) {
-        let index = event.currentTarget.dataset['index'];
+    toggleHistory(index) {
         if (index !== undefined) {
             this.shadowRoot.querySelector('.channel-history-' + index).toggle();
         }
     }
 
-    toggleUsers(event) {
-        let index = event.currentTarget.dataset['index'];
+    toggleUsers(index) {
         if (index !== undefined) {
             this.shadowRoot.querySelector('.channel-users-' + index).toggle();
         }
