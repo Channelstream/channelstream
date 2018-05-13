@@ -31,12 +31,10 @@ class ChatMessageList extends connect(store)(PolymerElement) {
     static get properties() {
         return {
             messages: {
-                type: Array,
-                statePath: 'chatView.messages'
+                type: Array
             },
             selectedChannel: {
-                type: String,
-                statePath: 'chatView.ui.selectedChannel'
+                type: String
             }
         };
     }
