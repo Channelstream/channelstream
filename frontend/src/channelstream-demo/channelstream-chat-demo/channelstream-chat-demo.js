@@ -1,4 +1,4 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import '@polymer/iron-pages/iron-pages.js';
 import '@polymer/paper-tabs/paper-tabs.js';
@@ -16,9 +16,9 @@ import {actions as chatViewChannelActions} from '../redux/chat_view/channels';
 import {actions as chatViewUsersActions} from '../redux/chat_view/users';
 import {actions as chatViewMessagesActions} from '../redux/chat_view/messages';
 
-class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
+class ChannelStreamChatDemo extends connect(store)(LitElement) {
 
-    static get template() {
+    _render({user, page}) {
         return html`
         <style>
             .pad-content {
@@ -34,25 +34,25 @@ class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
         </style>
         <channelstream-connection
                 id="channelstream-connection"
-                username="[[user.username]]"
-                channels="[[user.subscribedChannels]]"
-                on-channelstream-listen-message="receivedMessage"
-                on-channelstream-connected="handleConnected"
-                on-channelstream-subscribed="handleSubscribed"
-                on-channelstream-unsubscribed="handleUnsubscribed"
-                on-channelstream-channels-changed="handleChannelsChange">
+                username=${user.username}
+                channels=${user.subscribedChannels}
+                on-channelstream-listen-message=${(e) => this.receivedMessage(e)}
+                on-channelstream-connected=${(e) => this.handleConnected(e)}
+                on-channelstream-subscribed=${(e) => this.handleSubscribed(e)}
+                on-channelstream-unsubscribed=${(e) => this.handleUnsubscribed(e)}
+                on-channelstream-channels-changed=${(e) => this.handleChannelsChange(e)}>
         </channelstream-connection>
 
         <app-toolbar>
-            <span class="title">Channelstream Demo - Hello [[user.username]]</span>
+            <span class="title">Channelstream Demo - Hello ${user.username}</span>
 
-            <paper-tabs selected="[[page]]" attr-for-selected="name" on-selected-changed="changedTab">
+            <paper-tabs selected=${page} attr-for-selected="name" on-selected-changed="changedTab">
                 <paper-tab name="chat">Chat</paper-tab>
                 <paper-tab name="admin">Admin Stats</paper-tab>
             </paper-tabs>
         </app-toolbar>
 
-        <iron-pages selected="[[page]]" attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
+        <iron-pages selected=${page} attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
             <chat-view name="chat"></chat-view>
             <admin-view name="admin"></admin-view>
         </iron-pages>
@@ -65,27 +65,12 @@ class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
 
     static get properties() {
         return {
-            appConfig: {
-                type: Array,
-                value: () => {
-                    return window.AppConf;
-                }
-            },
+            appConfig: Object,
             isReady: Boolean,
-            user: {
-                type: Object,
-                observer: 'handleUserChange'
-            },
-            channels: {
-                type: Array
-            },
-
-            users: {
-                type: Object
-            },
-            page: {
-                type: String
-            }
+            user: Object,
+            channels: Array,
+            users: Object,
+            page: String
         };
     }
 
@@ -94,6 +79,11 @@ class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
         this.channels = state.chatView.channels;
         this.users = state.chatView.users;
         this.page = state.app.selectedPage;
+    }
+
+    constructor() {
+        super();
+        this.appConfig = window.AppConf;
     }
 
     changedTab(event) {
@@ -143,7 +133,6 @@ class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
     /** kicks off the connection */
     connectedCallback() {
         super.connectedCallback();
-        this.isReady = true;
         var channelstreamConnection = this.shadowRoot.querySelector('channelstream-connection');
         channelstreamConnection.connectUrl = this.appConfig.connectUrl;
         channelstreamConnection.disconnectUrl = this.appConfig.disconnectUrl;
@@ -161,40 +150,36 @@ class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
         }.bind(this));
         channelstreamConnection.connect();
 
-        this._boundSubscribe = e => this.subscribeToChannel(e);
-        this._boundChangeStatus = e => this.changeStatus(e);
-        this._boundSendMessage = e => this.sendMessage(e);
-        this.addEventListener('channelpicker-subscribe', this._boundSubscribe);
-        this.addEventListener('change-status', this._boundChangeStatus);
-        this.addEventListener('send-message', this._boundSendMessage);
+        this.addEventListener('channelpicker-subscribe', this.subscribeToChannel);
+        this.addEventListener('change-status', this.changeStatus);
+        this.addEventListener('send-message', this.sendMessage);
 
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
-        this.removeEventListener('channelpicker-subscribe', this._boundSubscribe);
-        this.removeEventListener('change-status', this._boundChangeStatus);
+    }
+
+    _didRender(props, changedProps, prevProps){
+        if (changedProps.user && prevProps.user){
+            this.handleUserChange(changedProps.user, prevProps.user);
+        }
     }
 
     /** creates new connection on name change */
     handleUserChange(newObj, oldObj) {
-        if (!this.isReady) {
-            return;
-        }
         if (oldObj.username === newObj.username) {
             return;
         }
-        var connection = this.shadowRoot.querySelector('channelstream-connection');
+        var connection = this.getConnection();
         connection.disconnect();
         connection.connect();
     }
 
     /** subscribes/unsubscribes users from channels in channelstream */
-    handleChannelsChange() {
-        if (!this.isReady) {
-            return;
-        }
-        var connection = this.shadowRoot.querySelector('channelstream-connection');
+    handleChannelsChange(e) {
+        console.log('handleChannelsChange', e.detail);
+        var connection = this.getConnection();
         var shouldUnsubscribe = connection.calculateUnsubscribe();
         if (shouldUnsubscribe.length > 0) {
             connection.unsubscribe(shouldUnsubscribe);
@@ -205,7 +190,7 @@ class ChannelStreamChatDemo extends connect(store)(PolymerElement) {
     }
 
     getConnection() {
-        return this.$['channelstream-connection'];
+        return this.shadowRoot.querySelector('channelstream-connection');
     }
 
     handleConnected(event) {
