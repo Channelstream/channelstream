@@ -24,7 +24,7 @@ class Channel(object):
         :param long_name:
         :param channel_config:
         """
-        self.id = str(uuid.uuid4()).replace('-', '')
+        self.uuid = str(uuid.uuid4()).replace('-', '')
         self.name = name
         self.long_name = long_name
         self.last_active = datetime.utcnow()
@@ -175,7 +175,7 @@ class Channel(object):
         settings = {k: getattr(self, k) for k in self.config_keys}
 
         chan_info = {
-            'id': self.id,
+            'uuid': self.uuid,
             'name': self.name,
             'long_name': self.long_name,
             'settings': settings,

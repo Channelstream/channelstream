@@ -6,7 +6,7 @@ from marshmallow import validate, fields
 
 
 def gen_uuid():
-    return str(uuid.uuid4())
+    return str(uuid.uuid4()).replace('-', '')
 
 
 def validate_connection_id(conn_id):
