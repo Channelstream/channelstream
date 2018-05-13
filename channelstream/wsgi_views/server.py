@@ -337,7 +337,7 @@ def message(request):
 
 
 @view_config(route_name='api_disconnect', request_method='POST',
-             renderer='json')
+             renderer='json', permission=NO_PERMISSION_REQUIRED)
 def disconnect(request):
     """
     Permanently remove connection from server
