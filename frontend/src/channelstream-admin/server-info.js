@@ -91,7 +91,7 @@ class ServerInfo extends LitElement {
         </div>
 
             ${repeat(channels, (channel) => channel.name, (channel, index) => html`
-            <paper-card heading="channel: ${channel.name}" class$="channel-${channel.id}">
+            <paper-card heading="channel: ${channel.name}" class$="channel-${channel.uuid}">
                 <div class="card-content">
                 ${index}
                     <ul>
@@ -103,7 +103,7 @@ class ServerInfo extends LitElement {
                     <p><strong>Config</strong></p>
                     <app-debug data="${channel.settings}"></app-debug>
 
-                    <iron-collapse class$="channel-history-${channel.id}">
+                    <iron-collapse class$="channel-history-${channel.uuid}">
                         <div class="history-holder">
                             <strong>Message history:</strong>
                             ${channel.history.map((item) => html`
@@ -112,7 +112,7 @@ class ServerInfo extends LitElement {
                         </div>
                     </iron-collapse>
 
-                    <iron-collapse class$="channel-users-${channel.id}">
+                    <iron-collapse class$="channel-users-${channel.uuid}">
                         <div class="users-holder">
                             <strong>Connected users:</strong>
                             ${channel.users.map((item) => html`
@@ -124,12 +124,12 @@ class ServerInfo extends LitElement {
             </div>
             <div class="card-actions">
                 <span>
-                <paper-button raised toggles on-tap=${(e) => this.toggleHistory(channel.id)}">
+                <paper-button raised toggles on-tap=${(e) => this.toggleHistory(channel.uuid)}">
                     <iron-icon icon="icons:history"></iron-icon>History</paper-button>
                 <paper-tooltip position="top" animation-delay="0">Shows this channels history</paper-tooltip>
                 </span>
                 <span>
-                <paper-button raised toggles on-tap=${(e) => this.toggleUsers(channel.id)}">
+                <paper-button raised toggles on-tap=${(e) => this.toggleUsers(channel.uuid)}">
                     <iron-icon icon="social:people-outline"></iron-icon>Users</paper-button>
                 <paper-tooltip position="top" animation-delay="0">Shows currently connected users</paper-tooltip>
                 </span>
