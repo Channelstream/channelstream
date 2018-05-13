@@ -1,5 +1,4 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
-import '@polymer/iron-ajax/iron-ajax.js';
+import {LitElement, html} from '@polymer/lit-element';
 import '@polymer/paper-progress/paper-progress.js';
 import './server-info.js';
 import '../debug.js';
@@ -21,8 +20,6 @@ const fetchServerInfo = (url, store) => {
     }).then(function(response) {
         return response.json();
     }).then(function(response) {
-        // let response = event.detail.response;
-        console.log('x',response)
         store.dispatch(currentActions.currentActionFinish(
             action_type, response));
         store.dispatch(statsActions.set({
@@ -45,26 +42,21 @@ const fetchServerInfo = (url, store) => {
 
 };
 
-class ChannelStreamAdmin extends connect(store)(PolymerElement) {
+class ChannelStreamAdmin extends connect(store)(LitElement) {
 
-    static get template() {
+    _render({channels, serverStats}) {
         return html`
         <style>
-            .transparent {
-                opacity: 0;
-            }
-
             #admin-page-progress {
                 width: 100%;
                 --paper-progress-indeterminate-cycle-duration: 3s;
                 margin-bottom: 15px;
-                transition-duration: 500ms;
             }
         </style>
 
-        <paper-progress id="admin-page-progress" indeterminate class="transparent" transparent="[[loadingAdmin]]"></paper-progress>
+        <paper-progress id="admin-page-progress" indeterminate disabled?=${this.currentActions.active.length === 0}></paper-progress>
 
-        <server-info channels="[[channels]]" server-stats="[[serverStats]]"></server-info>
+        <server-info channels=${channels} serverStats=${serverStats}></server-info>
         `;
     }
 
@@ -74,23 +66,16 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
 
     static get properties() {
         return {
-            appConfig: {
-                type: Array,
-                value: () => {
-                    return window.AppConf;
-                }
-            },
-            channels: {
-                type: Array
-            },
-            serverStats: {
-                type: Object
-            },
-            currentActions: {
-                type: Object,
-                observer: 'loadingChange'
-            }
+            appConfig: Object,
+            channels: Array,
+            serverStats: Object,
+            currentActions: Object
         };
+    }
+
+    constructor() {
+        super();
+        this.appConfig = window.AppConf;
     }
 
     _stateChanged(state) {
@@ -111,7 +96,7 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
     }
 
     refresh() {
-        fetchServerInfo(this.appConfig.urls.jsonUrl, store);
+        fetchServerInfo(window.AppConf.urls.jsonUrl, store);
     }
 
     _addInterval() {
@@ -121,15 +106,6 @@ class ChannelStreamAdmin extends connect(store)(PolymerElement) {
     _clearInterval() {
         if (this.interval) {
             clearInterval(this.interval);
-        }
-    }
-
-    loadingChange() {
-        if (this.currentActions.active.length) {
-            this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', false);
-        }
-        else {
-            this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', true);
         }
     }
 

@@ -12,6 +12,13 @@
                 jsonUrl: '{{ request.route_url('admin_json') }}'
             }
         }
+
+        window.process = {
+            env: {
+                NODE_ENV: 'production'
+            }
+        };
+
     </script>
 
     <script src="{{ request.static_url('channelstream:static/webcomponentsjs/custom-elements-es5-adapter.js') }}"></script>

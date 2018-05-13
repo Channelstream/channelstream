@@ -17,6 +17,12 @@
             websocketUrl: '{{ request.route_url('api_listen_ws').replace('http', 'ws') }}',
             infoUrl: '{{ request.route_url('section_action', section='demo', action='info') }}'
         }
+
+        window.process = {
+            env: {
+                NODE_ENV: 'production'
+            }
+        };
     </script>
     <script src="{{ request.static_url('channelstream:static/web-animations-js/web-animations-next-lite.min.js') }}"></script>
     <script src="{{ request.static_url('channelstream:static/webcomponentsjs/custom-elements-es5-adapter.js') }}"></script>
@@ -44,6 +50,29 @@
     }
 
 </style>
+
+{#<script>#}
+{##}
+{#    let tmpl = document.createElement('template');#}
+{#    tmpl.innerHTML = `#}
+{#        <b>I'm in shadow dom!</b>#}
+{#        <slot></slot>#}
+{#        `;#}
+{##}
+{##}
+{#    class TestApp extends HTMLElement {#}
+{#        constructor() {#}
+{#            super(); // always call super() first in the ctor.#}
+{##}
+{#            // Attach a shadow root to the element.#}
+{#            let shadowRoot = this.attachShadow({mode: 'open'});#}
+{#            shadowRoot.appendChild(tmpl.content.cloneNode(true));#}
+{#        }#}
+{##}
+{#    }#}
+{#    window.customElements.define('test-app', TestApp);#}
+{#</script>#}
+
 <div>
     <channelstream-chat-demo></channelstream-chat-demo>
 </div>
