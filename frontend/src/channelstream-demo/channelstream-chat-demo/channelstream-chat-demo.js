@@ -1,13 +1,11 @@
 import {LitElement, html} from '@polymer/lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
-import '@polymer/iron-pages/iron-pages.js';
 import '@polymer/paper-tabs/paper-tabs.js';
 import '@polymer/app-layout/app-toolbar/app-toolbar.js';
 import '../../debug.js';
 import '../channelstream-connection/channelstream-connection.js';
 import '../app-views/admin-view/admin-view.js';
 import '../app-views/chat-view/chat-view.js';
-
 import {store} from '../redux/store.js';
 import {actions as currentActions} from '../../channelstream-admin/redux/current_actions';
 import {actions as appActions} from '../redux/app';
@@ -19,6 +17,10 @@ import {actions as chatViewMessagesActions} from '../redux/chat_view/messages';
 class ChannelStreamChatDemo extends connect(store)(LitElement) {
 
     _render({user, page}) {
+        let currentPage;
+        if (page === 'chat'){ currentPage = html`<chat-view></chat-view>`};
+        if (page === 'admin'){ currentPage =  html`<admin-view></admin-view>`};
+
         return html`
         <style>
             .pad-content {
@@ -46,16 +48,15 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         <app-toolbar>
             <span class="title">Channelstream Demo - Hello ${user.username}</span>
 
-            <paper-tabs selected=${page} attr-for-selected="name" on-selected-changed="changedTab">
+            <paper-tabs selected=${page} attr-for-selected="name" on-selected-changed=${(e) => this.changedTab(e)}>
                 <paper-tab name="chat">Chat</paper-tab>
                 <paper-tab name="admin">Admin Stats</paper-tab>
             </paper-tabs>
         </app-toolbar>
 
-        <iron-pages selected=${page} attr-for-selected="name" selected-attribute="iron-selected" class="pad-content">
-            <chat-view name="chat"></chat-view>
-            <admin-view name="admin"></admin-view>
-        </iron-pages>
+        <div class="pad-content">
+            ${currentPage}
+        </div>
         `
     }
 
