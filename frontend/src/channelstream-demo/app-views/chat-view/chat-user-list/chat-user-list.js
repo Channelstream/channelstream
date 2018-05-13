@@ -1,4 +1,4 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../../redux/store.js';
 
@@ -7,9 +7,14 @@ import '@polymer/iron-list/iron-list.js';
 import '../../../chat-avatar/chat-avatar.js';
 
 
-class ChatUserList extends connect(store)(PolymerElement) {
+class ChatUserList extends connect(store)(LitElement) {
 
-    static get template(){
+    _render({users, channelsUsers, selectedChannel}) {
+
+        let visibleUsers = [];
+        if (channelsUsers.hasOwnProperty(selectedChannel)) {
+            visibleUsers = channelsUsers[selectedChannel];
+        }
         return html`
         <style>
             chat-avatar {
@@ -29,12 +34,12 @@ class ChatUserList extends connect(store)(PolymerElement) {
             }
         </style>
 
-        <template is="dom-repeat" items="[[_visibleUsers(selectedChannel, channelsUsers)]]">
-            <div class="user" tabindex$="[[tabIndex]]">
-                <chat-avatar username="[[item]]" email="[[_computedEmail(usersStates, item)]]"></chat-avatar>
-                <span style$="color:{{_computedColor(users, item)}}">[[item]]</span>
-            </div>
-        </template>
+        ${visibleUsers.map((username) => html`
+        <div class="user"> 
+            <chat-avatar username=${username} email=${users.states[username].email}></chat-avatar>
+            <span style$="color:${users.states[username].color || 'black'}">${username}</span>
+        </div>
+        `)}
         `
     }
 
@@ -44,33 +49,15 @@ class ChatUserList extends connect(store)(PolymerElement) {
 
     static get properties() {
         return {
-            selectedChannel: {
-                type: String
-            },
-            channelsUsers: {
-                type: Object
-            },
-            users: {
-                type: Object
-            },
+            selectedChannel: String,
+            channelsUsers: Object,
+            users: Object,
         };
     }
 
     _stateChanged(state) {
         this.users = state.chatView.users;
         this.channelsUsers = state.chatView.channels.users;
-    }
-
-    _visibleUsers(selectedChannel) {
-        return this.channelsUsers[selectedChannel];
-    }
-
-    _computedEmail(op, username) {
-        return this.users.states[username].email;
-    }
-
-    _computedColor(op, username) {
-        return this.users.states[username].color || 'black';
     }
 }
 

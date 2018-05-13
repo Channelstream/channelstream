@@ -1,4 +1,4 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../redux/store.js';
 
@@ -6,32 +6,23 @@ import '@polymer/iron-ajax/iron-ajax.js';
 import '@polymer/paper-progress/paper-progress.js';
 import '../../../channelstream-admin/server-info.js';
 import {fetchServerInfo} from '../../../channelstream-admin/channelstream-admin';
-import {actions as currentActions} from "../../../channelstream-admin/redux/current_actions";
-import {actions as statsActions} from "../../../channelstream-admin/redux/server_info/server_stats";
-import {actions as channelsActions} from "../../../channelstream-admin/redux/server_info/channels";
 
-class AdminView extends connect(store)(PolymerElement) {
+class AdminView extends connect(store)(LitElement) {
 
-    static get template(){
+    _render({channels, serverStats}) {
         return html`
-         <style>
-            .transparent {
-                opacity: 0;
-            }
-
+        <style>
             #admin-page-progress {
                 width: 100%;
                 --paper-progress-indeterminate-cycle-duration: 3s;
                 margin-bottom: 15px;
-                transition-duration: 500ms;
             }
-
         </style>
 
-        <paper-progress id="admin-page-progress" indeterminate class="transparent"></paper-progress>
+        <paper-progress id="admin-page-progress" indeterminate disabled?=${this.currentActions.active.length === 0}></paper-progress>
 
-        <server-info channels="[[channels]]" server-stats="[[serverStats]]"></server-info>
-        `
+        <server-info channels=${channels} serverStats=${serverStats}></server-info>
+        `;
     }
     
     static get is() {
@@ -60,6 +51,11 @@ class AdminView extends connect(store)(PolymerElement) {
                 observer: 'ironChange'
             },
         };
+    }
+
+    constructor() {
+        super();
+        this.appConfig = window.AppConf;
     }
 
     _stateChanged(state) {
