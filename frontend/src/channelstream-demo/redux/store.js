@@ -11,6 +11,6 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 const combinedReducers = combineReducers({app, user, currentActions, chatView, adminView: serverInfoView});
 
-const store = createStore(combinedReducers, {}, composeEnhancers(applyMiddleware(logger)));
+const store = createStore(combinedReducers, {}, composeEnhancers());
 window.ReduxStore = store;
 export {store};

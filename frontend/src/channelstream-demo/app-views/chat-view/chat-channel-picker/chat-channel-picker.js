@@ -19,6 +19,10 @@ class ChatChannelPicker extends LitElement {
         `
     }
 
+    constructor(){
+        super();
+    }
+
     static get properties() {
         return {
             possibleChannels: Array,

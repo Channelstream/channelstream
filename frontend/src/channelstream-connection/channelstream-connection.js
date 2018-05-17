@@ -1,5 +1,5 @@
 import {PolymerElement} from '@polymer/polymer/polymer-element.js'
-import '../../channelstream.js';
+import '../channelstream.js';
 
 /**
  *

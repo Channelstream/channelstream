@@ -1,14 +1,25 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
 
 import '@polymer/iron-image/iron-image.js';
 import '../../../chat-avatar/chat-avatar.js'
 
 
-class ChatMessage extends PolymerElement {
+class ChatMessage extends LitElement {
 
-    static get template(){
+    _shouldRender(props){
+        if (!props.message){
+            return false
+        }
+        return true;
+    }
+
+    _render({message}){
         return html`
         <style>
+            :host {
+                display: block;
+            }
+        
             chat-avatar {
                 float: left;
                 margin-right: 15px;
@@ -35,12 +46,13 @@ class ChatMessage extends PolymerElement {
             }
 
         </style>
-        <chat-avatar username="[[message.message.user]]" email="[[message.message.email]]"></chat-avatar>
-        <div class$="message [[message.type]]">
-            <div>[[[message.channel]]] <strong>[[message.user]]</strong></div>
-            <div><span class="timestamp">[[_shortTime(message.timestamp)]]</span>:
-                <span class="text">[[_messageText(message.message.text)]]</span></div>
+        <chat-avatar username=${message.user} email=${message.email}></chat-avatar>
+        <div class$="message ${message.type}">
+            <div>[${message.channel}] <strong>${message.user}</strong></div>
+            <div><span class="timestamp">${message.timestamp.split('.')[0]}</span>:
+                <span class="text">${this._messageText(message)}</span></div>
         </div>
+        <br clear="both"/>
         `
     }
 
@@ -60,13 +72,15 @@ class ChatMessage extends PolymerElement {
         this.random = Math.random();
     }
 
-    _messageText() {
-        let txt = this.message.message.action;
-        return this.message.message.text || `User ${txt}`;
-    }
+    _messageText(message) {
+        if (message.type === 'message'){
+            return message.message.text
+        }
+        else{
+            return `User ${message.message.action}`
+        }
 
-    _shortTime() {
-        return this.message.timestamp.split('.')[0];
+
     }
 }
 

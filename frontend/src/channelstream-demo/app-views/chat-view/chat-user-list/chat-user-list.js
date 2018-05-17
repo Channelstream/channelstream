@@ -3,7 +3,6 @@ import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../../redux/store.js';
 
 import '@polymer/iron-image/iron-image.js';
-import '@polymer/iron-list/iron-list.js';
 import '../../../chat-avatar/chat-avatar.js';
 
 

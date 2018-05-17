@@ -1,73 +1,49 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
-import '@polymer/iron-list/iron-list.js';
+import {LitElement, html} from '@polymer/lit-element';
 import '../chat-message/chat-message.js';
-import {mixinBehaviors} from '@polymer/polymer/lib/legacy/class.js';
-import {IronResizableBehavior} from '@polymer/iron-resizable-behavior/iron-resizable-behavior.js';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../../redux/store.js';
 
 
-class ChatMessageList extends connect(store)(PolymerElement) {
+class ChatMessageList extends connect(store)(LitElement) {
     static get is() {
         return 'chat-message-list';
     }
 
-    static get template(){
+    _render({messages, selectedChannel}){
         return html`
         <style>
-            iron-list {
+            .message-list {
                 height: 500px;
                 width: 100%;
+                overflow-y: auto;
             }
         </style>
-        <iron-list items="[[visibleMessages(selectedChannel, messages.allIds)]]" as="message" class="chat-list">
-            <template>
-                <chat-message message="[[messageData(message)]]"></chat-message>
-            </template>
-        </iron-list>
+        
+        <div class="message-list">
+        ${(messages.channelMessages[selectedChannel] || []).map((message, index) => html`
+        <chat-message message=${messages.messages[message]}></chat-message>
+        `)}
+        </div>
         `
     }
 
     static get properties() {
         return {
-            messages: {
-                type: Array
-            },
-            selectedChannel: {
-                type: String
-            }
+            messages: Array,
+            selectedChannel: String
         };
+    }
+
+    _didRender(props, changedProps, prevProps){
+        setTimeout(() => {
+            let listElem = this.shadowRoot.querySelector('.message-list');
+            listElem.scrollTop = listElem.scrollHeight;
+        }, 0)
     }
 
     _stateChanged(state) {
         this.messages = state.chatView.messages;
         this.selectedChannel = state.chatView.ui.selectedChannel;
-    }
-
-    static get observers() {
-        return [
-            // Observer method name, followed by a list of dependencies, in parenthesis
-            '_messagesChanged(messages.allIds.splices)'
-        ]
-    }
-
-    connectedCallback() {
-        super.connectedCallback();
-    }
-
-    messageData(messageId) {
-        return this.messages.messages[messageId];
-    }
-
-    visibleMessages(selectedChannel) {
-        return this.messages.channelMessages[this.selectedChannel] || [];
-    }
-
-    _messagesChanged() {
-        if (this.messages) {
-            let listElem = this.shadowRoot.querySelector('iron-list');
-            listElem.scrollToIndex(listElem.items.length - 1);
-        }
     }
 }
 

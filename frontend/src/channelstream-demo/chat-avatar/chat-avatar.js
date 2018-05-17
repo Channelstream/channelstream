@@ -1,10 +1,10 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
 import '@polymer/iron-image/iron-image.js';
 import gravatar from './gravatarjs.js';
 
-class ChatAvatar extends PolymerElement {
+class ChatAvatar extends LitElement {
 
-    static get template(){
+    _render({email, username}){
         return html`
         <style>
             iron-image {
@@ -17,7 +17,7 @@ class ChatAvatar extends PolymerElement {
                 @apply(--chat-avatar-mixin);
             }
         </style>
-        <iron-image sizing="cover" src="[[_getAvatar(username, email)]]" preload fade></iron-image>
+        <iron-image sizing="cover" src=${this._getAvatar(username, email)} preload fade></iron-image>
         `
     }
 
@@ -32,8 +32,8 @@ class ChatAvatar extends PolymerElement {
         };
     }
 
-    _getAvatar() {
-        var avatar = this.email || this.username || 'test';
+    _getAvatar(email, username) {
+        let avatar = email || username || 'test';
         return gravatar(avatar, {
             size: 50, rating: "pg", backup: "retro", secure: true
         });

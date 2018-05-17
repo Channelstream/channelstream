@@ -1,13 +1,12 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
-// import 'web-animations-js/web-animations-next-lite.min.js';
+import {LitElement, html} from '@polymer/lit-element';
 import '@polymer/paper-listbox/paper-listbox.js';
 import '@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '@polymer/paper-item/paper-item.js';
 
 
-class ChatStatusSelector extends PolymerElement {
+class ChatStatusSelector extends LitElement {
 
-    static get template(){
+    _render({selected}) {
         return html`
         <style>
             paper-item {
@@ -15,7 +14,8 @@ class ChatStatusSelector extends PolymerElement {
             }
         </style>
         <paper-dropdown-menu label="Status Color">
-            <paper-listbox slot="dropdown-content" class="dropdown-content" selected="{{selected}}" attr-for-selected="value">
+            <paper-listbox slot="dropdown-content" class="dropdown-content" 
+            on-selected-changed=${(e) => this._changeColor(e)} attr-for-selected="value">
                 <paper-item value="black">Black</paper-item>
                 <paper-item value="red">Red</paper-item>
                 <paper-item value="green">Green</paper-item>
@@ -32,21 +32,21 @@ class ChatStatusSelector extends PolymerElement {
     static get properties() {
         return {
             isReady: Boolean,
-            selected: {
-                type: String,
-                value: "black",
-                observer: '_changeColor'
-            }
+            selected: String
         };
     }
 
-    _changeColor() {
+    constructor() {
+        super();
+        this.type = 'black';
+    }
+
+    _changeColor(event) {
         this.dispatchEvent(new CustomEvent('change-status', {
-            detail: {color: this.selected},
+            detail: {color: event.target.selected},
             bubbles: true,
             composed: true
         }));
-
     }
 }
 

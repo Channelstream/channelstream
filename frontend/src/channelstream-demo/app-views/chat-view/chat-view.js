@@ -1,34 +1,45 @@
-import {PolymerElement, html} from '@polymer/polymer/polymer-element.js';
+import {LitElement, html} from '@polymer/lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../redux/store.js';
 
 import '@polymer/iron-a11y-keys/iron-a11y-keys.js';
 import '@polymer/iron-form/iron-form.js';
-import '@polymer/iron-resizable-behavior/iron-resizable-behavior.js';
 import '@polymer/paper-dialog/paper-dialog.js';
 import '@polymer/paper-button/paper-button.js';
 import '@polymer/paper-input/paper-input.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
 import '@polymer/paper-tabs/paper-tabs.js';
 import '@polymer/iron-flex-layout/iron-flex-layout-classes.js';
-import {mixinBehaviors} from '@polymer/polymer/lib/legacy/class.js';
-import {IronResizableBehavior} from '@polymer/iron-resizable-behavior/iron-resizable-behavior.js';
 
 import './chat-message-list/chat-message-list.js';
 import './chat-channel-picker/chat-channel-picker.js';
 import './chat-user-list/chat-user-list.js';
 import './chat-status-selector/chat-status-selector.js';
 
-import {actions as currentActions} from "../../../channelstream-admin/redux/current_actions";
 import {actions as userActions} from '../../redux/user';
 import {actions as channelViewUiActions} from '../../redux/chat_view/ui';
 
-class ChatView extends connect(store)(PolymerElement) {
+class ChatView extends connect(store)(LitElement) {
 
 
-    static get template() {
+    _render({user, possibleChannels, selectedChannel}) {
+
+        let dialogButton = null;
+        if (user.anonymous){
+            dialogButton = html`
+                <paper-button on-tap=${(e) => this.openDialog(e)} raised>
+                <iron-icon icon="social:person-outline"></iron-icon>
+                Change username
+                </paper-button>
+            `
+        }
+
         return html`
-            <style include="iron-flex iron-flex-alignment">
+            <style>
+            #column-holder{
+            display: flex;
+            }
+            
             :host > *{
                 --paper-tabs-selection-bar-color: #4285f4;
                 --paper-tab-ink: #4285f4;
@@ -39,7 +50,7 @@ class ChatView extends connect(store)(PolymerElement) {
             }
 
             .left-column {
-                @apply(--layout-flex);
+                flex-grow: 1;
             }
 
             #message-input {
@@ -56,52 +67,47 @@ class ChatView extends connect(store)(PolymerElement) {
             <p>Log in to post messages</p>
 
             <iron-form id="login-form">
-            <form method="post" on-iron-form-presubmit="formPresubmit">
-                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed="changeUser"></iron-a11y-keys>
-                <paper-input value="{{loginUsername}}" label="User Name" min-length="1" auto-validate required></paper-input>
-                <paper-input value="{{loginEmail}}" label="Email" min-length="1" auto-validate required></paper-input>
+            <form method="post" on-iron-form-presubmit=${(e) => this.formPresubmit(e)}>
+                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.changeUser(e)}></iron-a11y-keys>
+                <paper-input label="User Name" name="username" min-length="1" auto-validate required></paper-input>
+                <paper-input label="Email" name="email" min-length="1" auto-validate required></paper-input>
             </form>
             </iron-form>
 
 
             <div class="buttons">
-                <paper-button on-tap="changeUser" autofocus>Confirm credentials</paper-button>
+                <paper-button on-tap=${(e) => this.changeUser(e)} autofocus>Confirm credentials</paper-button>
             </div>
         </paper-dialog>
 
-        <div class="layout horizontal">
+        <div id="column-holder">
             <div class="left-column">
-                <paper-tabs selected="[[selectedChannel]]" attr-for-selected="name"
-                            on-selected-changed="selectedChannelChanged">
-                    <template is="dom-repeat" items="[[user.subscribedChannels]]">
-                        <paper-tab name="[[item]]">Channel: [[item]]</paper-tab>
-                    </template>
+                <paper-tabs selected=${selectedChannel} attr-for-selected="name"
+                            on-selected-changed=${(e) => this.selectedChannelChanged(e)}>
+                            
+                    ${user.subscribedChannels.map((channel) => html`
+                    <paper-tab name=${channel}>Channel: ${channel}</paper-tab>
+                    `) }
                 </paper-tabs>
                 <chat-message-list></chat-message-list>
             </div>
             <div class="right-column">
                 <chat-status-selector></chat-status-selector>
-                <chat-user-list selected-channel="[[selectedChannel]]"></chat-user-list>
+                <chat-user-list selectedChannel=${selectedChannel}></chat-user-list>
             </div>
 
         </div>
-        <iron-form id="message-form" on-iron-form-presubmit="formPresubmit">
-        <form method="post">
-            <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed="sendMessage"></iron-a11y-keys>
-            <paper-input id="message-input" name="message" label="Your message" value="{{message}}"></paper-input>
-            <paper-icon-button icon="icons:send" on-tap="sendMessage"></paper-icon-button>
-            <br/>
-            <template is="dom-if" if="[[user.anonymous]]">
-                <paper-button on-tap="openDialog" raised>
-                    <iron-icon icon="social:person-outline"></iron-icon>
-                    Change username
-                </paper-button>
-            </template>
-            <chat-channel-picker subscribed-channels="[[user.subscribedChannels]]"
-                                 possible-channels="[[possibleChannels]]"></chat-channel-picker>
-        </form>
+        <iron-form id="message-form" on-iron-form-presubmit=${(e) => this.formPresubmit(e)}>
+            <form method="post">
+                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.sendMessage(e)}></iron-a11y-keys>
+                <paper-input id="message-input" name="message" label="Your message"></paper-input>
+                <paper-icon-button icon="icons:send" on-tap=${(e) => this.sendMessage(e)}></paper-icon-button>
+                <br/>
+                ${dialogButton}
+                <chat-channel-picker subscribedChannels=${user.subscribedChannels}
+                                     possibleChannels=${possibleChannels}></chat-channel-picker>
+            </form>        
         </iron-form>
-        
         `
     }
 
@@ -111,21 +117,12 @@ class ChatView extends connect(store)(PolymerElement) {
 
     static get properties() {
         return {
-            channels: {
-                type: Array
-            },
-            possibleChannels: {
-                type: Array
-            },
-            selectedChannel: {
-                type: String
-            },
-            user: {
-                type: Array
-            },
-            users: {
-                type: Array
-            },
+            channels: Array,
+            // what we can subscribe to
+            possibleChannels: Array,
+            selectedChannel: String,
+            user: Object,
+            users: Array,
         };
     }
 
@@ -138,19 +135,6 @@ class ChatView extends connect(store)(PolymerElement) {
         this.users = state.chatView.users;
     }
 
-    static get actions() {
-        return {
-            ...currentActions,
-            setUser: userActions.set,
-            setUserState: userActions.setState,
-            setViewedChannel: channelViewUiActions.setViewedChannel
-        };
-    }
-
-    attached() {
-        this.async(this.notifyResize, 1);
-    }
-
     selectedChannelChanged(event) {
         console.log('selectedChannelChanged', event.detail.value);
         store.dispatch(channelViewUiActions.setViewedChannel(event.detail.value));
@@ -161,17 +145,19 @@ class ChatView extends connect(store)(PolymerElement) {
     }
 
     openDialog() {
-        this.$.loginDialog.open();
+        this.shadowRoot.querySelector('paper-dialog').open();
     }
 
     changeUser(event) {
         event.preventDefault();
-        if (this.$['login-form'].validate()) {
+        let loginForm = this.shadowRoot.querySelector('#login-form');
+        let formData = loginForm.serializeForm();
+        if (loginForm.validate()) {
             store.dispatch(userActions.set({
-                username: this.loginUsername,
-                email: this.loginEmail
+                username: formData.username,
+                email: formData.email
             }));
-            this.$.loginDialog.close();
+            this.shadowRoot.querySelector('paper-dialog').close();
         }
     }
 
@@ -184,11 +170,13 @@ class ChatView extends connect(store)(PolymerElement) {
      * channelstream-connection element */
     sendMessage(event) {
         event.preventDefault();
+        let msgForm = this.shadowRoot.querySelector('#message-form');
+        let formData = msgForm.serializeForm();
         this.dispatchEvent(new CustomEvent('send-message',
             {
                 detail: {
                     message: {
-                        text: this.message,
+                        text: formData.message,
                         email: this.user.email,
                     },
                     channel: this.selectedChannel,
