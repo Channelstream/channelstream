@@ -1,4 +1,3 @@
-import {PolymerElement} from '@polymer/polymer/polymer-element.js'
 import '../channelstream.js';
 
 /**
@@ -29,7 +28,7 @@ import '../channelstream.js';
  By default element has a listener attached that will fire `retryConnection()` handler on `channelstream-connect-error` event,
  this handler will forever try to re-establish connection to the server incrementing intervals between retries up to 1 minute.
  */
-class ChannelStreamConnection extends PolymerElement {
+class ChannelStreamConnectionElement extends HTMLElement {
     static get is() {
         return 'channelstream-connection';
     }
@@ -131,101 +130,15 @@ class ChannelStreamConnection extends PolymerElement {
      * @event channelstream-listen-error
      */
 
-    static get properties() {
-        return {
-            isReady: Boolean,
-            /** List of channels user should be subscribed to. */
-            channels: {
-                type: Array,
-                value: function () {
-                    return [];
-                },
-                notify: true
-            },
-            /** Username of connecting user. */
-            username: {
-                type: String,
-                value: 'Anonymous',
-                reflectToAttribute: true
-            },
-            /** Connection identifier. */
-            connectionId: {
-                type: String,
-                reflectToAttribute: true
-            },
-            /** Websocket connection url. */
-            websocketUrl: {
-                type: String,
-                value: ''
-            },
-            /** URL used in `connect()`. */
-            connectUrl: {
-                type: String,
-                value: ''
-            },
-            /** URL used in `disconnect()`. */
-            disconnectUrl: {
-                type: String,
-                value: ''
-            },
-            /** URL used in `subscribe()`. */
-            subscribeUrl: {
-                type: String,
-                value: ''
-            },
-            /** URL used in `unsubscribe()`. */
-            unsubscribeUrl: {
-                type: String,
-                value: ''
-            },
-            /** URL used in `updateUserState()`. */
-            userStateUrl: {
-                type: String,
-                value: ''
-            },
-            /** URL used in `message()`. */
-            messageUrl: {
-                type: String,
-                value: ''
-            },
-            /** Long-polling connection url. */
-            longPollUrl: {
-                type: String,
-                value: ''
-            },
-            /** Long-polling connection url. */
-            shouldReconnect: {
-                type: Boolean,
-                value: true
-            },
-            /** Should send heartbeats. */
-            heartbeats: {
-                type: Boolean,
-                value: true
-            },
-            /** How much should every retry interval increase (in milliseconds) */
-            increaseBounceIv: {
-                type: Number,
-                value: 2000
-            },
-            /** Should use websockets or long-polling by default */
-            noWebsocket: {
-                type: Boolean,
-                reflectToAttribute: true,
-                value: false
-            },
-            connected: {
-                type: Boolean,
-                reflectToAttribute: true,
-                value: false
-            },
-            connection: {
-                type: Object,
-                value: function () {
-                    return window.ChannelStreamConnection;
-                }
-            }
-        };
+    static get observedAttributes() {
+        return ['channels'];
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+        this.dispatchEvent(new CustomEvent('channels-changed', {
+            detail: {value: this.channels},
+            bubbles: true,
+            composed: true
+        }));
     }
 
     constructor(){
@@ -245,6 +158,24 @@ class ChannelStreamConnection extends PolymerElement {
             disconnect: [],
             userState: []
         };
+
+        this.isReady = false;
+        this.username = 'Anonymous';
+        this.connectionId = '';
+        this.websocketUrl = '';
+        this.connectUrl = '';
+        this.disconnectUrl = '';
+        this.subscribeUrl = '';
+        this.unsubscribeUrl = '';
+        this.userStateUrl = '';
+        this.messageUrl = '';
+        this.longPollUrl = '';
+        this.shouldReconnect = true;
+        this.heartbeats = true;
+        this.increaseBounceIv = 2000;
+        this.noWebsocket = false;
+        this.connected = false;
+        this.connection = window.ChannelStreamConnection;
     }
 
 
@@ -253,24 +184,25 @@ class ChannelStreamConnection extends PolymerElement {
         this.isReady = true;
     }
 
-    created() {
-        this.listen(this, 'channelstream-channels-changed', 'testEvent');
-        this.listen(this, 'channelstream-connected', 'testEvent');
-        this.listen(this, 'channelstream-connect-error', 'testEvent');
-        this.listen(this, 'channelstream-disconnected', 'testEvent');
-        this.listen(this, 'channelstream-message-sent', 'testEvent');
-        this.listen(this, 'channelstream-message-error', 'testEvent');
-        this.listen(this, 'channelstream-subscribed', 'testEvent');
-        this.listen(this, 'channelstream-subscribe-error', 'testEvent');
-        this.listen(this, 'channelstream-unsubscribed', 'testEvent');
-        this.listen(this, 'channelstream-unsubscribe-error', 'testEvent');
-        this.listen(this, 'channelstream-listen-message', 'testEvent');
-        this.listen(this, 'channelstream-listen-opened', 'testEvent');
-        this.listen(this, 'channelstream-websocket-closed', 'testEvent');
-        this.listen(this, 'channelstream-listen-error', 'testEvent');
-        this.listen(this, 'channelstream-set-user-state', 'testEvent');
-        this.listen(this, 'channelstream-set-user-state-error', 'testEvent');
-    }
+    // connectedCallback() {
+    //     super.connectedCallback();
+    //     this.addEventListener('channelstream-channels-changed', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-connected', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-connect-error', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-disconnected', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-message-sent', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-message-error', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-subscribed', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-subscribe-error', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-unsubscribed', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-unsubscribe-error', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-listen-message', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-listen-opened', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-websocket-closed', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-listen-error', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-set-user-state', this.testEvent.bind(this));
+    //     this.addEventListener('channelstream-set-user-state-error', this.testEvent.bind(this));
+    // }
 
     /**
      * Connects user and fetches connection id from the server.
@@ -518,4 +450,5 @@ class ChannelStreamConnection extends PolymerElement {
 }
 
 
-customElements.define(ChannelStreamConnection.is, ChannelStreamConnection);
+customElements.define(ChannelStreamConnectionElement.is,
+    ChannelStreamConnectionElement);
