@@ -135,6 +135,11 @@ class ChatView extends connect(store)(LitElement) {
         this.users = state.chatView.users;
     }
 
+    constructor(){
+        super();
+        this.selectedChannel = 'pub_chan';
+    }
+
     selectedChannelChanged(event) {
         console.log('selectedChannelChanged', event.detail.value);
         store.dispatch(channelViewUiActions.setViewedChannel(event.detail.value));
