@@ -124,7 +124,7 @@ class ServerInfo extends LitElement {
             }
             .column-right{
                 flex-grow: 1;
-            }
+            }            
         </style>
 
         <div class="server-stat">

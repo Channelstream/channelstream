@@ -38,6 +38,7 @@
         "webpack-uglify-js-plugin": "^1.1.9"
     },
     "dependencies": {
+        "@material/mwc-button": "^0.1.1",
         "@polymer/iron-a11y-keys": "^3.0.0-pre.19",
         "@polymer/iron-ajax": "^3.0.0-pre.19",
         "@polymer/iron-collapse": "^3.0.0-pre.19",
@@ -62,6 +63,7 @@
         "@polymer/paper-tooltip": "^3.0.0-pre.19",
         "@polymer/polymer": "^3.0.0",
         "@webcomponents/webcomponentsjs": "^2.0.0",
+        "babel-plugin-transform-regenerator": "^6.26.0",
         "bower": "^1.8.2",
         "imports-loader": "^0.7.1",
         "npm-check-updates": "^2.14.0",
@@ -69,6 +71,7 @@
         "pwa-helpers": "^0.8.2",
         "redux": "^3.7.2",
         "redux-logger": "^3.0.6",
+        "regenerator-runtime": "^0.11.1",
         "web-animations-js": "^2.3.1"
     }
 }
