@@ -217,7 +217,7 @@ def unsubscribe(request, *args):
       - "Legacy API"
       summary: "Removes connection from channels"
       description: ""
-      operationId: "subscribe"
+      operationId: "unsubscribe"
       consumes:
       - "application/json"
       produces:
@@ -297,19 +297,36 @@ def listen(request):
 @view_config(route_name='legacy_user_state', request_method='POST',
              renderer='json')
 def user_state(request):
-    """ set the status of specific user """
-    json_body = request.json_body
-    username = json_body.get('user')
-    user_state = json_body.get('user_state')
-    state_public_keys = json_body.get('state_public_keys', None)
-    if not username:
-        request.response.status = 400
-        return {'error': "No username specified"}
+    """
+    Sets the state of a user object
+    ---
+    post:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "Legacy API"
+      summary: "set the status of specific user"
+      description: ""
+      operationId: "user_state"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        required: true
+        schema:
+          $ref: "#/definitions/UserStateBody"
+    """
 
-    user_inst = channelstream.USERS.get(username)
-    if not user_inst:
-        request.response.status = 404
-        return {'error': "User not found"}
+    schema = validation.UserStateBodySchema(context={'request': request})
+    data = schema.load(request.json_body).data
+    username = data.get('user')
+    user_state = data.get('user_state')
+    state_public_keys = data.get('state_public_keys', None)
+    user_inst = channelstream.USERS[username]
     if state_public_keys is not None:
         user_inst.state_public_keys = state_public_keys
     changed = operations.change_user_state(
@@ -326,44 +343,105 @@ def user_state(request):
 def message(request):
     """
     Send message to channels and/or users
-    :return:
+    ---
+    post:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "Legacy API"
+      summary: "Send message to channels and/or users"
+      description: ""
+      operationId: "message"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        required: true
+        schema:
+          $ref: "#/definitions/MessageBody"
     """
-    msg_list = request.json_body
-    for msg in msg_list:
+
+    schema = validation.MessageBodySchema(
+        context={'request': request}, many=True)
+    data = request.json_body
+    for msg in data:
         if not msg.get('channel') and not msg.get('pm_users', []):
             continue
         gevent.spawn(operations.pass_message, msg, channelstream.stats)
     return True
 
 
-@view_config(route_name='api_disconnect', request_method='POST',
+@view_config(route_name='api_disconnect',
              renderer='json', permission=NO_PERMISSION_REQUIRED)
 def disconnect(request):
     """
     Permanently remove connection from server
-    :return:
+    ---
+    post:
+      tags:
+      - "Legacy API"
+      summary: "Permanently remove connection from server"
+      description: ""
+      operationId: "disconnect"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        schema:
+          $ref: "#/definitions/DisconnectBody"
     """
+    schema = validation.DisconnectBodySchema(context={'request': request})
     json_body = request.json_body
+    payload = {'conn_id': request.params.get('conn_id')}
     if json_body:
-        conn_id = json_body.get('conn_id')
-    else:
-        conn_id = request.params.get('conn_id')
-
-    return operations.disconnect(conn_id=conn_id)
+        payload['conn_id'] = json_body.get('conn_id')
+    data = schema.load(payload).data
+    return operations.disconnect(conn_id=data['conn_id'])
 
 
 @view_config(route_name='legacy_channel_config', request_method='POST',
              renderer='json')
 def channel_config(request):
-    """ Set channel configuration """
+    """
+    Set channel configuration
+    ---
+    post:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "Legacy API"
+      summary: "Set channel configuration"
+      description: ""
+      operationId: "channel_config"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        schema:
+          $ref: "#/definitions/ChannelConfigBody"
+    """
+
     utils = SharedUtils(request)
-    json_body = request.json_body
-    if not json_body:
+    schema = validation.ChannelConfigBodySchema(context={'request': request})
+    data = schema.load(request.json_body).data
+    if not data:
         request.response.status = 400
         return {'error': "No channels specified"}
 
-    operations.set_channel_config(channel_configs=json_body)
-    channels_info = utils.get_channel_info(json_body.keys(),
+    operations.set_channel_config(channel_configs=data)
+    channels_info = utils.get_channel_info(data.keys(),
                                            include_history=False,
                                            include_users=False)
     return channels_info
@@ -372,8 +450,26 @@ def channel_config(request):
 @view_config(route_name='legacy_info', renderer='json')
 def info(request):
     """
-    Returns channel information in json format
-    :return:
+    Returns channel information
+    ---
+    post:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "Legacy API"
+      summary: "Returns channel information"
+      description: ""
+      operationId: "info"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Foo bar"
+        schema:
+          $ref: "#/definitions/ChannelConfigBody"
     """
     utils = SharedUtils(request)
     if not request.body:
@@ -385,9 +481,10 @@ def info(request):
             'include_connections': True
         }
     else:
-        json_body = request.json_body
+        schema = validation.ChannelInfoBodySchema(context={'request': request})
+        data = schema.load(request.json_body).data
         # get info config for channel information
-        info_config = json_body.get('info') or {}
+        info_config = data.get('info') or {}
         req_channels = info_config.get('channels', None)
         info_config['include_connections'] = info_config.get(
             'include_connections', True)
@@ -482,6 +579,14 @@ class ServerViews(object):
         spec.definition('SubscribeBody', schema=validation.SubscribeBodySchema)
         spec.definition('UnsubscribeBody',
                         schema=validation.UnsubscribeBodySchema)
+        spec.definition('UserStateBody', schema=validation.UserStateBodySchema)
+        spec.definition('MessageBody', schema=validation.MessageBodySchema)
+        spec.definition('DisconnectBody',
+                        schema=validation.DisconnectBodySchema)
+        spec.definition('ChannelConfigBody',
+                        schema=validation.ChannelConfigBodySchema)
+        spec.definition('ChannelInfoBody',
+                        schema=validation.ChannelInfoBodySchema)
 
         doc_utils.add_pyramid_paths(spec, 'legacy_connect',
                                     request=self.request)

@@ -4,6 +4,7 @@ monkey.patch_all()
 
 import pytest
 import mock
+import gevent
 from datetime import datetime, timedelta
 from gevent.queue import Queue, Empty
 import marshmallow
@@ -13,6 +14,7 @@ import channelstream.gc
 from channelstream.channel import Channel
 from channelstream.connection import Connection
 from channelstream.user import User
+import channelstream.operations as operations
 
 
 @pytest.fixture
@@ -153,7 +155,8 @@ class TestChannel(object):
         channel.add_message({'message': 'test1', 'type': 'message'})
         channel.add_message({'message': 'test2', 'type': 'message'})
         channel.add_message({'message': 'test3', 'type': 'message'})
-        channel.add_message({'message': 'test4', 'type': 'message', 'no_history': True})
+        channel.add_message(
+            {'message': 'test4', 'type': 'message', 'no_history': True})
         channel.add_message({'message': 'test5', 'type': 'message'})
 
         assert len(channel.history) == 3
@@ -201,7 +204,8 @@ class TestChannel(object):
         channel.add_connection(connection)
         channel.add_connection(connection2)
         channel2.add_connection(connection3)
-        assert ['test', 'test2'] == sorted([c.name for c in user.get_channels()])
+        assert ['test', 'test2'] == sorted(
+            [c.name for c in user.get_channels()])
 
 
 @pytest.mark.usefixtures("cleanup_globals")
@@ -410,19 +414,24 @@ class TestConnectViews(object):
             {'state': {'bar': 'baz', 'key': 'foo'}, 'user': 'username'}
         ]
 
+
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
 class TestUserStateViews(object):
     def test_bad_json(self, dummy_request):
         from channelstream.wsgi_views.server import user_state
         dummy_request.json_body = {}
-        result = user_state(dummy_request)
-        assert result == {'error': 'No username specified'}
+        with pytest.raises(marshmallow.exceptions.ValidationError) as excinfo:
+            user_state(dummy_request)
+        assert excinfo.value.messages == {
+            'user': ['Missing data for required field.']}
 
     def test_not_found_json(self, dummy_request):
         from channelstream.wsgi_views.server import user_state
         dummy_request.json_body = {'user': 'blabla'}
-        result = user_state(dummy_request)
-        assert result == {'error': 'User not found'}
+        with pytest.raises(marshmallow.exceptions.ValidationError) as excinfo:
+            user_state(dummy_request)
+        assert excinfo.value.messages == {
+            'user': ['Unknown user']}
 
     def test_good_json(self, dummy_request):
         from channelstream.wsgi_views.server import connect, user_state
@@ -447,6 +456,7 @@ class TestUserStateViews(object):
         assert result['user_state']['private'] == 'im_private'
         sorted_changed = sorted([x['key'] for x in result['changed_state']])
         assert sorted_changed == sorted(['bar', 'private'])
+
 
 @pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
 class TestSubscribeViews(object):
@@ -612,3 +622,64 @@ class TestInfoView(object):
         result = info(dummy_request)
         assert 'a' in result['channels']
         assert 'aB' not in result['channels']
+
+
+@pytest.mark.usefixtures('cleanup_globals', 'pyramid_config')
+class TestMessageViews(object):
+    def test_empty_json(self, dummy_request):
+        from channelstream.wsgi_views.server import message
+        dummy_request.json_body = {}
+        assert channelstream.stats['total_unique_messages'] == 0
+        result = message(dummy_request)
+        assert channelstream.stats['total_unique_messages'] == 0
+
+    def test_good_json_no_channel(self, dummy_request):
+        from channelstream.wsgi_views.server import message
+        dummy_request.json_body = [
+            {
+                'type': 'message',
+                "user": 'system',
+                "channel": 'test',
+                'message': {
+                    'text': 'test'
+                }
+            }
+        ]
+        assert channelstream.stats['total_unique_messages'] == 0
+        message(dummy_request)
+        # change context
+        gevent.sleep(0)
+        assert channelstream.stats['total_unique_messages'] == 1
+        assert len(channelstream.CHANNELS.keys()) == 0
+
+    def test_good_json_no_channel(self, dummy_request):
+        from channelstream.wsgi_views.server import message
+        channel = Channel('test')
+        channel.store_history = True
+        channelstream.CHANNELS[channel.name] = channel
+        msg_payload = {
+            'type': 'message',
+            "user": 'system',
+            "channel": 'test',
+            'message': {
+                'text': 'test'
+            }
+        }
+
+        dummy_request.json_body = [
+            msg_payload
+        ]
+        assert channelstream.stats['total_unique_messages'] == 0
+        assert len(channel.history) == 0
+        message(dummy_request)
+        # change context
+        gevent.sleep(0)
+        assert channelstream.stats['total_unique_messages'] == 1
+        assert len(channel.history) == 1
+        msg = channel.history[0]
+        assert msg['uuid'] is not None
+        assert msg['user'] == msg_payload['user']
+        assert msg['message'] == msg_payload['message']
+        assert msg['type'] == msg_payload['type']
+        assert msg['channel'] == msg_payload['channel']
+        assert msg['timestamp'] is not None
