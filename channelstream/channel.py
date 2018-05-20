@@ -145,11 +145,11 @@ class Channel(object):
         """
         Sends the message to all connections subscribed to this channel
         """
+        no_history = message.pop('no_history', False)
         message = copy.deepcopy(message)
         pm_users = pm_users or []
         exclude_users = exclude_users or []
         self.last_active = datetime.utcnow()
-        no_history = message.pop('no_history', False)
         if self.store_history and message['type'] == 'message' and not no_history:
             self.history.append(message)
             self.history = self.history[self.history_size * -1:]
