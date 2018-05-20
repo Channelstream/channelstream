@@ -103,14 +103,12 @@ class MessageBodySchema(ChannelstreamSchema):
     no_history = fields.Boolean(missing=False)
     pm_users = fields.List(
         fields.String(
-            many=True,
             validate=validate.Length(min=1, max=512)),
         missing=lambda: [],
     )
-    exclude_users = fields.String(
-        many=True,
+    exclude_users = fields.List(fields.String(
         missing=lambda: [],
-        validate=validate.Length(min=1, max=512))
+        validate=validate.Length(min=1, max=512)))
     channel = fields.String(
         validate=validate.Length(min=1, max=256))
 

@@ -367,7 +367,7 @@ def message(request):
 
     schema = validation.MessageBodySchema(
         context={'request': request}, many=True)
-    data = request.json_body
+    data = schema.load(request.json_body).data
     for msg in data:
         if not msg.get('channel') and not msg.get('pm_users', []):
             continue
@@ -514,7 +514,7 @@ class ServerViews(object):
         """
         Admin json
         ---
-        post:
+        get:
           tags:
           - "Admin API"
           summary: "Return server information in json format for admin panel
