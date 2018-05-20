@@ -323,14 +323,12 @@ def user_state(request):
 
     schema = validation.UserStateBodySchema(context={'request': request})
     data = schema.load(request.json_body).data
-    username = data.get('user')
-    user_state = data.get('user_state')
-    state_public_keys = data.get('state_public_keys', None)
-    user_inst = channelstream.USERS[username]
-    if state_public_keys is not None:
-        user_inst.state_public_keys = state_public_keys
+    user_inst = channelstream.USERS[data['user']]
+    # can be empty list!
+    if data['state_public_keys'] is not None:
+        user_inst.state_public_keys = data['state_public_keys']
     changed = operations.change_user_state(
-        user_inst=user_inst, user_state=user_state)
+        user_inst=user_inst, user_state=data['user_state'])
     return {
         'user_state': user_inst.state,
         'changed_state': changed,

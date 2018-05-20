@@ -84,9 +84,8 @@ class UserStateBodySchema(ChannelstreamSchema):
 
     user_state = fields.Dict(missing=lambda: {})
     state_public_keys = fields.List(fields.String(
-        description='',
         validate=validate.Length(min=1, max=256)),
-        missing=lambda: [])
+        missing=None)
 
     @marshmallow.post_load(pass_original=True)
     def _add_unknown(self, data, original):

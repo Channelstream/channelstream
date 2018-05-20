@@ -425,16 +425,8 @@ class TestUserStateViews(object):
         assert excinfo.value.messages == {
             'user': ['Missing data for required field.']}
 
-    def test_not_found_json(self, dummy_request):
-        from channelstream.wsgi_views.server import user_state
-        dummy_request.json_body = {'user': 'blabla'}
-        with pytest.raises(marshmallow.exceptions.ValidationError) as excinfo:
-            user_state(dummy_request)
-        assert excinfo.value.messages == {
-            'user': ['Unknown user']}
-
-    def test_good_json(self, dummy_request):
-        from channelstream.wsgi_views.server import connect, user_state
+    def _connect_user(self):
+        from channelstream.wsgi_views.server import connect
         dummy_request.json_body = {'username': 'test',
                                    'conn_id': 'x',
                                    'fresh_user_state': {'key': 'foo'},
@@ -445,6 +437,18 @@ class TestUserStateViews(object):
                                        'a': {'store_history': True,
                                              'history_size': 2}}}
         connect(dummy_request)
+
+    def test_not_found_json(self, dummy_request):
+        from channelstream.wsgi_views.server import user_state
+        dummy_request.json_body = {'user': 'blabla'}
+        with pytest.raises(marshmallow.exceptions.ValidationError) as excinfo:
+            user_state(dummy_request)
+        assert excinfo.value.messages == {
+            'user': ['Unknown user']}
+
+    def test_good_json(self, dummy_request):
+        from channelstream.wsgi_views.server import user_state
+        self._connect_user()
         dummy_request.json_body = {
             "user": 'test',
             "user_state": {"bar": 2, 'private': 'im_private'},
@@ -454,6 +458,22 @@ class TestUserStateViews(object):
         sorted_keys = sorted(['bar', 'key', 'private'])
         assert sorted_keys == sorted(result['user_state'].keys())
         assert result['user_state']['private'] == 'im_private'
+        sorted_changed = sorted([x['key'] for x in result['changed_state']])
+        assert result['public_keys'] == ["avatar", "bar"]
+        assert sorted_changed == sorted(['bar', 'private'])
+
+    def test_good_json_no_public_keys(self, dummy_request):
+        from channelstream.wsgi_views.server import user_state
+        self._connect_user()
+        dummy_request.json_body = {
+            "user": 'test',
+            "user_state": {"bar": 2, 'private': 'im_private'}
+        }
+        result = user_state(dummy_request)
+        sorted_keys = sorted(['bar', 'key', 'private'])
+        assert sorted_keys == sorted(result['user_state'].keys())
+        assert result['user_state']['private'] == 'im_private'
+        assert result['public_keys'] == ["bar"]
         sorted_changed = sorted([x['key'] for x in result['changed_state']])
         assert sorted_changed == sorted(['bar', 'private'])
 
