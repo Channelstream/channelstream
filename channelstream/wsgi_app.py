@@ -5,6 +5,7 @@ from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.authentication import BasicAuthAuthenticationPolicy
 from pyramid.config import Configurator
 from pyramid.renderers import JSON
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 from channelstream.ext_json import json
 from channelstream.wsgi_views.wsgi_security import APIFactory
@@ -41,6 +42,13 @@ def make_app(server_config):
     config.scan('channelstream.wsgi_views.server')
     config.scan('channelstream.wsgi_views.error_handlers')
     config.scan('channelstream.events')
+
+    config.include('pyramid_apispec.views')
+    config.pyramid_apispec_add_explorer(
+        spec_route_name='openapi_spec',
+        script_generator='channelstream.utils:swagger_ui_script_template',
+        permission=NO_PERMISSION_REQUIRED)
+
     if config.registry.settings['demo']:
         config.scan('channelstream.wsgi_views.demo')
     app = config.make_wsgi_app()

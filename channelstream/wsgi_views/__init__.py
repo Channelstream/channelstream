@@ -12,7 +12,6 @@ def includeme(config):
     config.add_view(handle_CORS, route_name='CORS_route', renderer='string')
     config.add_route('index', '/')
     config.add_route('demo', '/demo')
-    config.add_route('api_explorer', '/api-explorer')
     config.add_route('openapi_spec', '/openapi.json')
     config.add_route('admin', '/admin',
                      factory='channelstream.wsgi_views.'

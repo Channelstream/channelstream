@@ -1,3 +1,5 @@
+from pyramid.renderers import render
+
 def handle_cors(request):
     settings = request.registry.settings
     if not settings['allow_cors']:
@@ -19,3 +21,14 @@ def handle_cors(request):
                                  'Cache-Control, Pragma, Origin, '
                                  'Connection, Referer, Cookie')
     request.response.headers.add('Access-Control-Max-Age', '86400')
+
+
+def swagger_ui_script_template(request, spec_route_name, **kwargs):
+    """
+    Generates the <script> code that bootstraps Swagger UI, it will be injected
+    into index template
+    :param request:
+    :param swagger_json_route:
+    :return:
+    """
+    return render('templates/explorer.jinja2', value=(), request=request)

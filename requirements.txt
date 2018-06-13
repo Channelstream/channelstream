@@ -5,6 +5,7 @@ apispec
 colander
 pyramid>=1.8
 pyramid_jinja2
+pyramid_apispec
 itsdangerous
 requests
 six

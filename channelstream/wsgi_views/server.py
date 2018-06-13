@@ -6,13 +6,12 @@ from gevent.queue import Queue, Empty
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
-
+from pyramid_apispec.helpers import add_pyramid_paths
 import channelstream
 
 from channelstream import operations
 from channelstream import validation
-from channelstream import doc_utils
-from ..ext_json import json
+from channelstream.ext_json import json
 from apispec import APISpec
 
 log = logging.getLogger(__name__)
@@ -558,10 +557,10 @@ class ServerViews(object):
             "uptime": uptime
         }
 
-    @view_config(route_name='api_explorer', permission=NO_PERMISSION_REQUIRED,
-                 renderer='templates/explorer.jinja2')
-    def api_explorer(self):
-        return {}
+    # @view_config(route_name='api_explorer', permission=NO_PERMISSION_REQUIRED,
+    #              renderer='templates/explorer.jinja2')
+    # def api_explorer(self):
+    #     return {}
 
     @view_config(route_name='openapi_spec', permission=NO_PERMISSION_REQUIRED,
                  renderer='json')
@@ -586,26 +585,19 @@ class ServerViews(object):
         spec.definition('ChannelInfoBody',
                         schema=validation.ChannelInfoBodySchema)
 
-        doc_utils.add_pyramid_paths(spec, 'legacy_connect',
-                                    request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_subscribe',
-                                    request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_unsubscribe',
-                                    request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_user_state',
-                                    request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_message',
-                                    request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_channel_config',
-                                    request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'legacy_info', request=self.request)
+        add_pyramid_paths(spec, 'legacy_connect', request=self.request)
+        add_pyramid_paths(spec, 'legacy_subscribe', request=self.request)
+        add_pyramid_paths(spec, 'legacy_unsubscribe', request=self.request)
+        add_pyramid_paths(spec, 'legacy_user_state', request=self.request)
+        add_pyramid_paths(spec, 'legacy_message', request=self.request)
+        add_pyramid_paths(spec, 'legacy_channel_config', request=self.request)
+        add_pyramid_paths(spec, 'legacy_info', request=self.request)
 
-        doc_utils.add_pyramid_paths(spec, 'api_listen', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'api_listen_ws', request=self.request)
-        doc_utils.add_pyramid_paths(spec, 'api_disconnect',
-                                    request=self.request)
+        add_pyramid_paths(spec, 'api_listen', request=self.request)
+        add_pyramid_paths(spec, 'api_listen_ws', request=self.request)
+        add_pyramid_paths(spec, 'api_disconnect',request=self.request)
 
-        doc_utils.add_pyramid_paths(spec, 'admin_json', request=self.request)
+        add_pyramid_paths(spec, 'admin_json', request=self.request)
         spec_dict = spec.to_dict()
         spec_dict['securityDefinitions'] = {
             "APIKeyHeader": {
