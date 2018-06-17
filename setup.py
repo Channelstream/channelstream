@@ -27,6 +27,11 @@ setup(name='channelstream',
       packages=find_packages(),
       include_package_data=True,
       install_requires=requires,
+      setup_requires=["pytest-runner"],
+      extras_require={
+          'dev': ['coverage', 'pytest', 'pyramid', 'tox', 'mock'],
+          'lint': ['black'],
+      },
       entry_points={
           'console_scripts': [
               'channelstream = channelstream.cli:cli_start',
