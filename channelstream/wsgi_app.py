@@ -16,18 +16,20 @@ def datetime_adapter(obj, request):
 
 
 def make_app(server_config):
-    config = Configurator(settings=server_config, root_factory=APIFactory,
-                          default_permission='access')
-    config.include('pyramid_jinja2')
+    config = Configurator(
+        settings=server_config, root_factory=APIFactory, default_permission="access"
+    )
+    config.include("pyramid_jinja2")
 
     def check_function(username, password, request):
-        if (password == server_config['admin_secret'] and
-                username == server_config['admin_user']):
-            return ('admin', username)
+        if (
+            password == server_config["admin_secret"]
+            and username == server_config["admin_user"]
+        ):
+            return ("admin", username)
         return None
 
-    authn_policy = BasicAuthAuthenticationPolicy(
-        check_function, realm='ChannelStream')
+    authn_policy = BasicAuthAuthenticationPolicy(check_function, realm="ChannelStream")
     authz_policy = ACLAuthorizationPolicy()
 
     config.set_authentication_policy(authn_policy)
@@ -35,21 +37,22 @@ def make_app(server_config):
 
     json_renderer = JSON(serializer=json.dumps, indent=4)
     json_renderer.add_adapter(datetime.datetime, datetime_adapter)
-    config.add_renderer('json', json_renderer)
+    config.add_renderer("json", json_renderer)
 
-    config.add_request_method('channelstream.utils.handle_cors', 'handle_cors')
-    config.include('channelstream.wsgi_views')
-    config.scan('channelstream.wsgi_views.server')
-    config.scan('channelstream.wsgi_views.error_handlers')
-    config.scan('channelstream.events')
+    config.add_request_method("channelstream.utils.handle_cors", "handle_cors")
+    config.include("channelstream.wsgi_views")
+    config.scan("channelstream.wsgi_views.server")
+    config.scan("channelstream.wsgi_views.error_handlers")
+    config.scan("channelstream.events")
 
-    config.include('pyramid_apispec.views')
+    config.include("pyramid_apispec.views")
     config.pyramid_apispec_add_explorer(
-        spec_route_name='openapi_spec',
-        script_generator='channelstream.utils:swagger_ui_script_template',
-        permission=NO_PERMISSION_REQUIRED)
+        spec_route_name="openapi_spec",
+        script_generator="channelstream.utils:swagger_ui_script_template",
+        permission=NO_PERMISSION_REQUIRED,
+    )
 
-    if config.registry.settings['demo']:
-        config.scan('channelstream.wsgi_views.demo')
+    if config.registry.settings["demo"]:
+        config.scan("channelstream.wsgi_views.demo")
     app = config.make_wsgi_app()
     return app

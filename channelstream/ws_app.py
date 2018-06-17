@@ -8,8 +8,8 @@ import channelstream
 
 class ChatApplicationSocket(WebSocket):
     def opened(self):
-        self.qs = parse_qs(self.environ['QUERY_STRING'])
-        self.conn_id = self.qs.get('conn_id', '-')[0]
+        self.qs = parse_qs(self.environ["QUERY_STRING"])
+        self.conn_id = self.qs.get("conn_id", "-")[0]
         if self.conn_id not in channelstream.CONNECTIONS:
             # close connection instantly if user played with id
             self.close()
@@ -28,8 +28,8 @@ class ChatApplicationSocket(WebSocket):
                 user.last_active = now
 
     def closed(self, code, reason=""):
-        self.environ.pop('ws4py.app')
+        self.environ.pop("ws4py.app")
         found_conn = self.conn_id in channelstream.CONNECTIONS
-        if hasattr(self, 'conn_id') and found_conn:
+        if hasattr(self, "conn_id") and found_conn:
             connection = channelstream.CONNECTIONS[self.conn_id]
             connection.mark_for_gc()

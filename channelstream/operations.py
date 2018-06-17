@@ -12,13 +12,15 @@ from channelstream.channel import Channel
 log = logging.getLogger(__name__)
 
 
-def connect(username=None,
-            fresh_user_state=None,
-            state_public_keys=None,
-            update_user_state=None,
-            conn_id=None,
-            channels=None,
-            channel_configs=None):
+def connect(
+    username=None,
+    fresh_user_state=None,
+    state_public_keys=None,
+    update_user_state=None,
+    conn_id=None,
+    channels=None,
+    channel_configs=None,
+):
     """
 
     :param username:
@@ -48,17 +50,16 @@ def connect(username=None,
         for channel_name in channels:
             # user gets assigned to a channel
             if channel_name not in channelstream.CHANNELS:
-                channel = Channel(channel_name,
-                                  channel_config=channel_configs.get(channel_name))
+                channel = Channel(
+                    channel_name, channel_config=channel_configs.get(channel_name)
+                )
                 channelstream.CHANNELS[channel_name] = channel
             channelstream.CHANNELS[channel_name].add_connection(connection)
-        log.info('connecting %s with uuid %s' % (username, connection.id))
+        log.info("connecting %s with uuid %s" % (username, connection.id))
         return connection, user
 
 
-def subscribe(connection=None,
-              channels=None,
-              channel_configs=None):
+def subscribe(connection=None, channels=None, channel_configs=None):
     """
 
     :param connection:
@@ -72,19 +73,17 @@ def subscribe(connection=None,
         if user:
             for channel_name in channels:
                 if channel_name not in channelstream.CHANNELS:
-                    channel = Channel(channel_name,
-                                      channel_config=channel_configs)
+                    channel = Channel(channel_name, channel_config=channel_configs)
                     channelstream.CHANNELS[channel_name] = channel
-                is_found = channelstream.CHANNELS[
-                    channel_name].add_connection(
-                    connection)
+                is_found = channelstream.CHANNELS[channel_name].add_connection(
+                    connection
+                )
                 if is_found:
                     subscribed_to.append(channel_name)
     return subscribed_to
 
 
-def unsubscribe(connection=None,
-                unsubscribe_channels=None):
+def unsubscribe(connection=None, unsubscribe_channels=None):
     """
 
     :param connection:
@@ -97,8 +96,9 @@ def unsubscribe(connection=None,
         if user:
             for channel_name in unsubscribe_channels:
                 if channel_name in channelstream.CHANNELS:
-                    is_found = channelstream.CHANNELS[
-                        channel_name].remove_connection(connection)
+                    is_found = channelstream.CHANNELS[channel_name].remove_connection(
+                        connection
+                    )
                     if is_found:
                         unsubscribed_from.append(channel_name)
     return unsubscribed_from
@@ -143,8 +143,7 @@ def set_channel_config(channel_configs):
     with channelstream.lock:
         for channel_name, config in channel_configs.items():
             if not channelstream.CHANNELS.get(channel_name):
-                channel = Channel(channel_name,
-                                  channel_config=channel_configs)
+                channel = Channel(channel_name, channel_config=channel_configs)
                 channelstream.CHANNELS[channel_name] = channel
             else:
                 channel = channelstream.CHANNELS[channel_name]
@@ -158,26 +157,28 @@ def pass_message(msg, stats):
     :param stats:
     :return:
     """
-    message = {'uuid': str(uuid.uuid4()).replace('-', ''),
-               'user': msg.get('user'),
-               'message': msg['message'],
-               'no_history': msg.get('no_history'),
-               'type': 'message',
-               'timestamp': msg['timestamp']}
-    pm_users = msg.get('pm_users', [])
+    message = {
+        "uuid": str(uuid.uuid4()).replace("-", ""),
+        "user": msg.get("user"),
+        "message": msg["message"],
+        "no_history": msg.get("no_history"),
+        "type": "message",
+        "timestamp": msg["timestamp"],
+    }
+    pm_users = msg.get("pm_users", [])
     total_sent = 0
-    stats['total_unique_messages'] += 1
-    exclude_users = msg.get('exclude_users') or []
-    if msg.get('channel'):
-        channel_inst = channelstream.CHANNELS.get(msg['channel'])
+    stats["total_unique_messages"] += 1
+    exclude_users = msg.get("exclude_users") or []
+    if msg.get("channel"):
+        channel_inst = channelstream.CHANNELS.get(msg["channel"])
         if channel_inst:
-            total_sent += channel_inst.add_message(message,
-                                                   pm_users=pm_users,
-                                                   exclude_users=exclude_users)
+            total_sent += channel_inst.add_message(
+                message, pm_users=pm_users, exclude_users=exclude_users
+            )
     elif pm_users:
         # if pm then iterate over all users and notify about new message!
         for username in pm_users:
             user_inst = channelstream.USERS.get(username)
             if user_inst:
                 total_sent += user_inst.add_message(message)
-    stats['total_messages'] += total_sent
+    stats["total_messages"] += total_sent

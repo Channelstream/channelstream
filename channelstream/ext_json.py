@@ -9,7 +9,7 @@ import functools
 import decimal
 import imp
 
-__all__ = ['json', 'simplejson', 'stdlibjson']
+__all__ = ["json", "simplejson", "stdlibjson"]
 
 
 def _is_aware(value):
@@ -19,8 +19,7 @@ def _is_aware(value):
     The logic is described in Python's docs:
     http://docs.python.org/library/datetime.html#datetime.tzinfo
     """
-    return (value.tzinfo is not None
-            and value.tzinfo.utcoffset(value) is not None)
+    return value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None
 
 
 def _obj_dump(obj):
@@ -39,8 +38,8 @@ def _obj_dump(obj):
         r = obj.isoformat()
         if obj.microsecond:
             r = r[:23] + r[26:]
-        if r.endswith('+00:00'):
-            r = r[:-6] + 'Z'
+        if r.endswith("+00:00"):
+            r = r[:-6] + "Z"
         return r
     elif isinstance(obj, datetime.date):
         return obj.isoformat()
@@ -55,7 +54,7 @@ def _obj_dump(obj):
         return r
     elif isinstance(obj, set):
         return list(obj)
-    elif hasattr(obj, '__json__'):
+    elif hasattr(obj, "__json__"):
         if callable(obj.__json__):
             return obj.__json__()
         else:
@@ -67,7 +66,7 @@ def _obj_dump(obj):
 # Import simplejson
 try:
     # import simplejson initially
-    _sj = imp.load_module('_sj', *imp.find_module('simplejson'))
+    _sj = imp.load_module("_sj", *imp.find_module("simplejson"))
 
     def extended_encode(obj):
         try:
@@ -78,21 +77,19 @@ try:
 
     # we handle decimals our own it makes unified behavior of json vs
     # simplejson
-    sj_version = [int(x) for x in _sj.__version__.split('.')]
+    sj_version = [int(x) for x in _sj.__version__.split(".")]
     major, minor = sj_version[0], sj_version[1]
     if major < 2 or (major == 2 and minor < 1):
         # simplejson < 2.1 doesnt support use_decimal
-        _sj.dumps = functools.partial(_sj.dumps,
-                                      default=extended_encode)
-        _sj.dump = functools.partial(_sj.dump,
-                                     default=extended_encode)
+        _sj.dumps = functools.partial(_sj.dumps, default=extended_encode)
+        _sj.dump = functools.partial(_sj.dump, default=extended_encode)
     else:
-        _sj.dumps = functools.partial(_sj.dumps,
-                                      default=extended_encode,
-                                      use_decimal=False)
-        _sj.dump = functools.partial(_sj.dump,
-                                     default=extended_encode,
-                                     use_decimal=False)
+        _sj.dumps = functools.partial(
+            _sj.dumps, default=extended_encode, use_decimal=False
+        )
+        _sj.dump = functools.partial(
+            _sj.dump, default=extended_encode, use_decimal=False
+        )
     simplejson = _sj
 
 except ImportError:
@@ -101,7 +98,7 @@ except ImportError:
 
 try:
     # simplejson not found try out regular json module
-    _json = imp.load_module('_json', *imp.find_module('json'))
+    _json = imp.load_module("_json", *imp.find_module("json"))
 
     # extended JSON encoder for json
     class ExtendedEncoder(_json.JSONEncoder):
@@ -127,4 +124,4 @@ if simplejson:
 elif _json:
     json = _json
 else:
-    raise ImportError('Could not find any json modules')
+    raise ImportError("Could not find any json modules")

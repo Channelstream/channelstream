@@ -21,7 +21,7 @@ class Connection(object):
         gevent.spawn_later(5, self.heartbeat)
 
     def __repr__(self):
-        return '<Connection: id:%s, owner:%s>' % (self.id, self.username)
+        return "<Connection: id:%s, owner:%s>" % (self.id, self.username)
 
     def add_message(self, message=None):
         """ Sends the message to the client connection """

@@ -7,17 +7,17 @@ from marshmallow import validate, fields
 
 
 def gen_uuid():
-    return str(uuid.uuid4()).replace('-', '')
+    return str(uuid.uuid4()).replace("-", "")
 
 
 def validate_connection_id(conn_id):
     if conn_id not in channelstream.CONNECTIONS:
-        raise marshmallow.ValidationError('Unknown connection')
+        raise marshmallow.ValidationError("Unknown connection")
 
 
 def validate_username(username):
     if username not in channelstream.USERS:
-        raise marshmallow.ValidationError('Unknown user')
+        raise marshmallow.ValidationError("Unknown user")
 
 
 class ChannelstreamSchema(marshmallow.Schema):
@@ -27,23 +27,20 @@ class ChannelstreamSchema(marshmallow.Schema):
 
 
 class ConnectBodySchema(ChannelstreamSchema):
-    username = fields.String(
-        required=True,
-        validate=validate.Length(min=1, max=512))
+    username = fields.String(required=True, validate=validate.Length(min=1, max=512))
 
-    conn_id = fields.String(
-        missing=gen_uuid,
-        validate=validate.Length(min=1, max=256))
+    conn_id = fields.String(missing=gen_uuid, validate=validate.Length(min=1, max=256))
 
-    channels = fields.List(fields.String(
-        validate=validate.Length(min=1, max=256)),
-        description='List of channels user should be subscribed to',
-        missing=lambda: [])
+    channels = fields.List(
+        fields.String(validate=validate.Length(min=1, max=256)),
+        description="List of channels user should be subscribed to",
+        missing=lambda: [],
+    )
 
-    state_public_keys = fields.List(fields.String(
-        description='',
-        validate=validate.Length(min=1, max=256)),
-        missing=lambda: [])
+    state_public_keys = fields.List(
+        fields.String(description="", validate=validate.Length(min=1, max=256)),
+        missing=lambda: [],
+    )
 
     fresh_user_state = fields.Dict(missing=lambda: {})
     user_state = fields.Dict(missing=lambda: {})
@@ -54,20 +51,22 @@ class ConnectBodySchema(ChannelstreamSchema):
 class SubscribeBodySchema(ChannelstreamSchema):
     conn_id = fields.String(
         required=True,
-        validate=[validate.Length(min=1, max=256),
-                  validate_connection_id])
+        validate=[validate.Length(min=1, max=256), validate_connection_id],
+    )
 
-    channels = fields.List(fields.String(
-        description='List of channels user should be subscribed to',
-        validate=validate.Length(min=1, max=256)),
+    channels = fields.List(
+        fields.String(
+            description="List of channels user should be subscribed to",
+            validate=validate.Length(min=1, max=256),
+        ),
         required=True,
-        validate=validate.Length(min=1))
+        validate=validate.Length(min=1),
+    )
     info = fields.Dict(missing=lambda: {})
 
     @marshmallow.pre_load
     def get_connection(self, in_data):
-        in_data.setdefault('conn_id',
-                           self.context['request'].GET.get('conn_id'))
+        in_data.setdefault("conn_id", self.context["request"].GET.get("conn_id"))
         return in_data
 
 
@@ -79,14 +78,13 @@ class UnsubscribeBodySchema(SubscribeBodySchema):
 
 class UserStateBodySchema(ChannelstreamSchema):
     user = fields.String(
-        required=True,
-        validate=[validate.Length(min=1, max=512),
-                  validate_username])
+        required=True, validate=[validate.Length(min=1, max=512), validate_username]
+    )
 
     user_state = fields.Dict(missing=lambda: {})
-    state_public_keys = fields.List(fields.String(
-        validate=validate.Length(min=1, max=256)),
-        missing=None)
+    state_public_keys = fields.List(
+        fields.String(validate=validate.Length(min=1, max=256)), missing=None
+    )
 
     @marshmallow.post_load(pass_original=True)
     def _add_unknown(self, data, original):
@@ -95,21 +93,16 @@ class UserStateBodySchema(ChannelstreamSchema):
 
 class MessageBodySchema(ChannelstreamSchema):
     timestamp = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
-    user = fields.String(
-        required=True,
-        validate=validate.Length(min=1, max=512))
+    user = fields.String(required=True, validate=validate.Length(min=1, max=512))
     message = fields.Dict()
     no_history = fields.Boolean(missing=False)
     pm_users = fields.List(
-        fields.String(
-            validate=validate.Length(min=1, max=512)),
-        missing=lambda: [],
+        fields.String(validate=validate.Length(min=1, max=512)), missing=lambda: []
     )
-    exclude_users = fields.List(fields.String(
-        missing=lambda: [],
-        validate=validate.Length(min=1, max=512)))
-    channel = fields.String(
-        validate=validate.Length(min=1, max=256))
+    exclude_users = fields.List(
+        fields.String(missing=lambda: [], validate=validate.Length(min=1, max=512))
+    )
+    channel = fields.String(validate=validate.Length(min=1, max=256))
 
     # @marshmallow.post_load(pass_original=True)
     # def _add_unknown(self, data, original):
@@ -119,12 +112,11 @@ class MessageBodySchema(ChannelstreamSchema):
 class DisconnectBodySchema(ChannelstreamSchema):
     conn_id = fields.String(
         required=True,
-        validate=[validate.Length(min=1, max=256),
-                  validate_connection_id])
+        validate=[validate.Length(min=1, max=256), validate_connection_id],
+    )
 
 
 class ChannelConfigBodySchema(ChannelstreamSchema):
-
     @marshmallow.post_load(pass_original=True)
     def _add_unknown(self, data, original):
         return add_missing_fields(data, original, self.fields)

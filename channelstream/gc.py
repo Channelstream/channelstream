@@ -38,7 +38,7 @@ def gc_conns():
                     conn.socket.close()
                 except Exception:
                     raise
-        log.debug('gc_conns() time %s' % (datetime.utcnow() - start_time))
+        log.debug("gc_conns() time %s" % (datetime.utcnow() - start_time))
 
 
 def gc_users():
@@ -48,7 +48,7 @@ def gc_users():
         for user in list(six.itervalues(channelstream.USERS)):
             if user.last_active < threshold:
                 channelstream.USERS.pop(user.username)
-        log.debug('gc_users() time %s' % (datetime.utcnow() - start_time))
+        log.debug("gc_users() time %s" % (datetime.utcnow() - start_time))
 
 
 def gc_users_forever():

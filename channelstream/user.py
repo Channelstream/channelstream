@@ -13,7 +13,7 @@ class User(object):
     """ represents a unique user of the system """
 
     def __init__(self, username):
-        self.uuid = str(uuid.uuid4()).replace('-', '')
+        self.uuid = str(uuid.uuid4()).replace("-", "")
         self.username = username
         self.state = {}
         self.state_public_keys = []
@@ -21,8 +21,7 @@ class User(object):
         self.last_active = datetime.utcnow()
 
     def __repr__(self):
-        return '<User:%s, connections:%s>' % (
-            self.username, len(self.connections))
+        return "<User:%s, connections:%s>" % (self.username, len(self.connections))
 
     def add_connection(self, connection):
         """
@@ -50,20 +49,17 @@ class User(object):
             for k, v in six.iteritems(state_dict):
                 if self.state.get(k) != v:
                     self.state[k] = v
-                    changed.append({'key': k, 'value': v})
+                    changed.append({"key": k, "value": v})
         return changed
 
     @property
     def public_state(self):
-        return {k: v for k, v in self.state.items()
-                if k in self.state_public_keys}
+        return {k: v for k, v in self.state.items() if k in self.state_public_keys}
 
     def get_info(self, include_connections=False):
-        info = {'state': self.public_state,
-                'user': self.username,
-                'uuid': self.uuid}
+        info = {"state": self.public_state, "user": self.username, "uuid": self.uuid}
         if include_connections:
-            info['connections'] = [c.id for c in self.connections]
+            info["connections"] = [c.id for c in self.connections]
         return info
 
     def get_channels(self):

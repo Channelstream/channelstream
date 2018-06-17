@@ -27,13 +27,18 @@ def get_connection_channels(connection):
 
 
 class SharedUtils(object):
-
     def __init__(self, request):
         self.request = request
 
-    def get_channel_info(self, req_channels=None, include_history=True,
-                         include_connections=False, include_users=False,
-                         exclude_channels=None, return_public_state=False):
+    def get_channel_info(
+        self,
+        req_channels=None,
+        include_history=True,
+        include_connections=False,
+        include_users=False,
+        exclude_channels=None,
+        return_public_state=False,
+    ):
         """
         Gets channel information for req_channels or all channels
         if req_channels is None
@@ -50,8 +55,7 @@ class SharedUtils(object):
             exclude_channels = []
         start_time = datetime.utcnow()
 
-        json_data = {"channels": {},
-                     "users": []}
+        json_data = {"channels": {}, "users": []}
 
         users_to_list = set()
 
@@ -59,27 +63,29 @@ class SharedUtils(object):
         if req_channels is None:
             channel_instances = six.itervalues(channelstream.CHANNELS)
         else:
-            channel_instances = [channelstream.CHANNELS[c]
-                                 for c in req_channels]
+            channel_instances = [channelstream.CHANNELS[c] for c in req_channels]
 
         for channel_inst in channel_instances:
             if channel_inst.name in exclude_channels:
                 continue
 
             channel_info = channel_inst.get_info(
-                include_history=include_history,
-                include_users=include_users
+                include_history=include_history, include_users=include_users
             )
             json_data["channels"][channel_inst.name] = channel_info
-            users_to_list.update(channel_info['users'])
+            users_to_list.update(channel_info["users"])
 
         for username in users_to_list:
             user = channelstream.USERS[username]
-            json_data['users'].append(
-                {'user': username,
-                 'state': user.state if not return_public_state
-                 else user.public_state})
-        log.info('info time: %s' % (datetime.utcnow() - start_time))
+            json_data["users"].append(
+                {
+                    "user": username,
+                    "state": user.state
+                    if not return_public_state
+                    else user.public_state,
+                }
+            )
+        log.info("info time: %s" % (datetime.utcnow() - start_time))
         return json_data
 
     def get_common_info(self, channels, info_config):
@@ -89,22 +95,23 @@ class SharedUtils(object):
         :param info_config:
         :return:
         """
-        include_history = info_config.get('include_history', True)
-        include_users = info_config.get('include_users', True)
-        exclude_channels = info_config.get('exclude_channels', [])
-        include_connections = info_config.get('include_connections', False)
-        return_public_state = info_config.get('return_public_state', False)
+        include_history = info_config.get("include_history", True)
+        include_users = info_config.get("include_users", True)
+        exclude_channels = info_config.get("exclude_channels", [])
+        include_connections = info_config.get("include_connections", False)
+        return_public_state = info_config.get("return_public_state", False)
         channels_info = self.get_channel_info(
-            channels, include_history=include_history,
+            channels,
+            include_history=include_history,
             include_connections=include_connections,
             include_users=include_users,
             exclude_channels=exclude_channels,
-            return_public_state=return_public_state)
+            return_public_state=return_public_state,
+        )
         return channels_info
 
 
-@view_config(route_name='legacy_connect', request_method='POST',
-             renderer='json')
+@view_config(route_name="legacy_connect", request_method="POST", renderer="json")
 def connect(request):
     """
     Connect view
@@ -136,30 +143,32 @@ def connect(request):
             $ref: '#/definitions/ConnectBody'
     """
     utils = SharedUtils(request)
-    schema = validation.ConnectBodySchema(context={'request': request})
+    schema = validation.ConnectBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
-    channels = sorted(json_body['channels'])
+    channels = sorted(json_body["channels"])
     connection, user = operations.connect(
-        username=json_body['username'],
-        fresh_user_state=json_body['fresh_user_state'],
-        state_public_keys=json_body['state_public_keys'],
-        update_user_state=json_body['user_state'],
-        conn_id=json_body['conn_id'],
+        username=json_body["username"],
+        fresh_user_state=json_body["fresh_user_state"],
+        state_public_keys=json_body["state_public_keys"],
+        update_user_state=json_body["user_state"],
+        conn_id=json_body["conn_id"],
         channels=channels,
-        channel_configs=json_body['channel_configs'])
+        channel_configs=json_body["channel_configs"],
+    )
 
     # get info config for channel information
-    channels_info = utils.get_common_info(channels, json_body['info'])
-    return {'conn_id': connection.id,
-            'state': user.state,
-            'username': user.username,
-            'public_state': user.public_state,
-            'channels': channels,
-            'channels_info': channels_info}
+    channels_info = utils.get_common_info(channels, json_body["info"])
+    return {
+        "conn_id": connection.id,
+        "state": user.state,
+        "username": user.username,
+        "public_state": user.public_state,
+        "channels": channels,
+        "channels_info": channels_info,
+    }
 
 
-@view_config(route_name='legacy_subscribe', request_method='POST',
-             renderer='json')
+@view_config(route_name="legacy_subscribe", request_method="POST", renderer="json")
 def subscribe(request, *args):
     """
     Subscribe view
@@ -185,26 +194,26 @@ def subscribe(request, *args):
           $ref: "#/definitions/SubscribeBody"
     """
     utils = SharedUtils(request)
-    schema = validation.SubscribeBodySchema(context={'request': request})
+    schema = validation.SubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
-    connection = channelstream.CONNECTIONS.get(json_body['conn_id'])
-    channels = json_body['channels']
-    channel_configs = json_body.get('channel_configs', {})
+    connection = channelstream.CONNECTIONS.get(json_body["conn_id"])
+    channels = json_body["channels"]
+    channel_configs = json_body.get("channel_configs", {})
     subscribed_to = operations.subscribe(
-        connection=connection,
-        channels=channels,
-        channel_configs=channel_configs)
+        connection=connection, channels=channels, channel_configs=channel_configs
+    )
 
     # get info config for channel information
     current_channels = get_connection_channels(connection)
-    channels_info = utils.get_common_info(current_channels, json_body['info'])
-    return {"channels": current_channels,
-            "channels_info": channels_info,
-            "subscribed_to": sorted(subscribed_to)}
+    channels_info = utils.get_common_info(current_channels, json_body["info"])
+    return {
+        "channels": current_channels,
+        "channels_info": channels_info,
+        "subscribed_to": sorted(subscribed_to),
+    }
 
 
-@view_config(route_name='legacy_unsubscribe', request_method='POST',
-             renderer='json')
+@view_config(route_name="legacy_unsubscribe", request_method="POST", renderer="json")
 def unsubscribe(request, *args):
     """
     Unsubscribe view
@@ -230,30 +239,31 @@ def unsubscribe(request, *args):
           $ref: "#/definitions/UnsubscribeBody"
     """
     utils = SharedUtils(request)
-    schema = validation.UnsubscribeBodySchema(context={'request': request})
+    schema = validation.UnsubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
-    connection = channelstream.CONNECTIONS.get(json_body['conn_id'])
+    connection = channelstream.CONNECTIONS.get(json_body["conn_id"])
     unsubscribed_from = operations.unsubscribe(
-        connection=connection,
-        unsubscribe_channels=json_body['channels'])
+        connection=connection, unsubscribe_channels=json_body["channels"]
+    )
 
     # get info config for channel information
     current_channels = get_connection_channels(connection)
-    channels_info = utils.get_common_info(current_channels, json_body['info'])
-    return {"channels": current_channels,
-            "channels_info": channels_info,
-            "unsubscribed_from": sorted(unsubscribed_from)}
+    channels_info = utils.get_common_info(current_channels, json_body["info"])
+    return {
+        "channels": current_channels,
+        "channels_info": channels_info,
+        "unsubscribed_from": sorted(unsubscribed_from),
+    }
 
 
-@view_config(route_name='api_listen', request_method='GET',
-             renderer='json')
+@view_config(route_name="api_listen", request_method="GET", renderer="json")
 def listen(request):
     """
     Handles long-polling connection
     :return:
     """
     config = request.registry.settings
-    conn_id = request.params.get('conn_id')
+    conn_id = request.params.get("conn_id")
     connection = channelstream.CONNECTIONS.get(conn_id)
     if not connection:
         raise HTTPUnauthorized()
@@ -269,8 +279,9 @@ def listen(request):
         messages = []
         # block for first message - wake up after a while
         try:
-            messages.extend(connection.queue.get(
-                timeout=config['wake_connections_after']))
+            messages.extend(
+                connection.queue.get(timeout=config["wake_connections_after"])
+            )
         except Empty:
             pass
         # get more messages if enqueued takes up total 0.25s
@@ -279,22 +290,21 @@ def listen(request):
                 messages.extend(connection.queue.get(timeout=0.25))
             except Empty:
                 break
-        cb = request.params.get('callback')
+        cb = request.params.get("callback")
         if cb:
-            resp = cb + '(' + json.dumps(messages) + ')'
+            resp = cb + "(" + json.dumps(messages) + ")"
         else:
             resp = json.dumps(messages)
         if six.PY2:
             yield resp
         else:
-            yield resp.encode('utf8')
+            yield resp.encode("utf8")
 
     request.response.app_iter = yield_response()
     return request.response
 
 
-@view_config(route_name='legacy_user_state', request_method='POST',
-             renderer='json')
+@view_config(route_name="legacy_user_state", request_method="POST", renderer="json")
 def user_state(request):
     """
     Sets the state of a user object
@@ -320,23 +330,23 @@ def user_state(request):
           $ref: "#/definitions/UserStateBody"
     """
 
-    schema = validation.UserStateBodySchema(context={'request': request})
+    schema = validation.UserStateBodySchema(context={"request": request})
     data = schema.load(request.json_body).data
-    user_inst = channelstream.USERS[data['user']]
+    user_inst = channelstream.USERS[data["user"]]
     # can be empty list!
-    if data['state_public_keys'] is not None:
-        user_inst.state_public_keys = data['state_public_keys']
+    if data["state_public_keys"] is not None:
+        user_inst.state_public_keys = data["state_public_keys"]
     changed = operations.change_user_state(
-        user_inst=user_inst, user_state=data['user_state'])
+        user_inst=user_inst, user_state=data["user_state"]
+    )
     return {
-        'user_state': user_inst.state,
-        'changed_state': changed,
-        'public_keys': user_inst.state_public_keys
+        "user_state": user_inst.state,
+        "changed_state": changed,
+        "public_keys": user_inst.state_public_keys,
     }
 
 
-@view_config(route_name='legacy_message', request_method='POST',
-             renderer='json')
+@view_config(route_name="legacy_message", request_method="POST", renderer="json")
 def message(request):
     """
     Send message to channels and/or users
@@ -362,18 +372,18 @@ def message(request):
           $ref: "#/definitions/MessageBody"
     """
 
-    schema = validation.MessageBodySchema(
-        context={'request': request}, many=True)
+    schema = validation.MessageBodySchema(context={"request": request}, many=True)
     data = schema.load(request.json_body).data
     for msg in data:
-        if not msg.get('channel') and not msg.get('pm_users', []):
+        if not msg.get("channel") and not msg.get("pm_users", []):
             continue
         gevent.spawn(operations.pass_message, msg, channelstream.stats)
     return True
 
 
-@view_config(route_name='api_disconnect',
-             renderer='json', permission=NO_PERMISSION_REQUIRED)
+@view_config(
+    route_name="api_disconnect", renderer="json", permission=NO_PERMISSION_REQUIRED
+)
 def disconnect(request):
     """
     Permanently remove connection from server
@@ -395,17 +405,16 @@ def disconnect(request):
         schema:
           $ref: "#/definitions/DisconnectBody"
     """
-    schema = validation.DisconnectBodySchema(context={'request': request})
+    schema = validation.DisconnectBodySchema(context={"request": request})
     json_body = request.json_body
-    payload = {'conn_id': request.params.get('conn_id')}
+    payload = {"conn_id": request.params.get("conn_id")}
     if json_body:
-        payload['conn_id'] = json_body.get('conn_id')
+        payload["conn_id"] = json_body.get("conn_id")
     data = schema.load(payload).data
-    return operations.disconnect(conn_id=data['conn_id'])
+    return operations.disconnect(conn_id=data["conn_id"])
 
 
-@view_config(route_name='legacy_channel_config', request_method='POST',
-             renderer='json')
+@view_config(route_name="legacy_channel_config", request_method="POST", renderer="json")
 def channel_config(request):
     """
     Set channel configuration
@@ -431,20 +440,20 @@ def channel_config(request):
     """
 
     utils = SharedUtils(request)
-    schema = validation.ChannelConfigBodySchema(context={'request': request})
+    schema = validation.ChannelConfigBodySchema(context={"request": request})
     data = schema.load(request.json_body).data
     if not data:
         request.response.status = 400
-        return {'error': "No channels specified"}
+        return {"error": "No channels specified"}
 
     operations.set_channel_config(channel_configs=data)
-    channels_info = utils.get_channel_info(data.keys(),
-                                           include_history=False,
-                                           include_users=False)
+    channels_info = utils.get_channel_info(
+        data.keys(), include_history=False, include_users=False
+    )
     return channels_info
 
 
-@view_config(route_name='legacy_info', renderer='json')
+@view_config(route_name="legacy_info", renderer="json")
 def info(request):
     """
     Returns channel information
@@ -472,32 +481,34 @@ def info(request):
     if not request.body:
         req_channels = channelstream.CHANNELS.keys()
         info_config = {
-            'include_history': True,
-            'include_users': True,
-            'exclude_channels': [],
-            'include_connections': True
+            "include_history": True,
+            "include_users": True,
+            "exclude_channels": [],
+            "include_connections": True,
         }
     else:
-        schema = validation.ChannelInfoBodySchema(context={'request': request})
+        schema = validation.ChannelInfoBodySchema(context={"request": request})
         data = schema.load(request.json_body).data
         # get info config for channel information
-        info_config = data.get('info') or {}
-        req_channels = info_config.get('channels', None)
-        info_config['include_connections'] = info_config.get(
-            'include_connections', True)
+        info_config = data.get("info") or {}
+        req_channels = info_config.get("channels", None)
+        info_config["include_connections"] = info_config.get(
+            "include_connections", True
+        )
     channels_info = utils.get_common_info(req_channels, info_config)
     return channels_info
 
 
-@view_defaults(route_name='action', renderer='json', permission='access')
+@view_defaults(route_name="action", renderer="json", permission="access")
 class ServerViews(object):
     def __init__(self, request):
         self.request = request
         self.request.handle_cors()
         self.utils = SharedUtils(request)
 
-    @view_config(route_name='admin',
-                 renderer='templates/admin.jinja2', permission='access')
+    @view_config(
+        route_name="admin", renderer="templates/admin.jinja2", permission="access"
+    )
     def admin(self):
         """
         Serve admin page html
@@ -505,8 +516,7 @@ class ServerViews(object):
         """
         return {}
 
-    @view_config(route_name='admin_json',
-                 renderer='json', permission='access')
+    @view_config(route_name="admin_json", renderer="json", permission="access")
     def admin_json(self):
         """
         Admin json
@@ -528,33 +538,35 @@ class ServerViews(object):
             description: "Response info configuration"
         """
 
-        uptime = datetime.utcnow() - channelstream.stats['started_on']
-        uptime = str(uptime).split('.')[0]
+        uptime = datetime.utcnow() - channelstream.stats["started_on"]
+        uptime = str(uptime).split(".")[0]
         remembered_user_count = len(
-            [user for user in six.iteritems(channelstream.USERS)])
-        active_users = [user for user in six.itervalues(channelstream.USERS)
-                        if user.connections]
+            [user for user in six.iteritems(channelstream.USERS)]
+        )
+        active_users = [
+            user for user in six.itervalues(channelstream.USERS) if user.connections
+        ]
         unique_user_count = len(active_users)
-        total_connections = sum([len(user.connections)
-                                 for user in active_users])
-        channels_info = self.utils.get_common_info(None, {
-            'include_history': True,
-            'include_users': True,
-            'exclude_channels': [],
-            'include_connections': True
-        })
+        total_connections = sum([len(user.connections) for user in active_users])
+        channels_info = self.utils.get_common_info(
+            None,
+            {
+                "include_history": True,
+                "include_users": True,
+                "exclude_channels": [],
+                "include_connections": True,
+            },
+        )
         return {
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
             "total_connections": total_connections,
             "total_channels": len(channelstream.CHANNELS.keys()),
-            "total_messages": channelstream.stats['total_messages'],
-            "total_unique_messages": channelstream.stats[
-                'total_unique_messages'],
-            "channels": channels_info['channels'],
-            "users": [user.get_info(include_connections=True)
-                      for user in active_users],
-            "uptime": uptime
+            "total_messages": channelstream.stats["total_messages"],
+            "total_unique_messages": channelstream.stats["total_unique_messages"],
+            "channels": channels_info["channels"],
+            "users": [user.get_info(include_connections=True) for user in active_users],
+            "uptime": uptime,
         }
 
     # @view_config(route_name='api_explorer', permission=NO_PERMISSION_REQUIRED,
@@ -562,55 +574,49 @@ class ServerViews(object):
     # def api_explorer(self):
     #     return {}
 
-    @view_config(route_name='openapi_spec', permission=NO_PERMISSION_REQUIRED,
-                 renderer='json')
+    @view_config(
+        route_name="openapi_spec", permission=NO_PERMISSION_REQUIRED, renderer="json"
+    )
     def api_spec(self):
         spec = APISpec(
-            title='Channelstream API',
-            version='0.7.0',
-            plugins=[
-                'apispec.ext.marshmallow'
-            ],
+            title="Channelstream API",
+            version="0.7.0",
+            plugins=["apispec.ext.marshmallow"],
         )
-        spec.definition('ConnectBody', schema=validation.ConnectBodySchema)
-        spec.definition('SubscribeBody', schema=validation.SubscribeBodySchema)
-        spec.definition('UnsubscribeBody',
-                        schema=validation.UnsubscribeBodySchema)
-        spec.definition('UserStateBody', schema=validation.UserStateBodySchema)
-        spec.definition('MessageBody', schema=validation.MessageBodySchema(many=True))
-        spec.definition('DisconnectBody',
-                        schema=validation.DisconnectBodySchema)
-        spec.definition('ChannelConfigBody',
-                        schema=validation.ChannelConfigBodySchema)
-        spec.definition('ChannelInfoBody',
-                        schema=validation.ChannelInfoBodySchema)
+        spec.definition("ConnectBody", schema=validation.ConnectBodySchema)
+        spec.definition("SubscribeBody", schema=validation.SubscribeBodySchema)
+        spec.definition("UnsubscribeBody", schema=validation.UnsubscribeBodySchema)
+        spec.definition("UserStateBody", schema=validation.UserStateBodySchema)
+        spec.definition("MessageBody", schema=validation.MessageBodySchema(many=True))
+        spec.definition("DisconnectBody", schema=validation.DisconnectBodySchema)
+        spec.definition("ChannelConfigBody", schema=validation.ChannelConfigBodySchema)
+        spec.definition("ChannelInfoBody", schema=validation.ChannelInfoBodySchema)
 
-        add_pyramid_paths(spec, 'legacy_connect', request=self.request)
-        add_pyramid_paths(spec, 'legacy_subscribe', request=self.request)
-        add_pyramid_paths(spec, 'legacy_unsubscribe', request=self.request)
-        add_pyramid_paths(spec, 'legacy_user_state', request=self.request)
-        add_pyramid_paths(spec, 'legacy_message', request=self.request)
-        add_pyramid_paths(spec, 'legacy_channel_config', request=self.request)
-        add_pyramid_paths(spec, 'legacy_info', request=self.request)
+        add_pyramid_paths(spec, "legacy_connect", request=self.request)
+        add_pyramid_paths(spec, "legacy_subscribe", request=self.request)
+        add_pyramid_paths(spec, "legacy_unsubscribe", request=self.request)
+        add_pyramid_paths(spec, "legacy_user_state", request=self.request)
+        add_pyramid_paths(spec, "legacy_message", request=self.request)
+        add_pyramid_paths(spec, "legacy_channel_config", request=self.request)
+        add_pyramid_paths(spec, "legacy_info", request=self.request)
 
-        add_pyramid_paths(spec, 'api_listen', request=self.request)
-        add_pyramid_paths(spec, 'api_listen_ws', request=self.request)
-        add_pyramid_paths(spec, 'api_disconnect',request=self.request)
+        add_pyramid_paths(spec, "api_listen", request=self.request)
+        add_pyramid_paths(spec, "api_listen_ws", request=self.request)
+        add_pyramid_paths(spec, "api_disconnect", request=self.request)
 
-        add_pyramid_paths(spec, 'admin_json', request=self.request)
+        add_pyramid_paths(spec, "admin_json", request=self.request)
         spec_dict = spec.to_dict()
-        spec_dict['securityDefinitions'] = {
+        spec_dict["securityDefinitions"] = {
             "APIKeyHeader": {
                 "type": "apiKey",
                 "name": "X-Channelstream-Secret",
-                "in": "header"
+                "in": "header",
             }
         }
         return spec_dict
 
 
-@view_config(
-    context='channelstream.wsgi_views.wsgi_security:RequestBasicChallenge')
+@view_config(context="channelstream.wsgi_views.wsgi_security:RequestBasicChallenge")
 def admin_challenge(request):
     response = HTTPUnauthorized()
     response.headers.update(forget(request))
