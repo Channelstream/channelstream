@@ -577,7 +577,7 @@ class ServerViews(object):
         spec.definition('UnsubscribeBody',
                         schema=validation.UnsubscribeBodySchema)
         spec.definition('UserStateBody', schema=validation.UserStateBodySchema)
-        spec.definition('MessageBody', schema=validation.MessageBodySchema)
+        spec.definition('MessageBody', schema=validation.MessageBodySchema(many=True))
         spec.definition('DisconnectBody',
                         schema=validation.DisconnectBodySchema)
         spec.definition('ChannelConfigBody',

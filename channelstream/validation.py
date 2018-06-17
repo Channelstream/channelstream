@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 import channelstream
 import marshmallow
@@ -93,8 +94,7 @@ class UserStateBodySchema(ChannelstreamSchema):
 
 
 class MessageBodySchema(ChannelstreamSchema):
-
-    timestamp = fields.DateTime()
+    timestamp = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
     user = fields.String(
         required=True,
         validate=validate.Length(min=1, max=512))

@@ -158,22 +158,12 @@ def pass_message(msg, stats):
     :param stats:
     :return:
     """
-    if msg.get('timestamp'):
-        # if present lets use timestamp provided in the message
-        if '.' in msg['timestamp']:
-            timestmp = datetime.strptime(msg['timestamp'],
-                                         '%Y-%m-%dT%H:%M:%S.%f')
-        else:
-            timestmp = datetime.strptime(msg['timestamp'],
-                                         '%Y-%m-%dT%H:%M:%S')
-    else:
-        timestmp = datetime.utcnow()
     message = {'uuid': str(uuid.uuid4()).replace('-', ''),
                'user': msg.get('user'),
                'message': msg['message'],
                'no_history': msg.get('no_history'),
                'type': 'message',
-               'timestamp': timestmp}
+               'timestamp': msg['timestamp']}
     pm_users = msg.get('pm_users', [])
     total_sent = 0
     stats['total_unique_messages'] += 1
