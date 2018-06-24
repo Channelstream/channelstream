@@ -388,6 +388,22 @@ def disconnect(request):
     """
     Permanently remove connection from server
     ---
+    get:
+      tags:
+      - "Legacy API"
+      summary: "Permanently remove connection from server"
+      description: ""
+      operationId: "disconnect"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: query
+        schema:
+          type: string
+        name: "conn_id"
+        description: "Connection Id"
     post:
       tags:
       - "Legacy API"
@@ -406,10 +422,11 @@ def disconnect(request):
           $ref: "#/definitions/DisconnectBody"
     """
     schema = validation.DisconnectBodySchema(context={"request": request})
-    json_body = request.json_body
-    payload = {"conn_id": request.params.get("conn_id")}
-    if json_body:
-        payload["conn_id"] = json_body.get("conn_id")
+    if request.method != "POST":
+        payload = {"conn_id": request.GET.get("conn_id")}
+    else:
+        json_body = request.json_body
+        payload = {"conn_id": json_body.get("conn_id")}
     data = schema.load(payload).data
     return operations.disconnect(conn_id=data["conn_id"])
 
