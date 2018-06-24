@@ -131,6 +131,7 @@ class DemoViews(object):
                 "status": None,
                 "private": "is private",
                 "bar": 1,
+                "bool": True,
             },
             "user_state": state,
             "state_public_keys": ["email", "status", "bar", "color"],

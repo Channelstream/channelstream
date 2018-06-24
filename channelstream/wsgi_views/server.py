@@ -10,7 +10,7 @@ from pyramid_apispec.helpers import add_pyramid_paths
 import channelstream
 
 from channelstream import operations
-from channelstream import validation
+from channelstream.validation import schemas
 from channelstream.ext_json import json
 from apispec import APISpec
 
@@ -143,7 +143,7 @@ def connect(request):
             $ref: '#/definitions/ConnectBody'
     """
     utils = SharedUtils(request)
-    schema = validation.ConnectBodySchema(context={"request": request})
+    schema = schemas.ConnectBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
     channels = sorted(json_body["channels"])
     connection, user = operations.connect(
@@ -194,7 +194,7 @@ def subscribe(request, *args):
           $ref: "#/definitions/SubscribeBody"
     """
     utils = SharedUtils(request)
-    schema = validation.SubscribeBodySchema(context={"request": request})
+    schema = schemas.SubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
     connection = channelstream.CONNECTIONS.get(json_body["conn_id"])
     channels = json_body["channels"]
@@ -239,7 +239,7 @@ def unsubscribe(request, *args):
           $ref: "#/definitions/UnsubscribeBody"
     """
     utils = SharedUtils(request)
-    schema = validation.UnsubscribeBodySchema(context={"request": request})
+    schema = schemas.UnsubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
     connection = channelstream.CONNECTIONS.get(json_body["conn_id"])
     unsubscribed_from = operations.unsubscribe(
@@ -330,7 +330,7 @@ def user_state(request):
           $ref: "#/definitions/UserStateBody"
     """
 
-    schema = validation.UserStateBodySchema(context={"request": request})
+    schema = schemas.UserStateBodySchema(context={"request": request})
     data = schema.load(request.json_body).data
     user_inst = channelstream.USERS[data["user"]]
     # can be empty list!
@@ -372,12 +372,12 @@ def message(request):
           $ref: "#/definitions/MessageBody"
     """
 
-    schema = validation.MessageBodySchema(context={"request": request}, many=True)
+    schema = schemas.MessageBodySchema(context={"request": request}, many=True)
     data = schema.load(request.json_body).data
     for msg in data:
         if not msg.get("channel") and not msg.get("pm_users", []):
             continue
-        gevent.spawn(operations.pass_message, msg, channelstream.stats)
+        gevent.spawn(operations.pass_message, msg, channelstream.STATS)
     return True
 
 
@@ -421,7 +421,7 @@ def disconnect(request):
         schema:
           $ref: "#/definitions/DisconnectBody"
     """
-    schema = validation.DisconnectBodySchema(context={"request": request})
+    schema = schemas.DisconnectBodySchema(context={"request": request})
     if request.method != "POST":
         payload = {"conn_id": request.GET.get("conn_id")}
     else:
@@ -457,7 +457,7 @@ def channel_config(request):
     """
 
     utils = SharedUtils(request)
-    schema = validation.ChannelConfigBodySchema(context={"request": request})
+    schema = schemas.ChannelConfigBodySchema(context={"request": request})
     data = schema.load(request.json_body).data
     if not data:
         request.response.status = 400
@@ -504,7 +504,7 @@ def info(request):
             "include_connections": True,
         }
     else:
-        schema = validation.ChannelInfoBodySchema(context={"request": request})
+        schema = schemas.ChannelInfoBodySchema(context={"request": request})
         data = schema.load(request.json_body).data
         # get info config for channel information
         info_config = data.get("info") or {}
@@ -512,6 +512,7 @@ def info(request):
         info_config["include_connections"] = info_config.get(
             "include_connections", True
         )
+    print(info_config, request.json_body)
     channels_info = utils.get_common_info(req_channels, info_config)
     return channels_info
 
@@ -555,7 +556,7 @@ class ServerViews(object):
             description: "Response info configuration"
         """
 
-        uptime = datetime.utcnow() - channelstream.stats["started_on"]
+        uptime = datetime.utcnow() - channelstream.STATS["started_on"]
         uptime = str(uptime).split(".")[0]
         remembered_user_count = len(
             [user for user in six.iteritems(channelstream.USERS)]
@@ -579,8 +580,8 @@ class ServerViews(object):
             "unique_user_count": unique_user_count,
             "total_connections": total_connections,
             "total_channels": len(channelstream.CHANNELS.keys()),
-            "total_messages": channelstream.stats["total_messages"],
-            "total_unique_messages": channelstream.stats["total_unique_messages"],
+            "total_messages": channelstream.STATS["total_messages"],
+            "total_unique_messages": channelstream.STATS["total_unique_messages"],
             "channels": channels_info["channels"],
             "users": [user.get_info(include_connections=True) for user in active_users],
             "uptime": uptime,
@@ -600,14 +601,14 @@ class ServerViews(object):
             version="0.7.0",
             plugins=["apispec.ext.marshmallow"],
         )
-        spec.definition("ConnectBody", schema=validation.ConnectBodySchema)
-        spec.definition("SubscribeBody", schema=validation.SubscribeBodySchema)
-        spec.definition("UnsubscribeBody", schema=validation.UnsubscribeBodySchema)
-        spec.definition("UserStateBody", schema=validation.UserStateBodySchema)
-        spec.definition("MessageBody", schema=validation.MessageBodySchema(many=True))
-        spec.definition("DisconnectBody", schema=validation.DisconnectBodySchema)
-        spec.definition("ChannelConfigBody", schema=validation.ChannelConfigBodySchema)
-        spec.definition("ChannelInfoBody", schema=validation.ChannelInfoBodySchema)
+        spec.definition("ConnectBody", schema=schemas.ConnectBodySchema)
+        spec.definition("SubscribeBody", schema=schemas.SubscribeBodySchema)
+        spec.definition("UnsubscribeBody", schema=schemas.UnsubscribeBodySchema)
+        spec.definition("UserStateBody", schema=schemas.UserStateBodySchema)
+        spec.definition("MessageBody", schema=schemas.MessageBodySchema(many=True))
+        spec.definition("DisconnectBody", schema=schemas.DisconnectBodySchema)
+        spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigBodySchema)
+        spec.definition("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)
 
         add_pyramid_paths(spec, "legacy_connect", request=self.request)
         add_pyramid_paths(spec, "legacy_subscribe", request=self.request)

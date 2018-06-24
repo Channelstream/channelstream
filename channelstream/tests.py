@@ -22,6 +22,11 @@ def cleanup_globals():
     channelstream.CHANNELS = {}
     channelstream.CONNECTIONS = {}
     channelstream.USERS = {}
+    channelstream.STATS = {
+        "total_messages": 0,
+        "total_unique_messages": 0,
+        "started_on": datetime.utcnow(),
+    }
 
 
 @pytest.mark.usefixtures("cleanup_globals")
@@ -619,6 +624,7 @@ class TestInfoView(object):
             "channel_configs": {"c": {"store_history": True, "history_size": 2}},
         }
         connect(dummy_request)
+        dummy_request.json_body = {}
         result = info(dummy_request)
         assert sorted(("a", "aB", "c")) == sorted(result["channels"].keys())
         assert result["users"]
@@ -646,6 +652,44 @@ class TestInfoView(object):
         assert "a" in result["channels"]
         assert "aB" not in result["channels"]
 
+    def test_detailed_json(self, dummy_request):
+        from channelstream.wsgi_views.server import connect, info, message
+
+        dummy_request.json_body = {
+            "username": "test1",
+            "conn_id": "x",
+            "fresh_user_state": {"key": "foo"},
+            "user_state": {"bar": "baz", "private": "p1"},
+            "state_public_keys": ["bar"],
+            "channels": ["a", "aB", "c", "D"],
+            "channel_configs": {"a": {"store_history": True, "history_size": 2}},
+        }
+        connect(dummy_request)
+        dummy_request.json_body = [
+            {
+                "type": "message",
+                "user": "test1",
+                "channel": "a",
+                "message": {"text": "test"},
+            }
+        ]
+        message(dummy_request)
+        gevent.sleep(0)
+        dummy_request.body = "value"
+        dummy_request.json_body = {
+            "info": {
+                "exclude_channels": ["c"],
+                "include_history": False,
+                "include_users": True,
+                "return_public_state": True,
+                "include_connections": True,
+            }
+        }
+        result = info(dummy_request)
+        assert sorted(result["channels"].keys()) == sorted(["a", "aB", "D"])
+        assert "private" not in result["users"][0]["state"]
+        assert len(result["channels"]["a"]["history"]) == 0
+
 
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
 class TestMessageViews(object):
@@ -653,9 +697,9 @@ class TestMessageViews(object):
         from channelstream.wsgi_views.server import message
 
         dummy_request.json_body = {}
-        assert channelstream.stats["total_unique_messages"] == 0
+        assert channelstream.STATS["total_unique_messages"] == 0
         result = message(dummy_request)
-        assert channelstream.stats["total_unique_messages"] == 0
+        assert channelstream.STATS["total_unique_messages"] == 0
 
     def test_good_json_no_channel(self, dummy_request):
         from channelstream.wsgi_views.server import message
@@ -668,11 +712,11 @@ class TestMessageViews(object):
                 "message": {"text": "test"},
             }
         ]
-        assert channelstream.stats["total_unique_messages"] == 0
+        assert channelstream.STATS["total_unique_messages"] == 0
         message(dummy_request)
         # change context
         gevent.sleep(0)
-        assert channelstream.stats["total_unique_messages"] == 1
+        assert channelstream.STATS["total_unique_messages"] == 1
         assert len(channelstream.CHANNELS.keys()) == 0
 
     def test_good_json_no_channel(self, dummy_request):
@@ -689,12 +733,12 @@ class TestMessageViews(object):
         }
 
         dummy_request.json_body = [msg_payload]
-        assert channelstream.stats["total_unique_messages"] == 0
+        assert channelstream.STATS["total_unique_messages"] == 0
         assert len(channel.history) == 0
         message(dummy_request)
         # change context
         gevent.sleep(0)
-        assert channelstream.stats["total_unique_messages"] == 1
+        assert channelstream.STATS["total_unique_messages"] == 1
         assert len(channel.history) == 1
         msg = channel.history[0]
         assert msg["uuid"] is not None

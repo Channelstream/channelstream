@@ -1,29 +1,30 @@
-import uuid
 from datetime import datetime
 
-import channelstream
 import marshmallow
 from marshmallow import validate, fields
+from channelstream.validation import (
+    BackportedDict,
+    ChannelstreamSchema,
+    gen_uuid,
+    validate_connection_id,
+    validate_username,
+    UserStateField,
+)
 
 
-def gen_uuid():
-    return str(uuid.uuid4()).replace("-", "")
+class InfoResolutionSchema(ChannelstreamSchema):
+    include_history = fields.Boolean(missing=True)
+    include_users = fields.Boolean(missing=True)
+    channels = fields.List(fields.String(validate=validate.Length(min=1, max=256)))
+    exclude_channels = fields.List(
+        fields.String(validate=validate.Length(min=1, max=256))
+    )
+    include_connections = fields.Boolean(missing=False)
+    return_public_state = fields.Boolean(missing=False)
 
 
-def validate_connection_id(conn_id):
-    if conn_id not in channelstream.CONNECTIONS:
-        raise marshmallow.ValidationError("Unknown connection")
-
-
-def validate_username(username):
-    if username not in channelstream.USERS:
-        raise marshmallow.ValidationError("Unknown user")
-
-
-class ChannelstreamSchema(marshmallow.Schema):
-    class Meta:
-        strict = True
-        ordered = True
+class ChannelInfoBodySchema(ChannelstreamSchema):
+    info = fields.Nested(InfoResolutionSchema, required=True)
 
 
 class ConnectBodySchema(ChannelstreamSchema):
@@ -42,8 +43,12 @@ class ConnectBodySchema(ChannelstreamSchema):
         missing=lambda: [],
     )
 
-    fresh_user_state = fields.Dict(missing=lambda: {})
-    user_state = fields.Dict(missing=lambda: {})
+    fresh_user_state = BackportedDict(
+        missing=lambda: {}, values=UserStateField(allow_none=True), keys=fields.String()
+    )
+    user_state = BackportedDict(
+        missing=lambda: {}, values=UserStateField(allow_none=True), keys=fields.String()
+    )
     channel_configs = fields.Dict(missing=lambda: {})
     info = fields.Dict(missing=lambda: {})
 
@@ -71,9 +76,7 @@ class SubscribeBodySchema(ChannelstreamSchema):
 
 
 class UnsubscribeBodySchema(SubscribeBodySchema):
-    @marshmallow.post_load(pass_original=True)
-    def _add_unknown(self, data, original):
-        return add_missing_fields(data, original, self.fields)
+    pass
 
 
 class UserStateBodySchema(ChannelstreamSchema):
@@ -81,14 +84,12 @@ class UserStateBodySchema(ChannelstreamSchema):
         required=True, validate=[validate.Length(min=1, max=512), validate_username]
     )
 
-    user_state = fields.Dict(missing=lambda: {})
+    user_state = BackportedDict(
+        missing=lambda: {}, values=UserStateField(allow_none=True), keys=fields.String()
+    )
     state_public_keys = fields.List(
         fields.String(validate=validate.Length(min=1, max=256)), missing=None
     )
-
-    @marshmallow.post_load(pass_original=True)
-    def _add_unknown(self, data, original):
-        return add_missing_fields(data, original, self.fields)
 
 
 class MessageBodySchema(ChannelstreamSchema):
@@ -104,10 +105,6 @@ class MessageBodySchema(ChannelstreamSchema):
     )
     channel = fields.String(validate=validate.Length(min=1, max=256))
 
-    # @marshmallow.post_load(pass_original=True)
-    # def _add_unknown(self, data, original):
-    #     return add_missing_fields(data, original, self.fields)
-
 
 class DisconnectBodySchema(ChannelstreamSchema):
     conn_id = fields.String(
@@ -117,19 +114,9 @@ class DisconnectBodySchema(ChannelstreamSchema):
 
 
 class ChannelConfigBodySchema(ChannelstreamSchema):
-    @marshmallow.post_load(pass_original=True)
-    def _add_unknown(self, data, original):
-        return add_missing_fields(data, original, self.fields)
-
-
-class ChannelInfoBodySchema(ChannelstreamSchema):
-    @marshmallow.post_load(pass_original=True)
-    def _add_unknown(self, data, original):
-        return add_missing_fields(data, original, self.fields)
-
-
-def add_missing_fields(data, original, fields):
-    for key, val in original.items():
-        if key not in fields:
-            data[key] = val
-    return data
+    notify_presence = fields.Boolean(missing=False)
+    store_history = fields.Boolean(missing=False)
+    history_size = fields.Integer(missing=10, validate=[validate.Range(min=0)])
+    broadcast_presence_with_user_lists = fields.Boolean(missing=False)
+    notify_state = fields.Boolean(missing=False)
+    store_frames = fields.Boolean(missing=True)
