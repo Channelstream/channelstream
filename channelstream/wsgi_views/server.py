@@ -63,7 +63,7 @@ class SharedUtils(object):
         if req_channels is None:
             channel_instances = six.itervalues(channelstream.CHANNELS)
         else:
-            channel_instances = [channelstream.CHANNELS[c] for c in req_channels]
+            channel_instances = [channelstream.CHANNELS[c] for c in req_channels if c in channelstream.CHANNELS]
 
         for channel_inst in channel_instances:
             if channel_inst.name in exclude_channels:
@@ -131,7 +131,7 @@ def connect(request):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         required: true
         schema:
           $ref: "#/definitions/ConnectBody"
@@ -139,6 +139,7 @@ def connect(request):
         422:
           description: "Unprocessable Entity"
         200:
+          description: "Success"
           schema:
             $ref: '#/definitions/ConnectBody'
     """
@@ -188,10 +189,15 @@ def subscribe(request, *args):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         required: true
         schema:
           $ref: "#/definitions/SubscribeBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     """
     utils = SharedUtils(request)
     schema = schemas.SubscribeBodySchema(context={"request": request})
@@ -233,10 +239,15 @@ def unsubscribe(request, *args):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         required: true
         schema:
           $ref: "#/definitions/UnsubscribeBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     """
     utils = SharedUtils(request)
     schema = schemas.UnsubscribeBodySchema(context={"request": request})
@@ -324,10 +335,15 @@ def user_state(request):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         required: true
         schema:
           $ref: "#/definitions/UserStateBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     """
 
     schema = schemas.UserStateBodySchema(context={"request": request})
@@ -366,10 +382,15 @@ def message(request):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         required: true
         schema:
           $ref: "#/definitions/MessageBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     """
 
     schema = schemas.MessageBodySchema(context={"request": request}, many=True)
@@ -404,6 +425,11 @@ def disconnect(request):
           type: string
         name: "conn_id"
         description: "Connection Id"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     post:
       tags:
       - "Legacy API"
@@ -417,9 +443,14 @@ def disconnect(request):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         schema:
           $ref: "#/definitions/DisconnectBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     """
     schema = schemas.DisconnectBodySchema(context={"request": request})
     if request.method != "POST":
@@ -451,9 +482,14 @@ def channel_config(request):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         schema:
           $ref: "#/definitions/ChannelConfigBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     """
 
     utils = SharedUtils(request)
@@ -490,9 +526,14 @@ def info(request):
       parameters:
       - in: "body"
         name: "body"
-        description: "Foo bar"
+        description: "Request JSON body"
         schema:
-          $ref: "#/definitions/ChannelConfigBody"
+          $ref: "#/definitions/ChannelInfoBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
     """
     utils = SharedUtils(request)
     if not request.body:
@@ -554,6 +595,11 @@ class ServerViews(object):
           - in: "body"
             name: "body"
             description: "Response info configuration"
+          responses:
+            422:
+              description: "Unprocessable Entity"
+            200:
+              description: "Success"
         """
 
         uptime = datetime.utcnow() - channelstream.STATS["started_on"]
@@ -596,6 +642,25 @@ class ServerViews(object):
         route_name="openapi_spec", permission=NO_PERMISSION_REQUIRED, renderer="json"
     )
     def api_spec(self):
+        """
+        OpenApi 2.0 spec
+        ---
+        get:
+          tags:
+          - "OpenApi 2.0 spec"
+          summary: "Return openapi spec
+          purposes"
+          description: ""
+          operationId: "api_spec"
+          consumes:
+          - "application/json"
+          produces:
+          - "application/json"
+          parameters:
+          responses:
+            200:
+              description: "Success"
+        """
         spec = APISpec(
             title="Channelstream API",
             version="0.7.0",
