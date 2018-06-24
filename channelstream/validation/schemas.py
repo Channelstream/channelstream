@@ -12,6 +12,15 @@ from channelstream.validation import (
 )
 
 
+class ChannelConfigSchema(ChannelstreamSchema):
+    notify_presence = fields.Boolean(missing=False)
+    store_history = fields.Boolean(missing=False)
+    history_size = fields.Integer(missing=10, validate=[validate.Range(min=0)])
+    broadcast_presence_with_user_lists = fields.Boolean(missing=False)
+    notify_state = fields.Boolean(missing=False)
+    store_frames = fields.Boolean(missing=True)
+
+
 class InfoResolutionSchema(ChannelstreamSchema):
     include_history = fields.Boolean(missing=True)
     include_users = fields.Boolean(missing=True)
@@ -49,8 +58,12 @@ class ConnectBodySchema(ChannelstreamSchema):
     user_state = BackportedDict(
         missing=lambda: {}, values=UserStateField(allow_none=True), keys=fields.String()
     )
-    channel_configs = fields.Dict(missing=lambda: {})
-    info = fields.Dict(missing=lambda: {})
+    channel_configs = BackportedDict(
+        missing=lambda: {},
+        values=fields.Nested(ChannelConfigSchema()),
+        keys=fields.String(),
+    )
+    info = fields.Nested(InfoResolutionSchema(), missing=lambda: {})
 
 
 class SubscribeBodySchema(ChannelstreamSchema):
@@ -67,7 +80,13 @@ class SubscribeBodySchema(ChannelstreamSchema):
         required=True,
         validate=validate.Length(min=1),
     )
-    info = fields.Dict(missing=lambda: {})
+    info = fields.Nested(InfoResolutionSchema(), missing=lambda: {})
+
+    channel_configs = BackportedDict(
+        missing=lambda: {},
+        values=fields.Nested(ChannelConfigSchema()),
+        keys=fields.String(),
+    )
 
     @marshmallow.pre_load
     def get_connection(self, in_data):
@@ -111,12 +130,3 @@ class DisconnectBodySchema(ChannelstreamSchema):
         required=True,
         validate=[validate.Length(min=1, max=256), validate_connection_id],
     )
-
-
-class ChannelConfigBodySchema(ChannelstreamSchema):
-    notify_presence = fields.Boolean(missing=False)
-    store_history = fields.Boolean(missing=False)
-    history_size = fields.Integer(missing=10, validate=[validate.Range(min=0)])
-    broadcast_presence_with_user_lists = fields.Boolean(missing=False)
-    notify_state = fields.Boolean(missing=False)
-    store_frames = fields.Boolean(missing=True)

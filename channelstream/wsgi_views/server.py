@@ -457,15 +457,15 @@ def channel_config(request):
     """
 
     utils = SharedUtils(request)
-    schema = schemas.ChannelConfigBodySchema(context={"request": request})
-    data = schema.load(request.json_body).data
-    if not data:
-        request.response.status = 400
-        return {"error": "No channels specified"}
 
-    operations.set_channel_config(channel_configs=data)
+    deserialized = {}
+    schema = schemas.ChannelConfigSchema(context={"request": request})
+    json_body = request.json_body
+    for k in json_body.keys():
+        deserialized[k] = schema.load(json_body[k]).data
+    operations.set_channel_config(channel_configs=deserialized)
     channels_info = utils.get_channel_info(
-        data.keys(), include_history=False, include_users=False
+        deserialized.keys(), include_history=False, include_users=False
     )
     return channels_info
 
@@ -607,7 +607,7 @@ class ServerViews(object):
         spec.definition("UserStateBody", schema=schemas.UserStateBodySchema)
         spec.definition("MessageBody", schema=schemas.MessageBodySchema(many=True))
         spec.definition("DisconnectBody", schema=schemas.DisconnectBodySchema)
-        spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigBodySchema)
+        spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
         spec.definition("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)
 
         add_pyramid_paths(spec, "legacy_connect", request=self.request)

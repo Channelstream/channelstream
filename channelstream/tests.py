@@ -2,6 +2,7 @@ from gevent import monkey
 
 monkey.patch_all()
 
+import pprint
 import pytest
 import mock
 import gevent
@@ -747,3 +748,36 @@ class TestMessageViews(object):
         assert msg["type"] == msg_payload["type"]
         assert msg["channel"] == msg_payload["channel"]
         assert msg["timestamp"] is not None
+
+
+@pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
+class TestChannelConfigView(object):
+    def test_empty_json(self, dummy_request):
+        from channelstream.wsgi_views.server import channel_config
+
+        dummy_request.json_body = {}
+        result = channel_config(dummy_request)
+        assert result["channels"] == {}
+        assert result["users"] == []
+
+    def test_valid_json(self, dummy_request):
+        from channelstream.wsgi_views.server import channel_config
+
+        dummy_request.json_body = {
+            "chanx1": {
+                "notify_presence": True,
+                "store_history": True,
+                "history_size": 3,
+                "broadcast_presence_with_user_lists": True,
+                "notify_state": True,
+                "store_frames": False,
+            }
+        }
+        result = channel_config(dummy_request)
+        channel_settings = result["channels"]["chanx1"]["settings"]
+        assert channel_settings["notify_presence"] is True
+        assert channel_settings["store_history"] is True
+        assert channel_settings["history_size"] == 3
+        assert channel_settings["broadcast_presence_with_user_lists"] is True
+        assert channel_settings["notify_state"] is True
+        assert channel_settings["store_frames"] is False

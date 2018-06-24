@@ -69,6 +69,7 @@ class UserStateField(fields.Field):
         return value
 
 
+# backported from marshmallow 3.x
 @map_to_swagger_type("object", "object")
 class BackportedDict(fields.Field):
     """A dict field. Supports dicts and dict-like objects. Optionally composed

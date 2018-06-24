@@ -143,11 +143,13 @@ def set_channel_config(channel_configs):
     with channelstream.lock:
         for channel_name, config in channel_configs.items():
             if not channelstream.CHANNELS.get(channel_name):
-                channel = Channel(channel_name, channel_config=channel_configs)
+                channel = Channel(
+                    channel_name, channel_config=channel_configs.get(channel_name)
+                )
                 channelstream.CHANNELS[channel_name] = channel
             else:
                 channel = channelstream.CHANNELS[channel_name]
-                channel.reconfigure_from_dict(channel_configs)
+                channel.reconfigure_from_dict(channel_configs.get(channel_name))
 
 
 def pass_message(msg, stats):
