@@ -6,7 +6,9 @@ import marshmallow
 from marshmallow import validate, fields, ValidationError
 from marshmallow.base import FieldABC
 import collections
-from apispec.ext.marshmallow.swagger import map_to_swagger_type
+from apispec.ext.marshmallow.openapi import OpenAPIConverter
+
+converter = OpenAPIConverter('2.0.0')
 
 
 def gen_uuid():
@@ -30,7 +32,7 @@ def add_missing_fields(data, original, fields):
     return data
 
 
-@map_to_swagger_type("object", "object")
+@converter.map_to_openapi_type("object", "object")
 class UserStateDictField(fields.Dict):
     default_error_messages = {
         "invalid_value": "'{dict_key}' key is not type of string, integer, boolean or float.",
@@ -51,7 +53,7 @@ class UserStateDictField(fields.Dict):
         return value
 
 
-@map_to_swagger_type("string", "string")
+@converter.map_to_openapi_type("string", "string")
 class UserStateField(fields.Field):
     default_error_messages = {
         "invalid_value": "Value is not type of string, integer, boolean or float."
@@ -70,7 +72,7 @@ class UserStateField(fields.Field):
 
 
 # backported from marshmallow 3.x
-@map_to_swagger_type("object", "object")
+@converter.map_to_openapi_type("object", "object")
 class BackportedDict(fields.Field):
     """A dict field. Supports dicts and dict-like objects. Optionally composed
     with another `Field` class or instance.
