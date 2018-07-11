@@ -58,24 +58,19 @@ class Channel(object):
 
     def add_connection(self, connection):
         username = connection.username
-        if username not in self.connections:
-            self.connections[username] = []
-
-        if not self.connections[username] and self.notify_presence:
+        connections = self.connections.setdefault(username, [])
+        if not connections and self.notify_presence:
             self.send_notify_presence_info(username, "joined")
-
-        if connection not in self.connections[connection.username]:
-            self.connections[connection.username].append(connection)
+        if connection not in connections:
+            connections.append(connection)
             return True
         return False
 
     def remove_connection(self, connection):
         was_found = False
         username = connection.username
-        if username not in self.connections:
-            self.connections[username] = []
-
-        if connection in self.connections[username]:
+        connections = self.connections.setdefault(username, [])
+        if connection in connections:
             self.connections[username].remove(connection)
             was_found = True
 

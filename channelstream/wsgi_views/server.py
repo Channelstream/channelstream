@@ -63,7 +63,11 @@ class SharedUtils(object):
         if req_channels is None:
             channel_instances = six.itervalues(channelstream.CHANNELS)
         else:
-            channel_instances = [channelstream.CHANNELS[c] for c in req_channels if c in channelstream.CHANNELS]
+            channel_instances = [
+                channelstream.CHANNELS[c]
+                for c in req_channels
+                if c in channelstream.CHANNELS
+            ]
 
         for channel_inst in channel_instances:
             if channel_inst.name in exclude_channels:

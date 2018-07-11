@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class Connection(object):
-    """ Represents a browser connection"""
+    """ Represents a client connection"""
 
     def __init__(self, username, conn_id):
         self.username = username  # hold user id/name of connection
