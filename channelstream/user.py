@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 
 import six
-import channelstream
+from channelstream import server_state
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class User(object):
 
     def get_channels(self):
         channels = []
-        for channel in six.itervalues(channelstream.CHANNELS):
+        for channel in six.itervalues(server_state.CHANNELS):
             if channel.connections.get(self.username):
                 channels.append(channel)
         return channels

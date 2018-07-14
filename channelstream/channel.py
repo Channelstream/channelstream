@@ -5,7 +5,7 @@ import uuid
 
 from datetime import datetime
 
-import channelstream
+from channelstream import server_state
 
 log = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ class Channel(object):
         connected_users = []
         if self.broadcast_presence_with_user_lists:
             for _username in self.connections.keys():
-                user_inst = channelstream.USERS.get(_username)
+                user_inst = server_state.USERS.get(_username)
                 user_data = {
                     "user": user_inst.username,
                     "state": user_inst.public_state,
@@ -118,7 +118,7 @@ class Channel(object):
             "message": {"action": action},
         }
         if action == "joined":
-            payload["state"] = channelstream.USERS[username].public_state
+            payload["state"] = server_state.USERS[username].public_state
         self.add_message(payload, exclude_users=[username])
         return payload
 
@@ -147,7 +147,6 @@ class Channel(object):
         if self.store_history and message["type"] == "message":
             self.history.append(message)
             self.history = self.history[self.history_size * -1 :]
-
 
     def add_message(self, message, pm_users=None, exclude_users=None):
         """
@@ -193,7 +192,7 @@ class Channel(object):
         }
 
         for username in self.connections.keys():
-            user_inst = channelstream.USERS.get(username)
+            user_inst = server_state.USERS.get(username)
             if include_users and user_inst.username not in chan_info["users"]:
                 chan_info["users"].append(user_inst.username)
         chan_info["users"] = sorted(chan_info["users"])

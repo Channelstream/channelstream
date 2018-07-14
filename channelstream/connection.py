@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import gevent
 
-import channelstream
+from channelstream import server_state
 from .ext_json import json
 
 log = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class Connection(object):
                 self.socket.send(json.dumps([message] if message else []))
                 now = datetime.utcnow()
                 self.last_active = now
-                channelstream.USERS[self.username].last_active = now
+                server_state.USERS[self.username].last_active = now
             except Exception:
                 self.mark_for_gc()
         elif self.queue:

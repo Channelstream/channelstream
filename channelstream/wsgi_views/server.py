@@ -7,9 +7,8 @@ from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
 from pyramid_apispec.helpers import add_pyramid_paths
-import channelstream
 
-from channelstream import operations
+from channelstream import operations, server_state
 from channelstream.validation import schemas
 from channelstream.ext_json import json
 from apispec import APISpec
@@ -19,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def get_connection_channels(connection):
     found_channels = []
-    for channel in six.itervalues(channelstream.CHANNELS):
+    for channel in six.itervalues(server_state.CHANNELS):
         user_conns = channel.connections.get(connection.username) or []
         if connection in user_conns:
             found_channels.append(channel.name)
@@ -61,12 +60,12 @@ class SharedUtils(object):
 
         # select everything for empty list
         if req_channels is None:
-            channel_instances = six.itervalues(channelstream.CHANNELS)
+            channel_instances = six.itervalues(server_state.CHANNELS)
         else:
             channel_instances = [
-                channelstream.CHANNELS[c]
+                server_state.CHANNELS[c]
                 for c in req_channels
-                if c in channelstream.CHANNELS
+                if c in server_state.CHANNELS
             ]
 
         for channel_inst in channel_instances:
@@ -80,7 +79,7 @@ class SharedUtils(object):
             users_to_list.update(channel_info["users"])
 
         for username in users_to_list:
-            user = channelstream.USERS[username]
+            user = server_state.USERS[username]
             json_data["users"].append(
                 {
                     "user": username,
@@ -206,7 +205,7 @@ def subscribe(request, *args):
     utils = SharedUtils(request)
     schema = schemas.SubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
-    connection = channelstream.CONNECTIONS.get(json_body["conn_id"])
+    connection = server_state.CONNECTIONS.get(json_body["conn_id"])
     channels = json_body["channels"]
     channel_configs = json_body.get("channel_configs", {})
     subscribed_to = operations.subscribe(
@@ -256,7 +255,7 @@ def unsubscribe(request, *args):
     utils = SharedUtils(request)
     schema = schemas.UnsubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
-    connection = channelstream.CONNECTIONS.get(json_body["conn_id"])
+    connection = server_state.CONNECTIONS.get(json_body["conn_id"])
     unsubscribed_from = operations.unsubscribe(
         connection=connection, unsubscribe_channels=json_body["channels"]
     )
@@ -279,7 +278,7 @@ def listen(request):
     """
     config = request.registry.settings
     conn_id = request.params.get("conn_id")
-    connection = channelstream.CONNECTIONS.get(conn_id)
+    connection = server_state.CONNECTIONS.get(conn_id)
     if not connection:
         raise HTTPUnauthorized()
     # mark the conn active
@@ -352,7 +351,7 @@ def user_state(request):
 
     schema = schemas.UserStateBodySchema(context={"request": request})
     data = schema.load(request.json_body).data
-    user_inst = channelstream.USERS[data["user"]]
+    user_inst = server_state.USERS[data["user"]]
     # can be empty list!
     if data["state_public_keys"] is not None:
         user_inst.state_public_keys = data["state_public_keys"]
@@ -402,7 +401,7 @@ def message(request):
     for msg in data:
         if not msg.get("channel") and not msg.get("pm_users", []):
             continue
-        gevent.spawn(operations.pass_message, msg, channelstream.STATS)
+        gevent.spawn(operations.pass_message, msg, server_state.STATS)
     return True
 
 
@@ -541,7 +540,7 @@ def info(request):
     """
     utils = SharedUtils(request)
     if not request.body:
-        req_channels = channelstream.CHANNELS.keys()
+        req_channels = server_state.CHANNELS.keys()
         info_config = {
             "include_history": True,
             "include_users": True,
@@ -579,7 +578,12 @@ class ServerViews(object):
         """
         return {}
 
-    @view_config(route_name="admin_json", renderer="json", request_method=('POST', 'GET'), permission="access")
+    @view_config(
+        route_name="admin_json",
+        renderer="json",
+        request_method=("POST", "GET"),
+        permission="access",
+    )
     def admin_json(self):
         """
         Admin json
@@ -626,13 +630,13 @@ class ServerViews(object):
               description: "Success"
         """
 
-        uptime = datetime.utcnow() - channelstream.STATS["started_on"]
+        uptime = datetime.utcnow() - server_state.STATS["started_on"]
         uptime = str(uptime).split(".")[0]
         remembered_user_count = len(
-            [user for user in six.iteritems(channelstream.USERS)]
+            [user for user in six.iteritems(server_state.USERS)]
         )
         active_users = [
-            user for user in six.itervalues(channelstream.USERS) if user.connections
+            user for user in six.itervalues(server_state.USERS) if user.connections
         ]
         unique_user_count = len(active_users)
         total_connections = sum([len(user.connections) for user in active_users])
@@ -649,9 +653,9 @@ class ServerViews(object):
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
             "total_connections": total_connections,
-            "total_channels": len(channelstream.CHANNELS.keys()),
-            "total_messages": channelstream.STATS["total_messages"],
-            "total_unique_messages": channelstream.STATS["total_unique_messages"],
+            "total_channels": len(server_state.CHANNELS.keys()),
+            "total_messages": server_state.STATS["total_messages"],
+            "total_unique_messages": server_state.STATS["total_unique_messages"],
             "channels": channels_info["channels"],
             "users": [user.get_info(include_connections=True) for user in active_users],
             "uptime": uptime,

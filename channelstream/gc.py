@@ -5,19 +5,19 @@ from datetime import datetime, timedelta
 import gevent
 import six
 
-import channelstream
+from channelstream import server_state
 
 log = logging.getLogger(__name__)
 
 
 def gc_conns():
-    with channelstream.lock:
+    with server_state.lock:
         start_time = datetime.utcnow()
         threshold = start_time - timedelta(seconds=15)
         collected_conns = []
         # collect every ref in chanels
         # remove connections from channels
-        for channel in six.itervalues(channelstream.CHANNELS):
+        for channel in six.itervalues(server_state.CHANNELS):
             for username, conns in list(channel.connections.items()):
                 for conn in conns:
                     if conn.last_active < threshold:
@@ -26,11 +26,11 @@ def gc_conns():
                 channel.after_parted(username)
         # remove old conns from users and connection dictionaries
         for conn in collected_conns:
-            if conn.username in channelstream.USERS:
-                if conn in channelstream.USERS[conn.username].connections:
-                    channelstream.USERS[conn.username].connections.remove(conn)
-            if conn.id in channelstream.CONNECTIONS:
-                del channelstream.CONNECTIONS[conn.id]
+            if conn.username in server_state.USERS:
+                if conn in server_state.USERS[conn.username].connections:
+                    server_state.USERS[conn.username].connections.remove(conn)
+            if conn.id in server_state.CONNECTIONS:
+                del server_state.CONNECTIONS[conn.id]
             # make sure connection is closed after we garbage
             # collected it from our list
             if conn.socket:
@@ -42,12 +42,12 @@ def gc_conns():
 
 
 def gc_users():
-    with channelstream.lock:
+    with server_state.lock:
         start_time = datetime.utcnow()
         threshold = datetime.utcnow() - timedelta(days=1)
-        for user in list(six.itervalues(channelstream.USERS)):
+        for user in list(six.itervalues(server_state.USERS)):
             if user.last_active < threshold:
-                channelstream.USERS.pop(user.username)
+                server_state.USERS.pop(user.username)
         log.debug("gc_users() time %s" % (datetime.utcnow() - start_time))
 
 

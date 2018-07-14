@@ -1,14 +1,13 @@
 import uuid
-from datetime import datetime
 
-import channelstream
 import marshmallow
 from marshmallow import validate, fields, ValidationError
 from marshmallow.base import FieldABC
 import collections
 from apispec.ext.marshmallow.openapi import OpenAPIConverter
+from channelstream import server_state
 
-converter = OpenAPIConverter('2.0.0')
+converter = OpenAPIConverter("2.0.0")
 
 
 def gen_uuid():
@@ -16,12 +15,12 @@ def gen_uuid():
 
 
 def validate_connection_id(conn_id):
-    if conn_id not in channelstream.CONNECTIONS:
+    if conn_id not in server_state.CONNECTIONS:
         raise marshmallow.ValidationError("Unknown connection")
 
 
 def validate_username(username):
-    if username not in channelstream.USERS:
+    if username not in server_state.USERS:
         raise marshmallow.ValidationError("Unknown user")
 
 

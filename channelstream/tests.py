@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from gevent.queue import Queue, Empty
 import marshmallow
 from pyramid import testing
-import channelstream
+from channelstream import server_state
 import channelstream.gc
 from channelstream.channel import Channel
 from channelstream.connection import Connection
@@ -20,10 +20,10 @@ import channelstream.operations as operations
 
 @pytest.fixture
 def cleanup_globals():
-    channelstream.CHANNELS = {}
-    channelstream.CONNECTIONS = {}
-    channelstream.USERS = {}
-    channelstream.STATS = {
+    server_state.CHANNELS = {}
+    server_state.CONNECTIONS = {}
+    server_state.USERS = {}
+    server_state.STATS = {
         "total_messages": 0,
         "total_unique_messages": 0,
         "started_on": datetime.utcnow(),
@@ -95,7 +95,7 @@ class TestChannel(object):
 
     def test_remove_connection_w_presence(self):
         user = User("test_user")
-        channelstream.USERS[user.username] = user
+        server_state.USERS[user.username] = user
         connection = Connection("test_user", conn_id="A")
         user.add_connection(connection)
         config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
@@ -105,7 +105,7 @@ class TestChannel(object):
 
     def test_add_connection_w_presence(self):
         user = User("test_user")
-        channelstream.USERS[user.username] = user
+        server_state.USERS[user.username] = user
         connection = Connection("test_user", conn_id="A")
         user.add_connection(connection)
         config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
@@ -132,12 +132,12 @@ class TestChannel(object):
         user = User("test_user")
         user.state_from_dict({"key": "1", "key2": "2"})
         user.state_public_keys = ["key2"]
-        channelstream.USERS[user.username] = user
+        server_state.USERS[user.username] = user
         connection = Connection("test_user", conn_id="A")
         user.add_connection(connection)
         user2 = User("test_user2")
         user2.state_from_dict({"key": "1", "key2": "2"})
-        channelstream.USERS[user2.username] = user2
+        server_state.USERS[user2.username] = user2
         connection2 = Connection("test_user2", conn_id="A")
         user2.add_connection(connection2)
         config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
@@ -201,8 +201,8 @@ class TestChannel(object):
         user.add_connection(connection3)
         channel = Channel("test")
         channel2 = Channel("test2")
-        channelstream.CHANNELS[channel.name] = channel
-        channelstream.CHANNELS[channel2.name] = channel2
+        server_state.CHANNELS[channel.name] = channel
+        server_state.CHANNELS[channel2.name] = channel2
         channel.add_connection(connection)
         channel.add_connection(connection2)
         channel2.add_connection(connection3)
@@ -266,21 +266,21 @@ class TestUser(object):
 class TestGC(object):
     def test_gc_connections_active(self):
         channel = Channel("test")
-        channelstream.CHANNELS[channel.name] = channel
+        server_state.CHANNELS[channel.name] = channel
         channel2 = Channel("test2")
-        channelstream.CHANNELS[channel2.name] = channel2
+        server_state.CHANNELS[channel2.name] = channel2
         user = User("test_user")
-        channelstream.USERS[user.username] = user
+        server_state.USERS[user.username] = user
         user2 = User("test_user2")
-        channelstream.USERS[user2.username] = user2
+        server_state.USERS[user2.username] = user2
         connection = Connection("test_user", "1")
-        channelstream.CONNECTIONS[connection.id] = connection
+        server_state.CONNECTIONS[connection.id] = connection
         connection2 = Connection("test_user", "2")
-        channelstream.CONNECTIONS[connection2.id] = connection2
+        server_state.CONNECTIONS[connection2.id] = connection2
         connection3 = Connection("test_user2", "3")
-        channelstream.CONNECTIONS[connection3.id] = connection3
+        server_state.CONNECTIONS[connection3.id] = connection3
         connection4 = Connection("test_user2", "4")
-        channelstream.CONNECTIONS[connection4.id] = connection4
+        server_state.CONNECTIONS[connection4.id] = connection4
         user.add_connection(connection)
         user.add_connection(connection2)
         channel.add_connection(connection)
@@ -290,10 +290,10 @@ class TestGC(object):
         channel2.add_connection(connection3)
         channel2.add_connection(connection4)
         channelstream.gc.gc_conns()
-        conns = channelstream.CHANNELS["test"].connections["test_user"]
+        conns = server_state.CHANNELS["test"].connections["test_user"]
         assert len(conns) == 2
-        assert len(channelstream.CONNECTIONS.items()) == 4
-        conns = channelstream.CHANNELS["test2"].connections["test_user2"]
+        assert len(server_state.CONNECTIONS.items()) == 4
+        conns = server_state.CHANNELS["test2"].connections["test_user2"]
         assert len(conns) == 2
         assert len(user.connections) == 2
         assert len(user2.connections) == 2
@@ -302,23 +302,23 @@ class TestGC(object):
 
     def test_gc_connections_collecting(self):
         channel = Channel("test")
-        channelstream.CHANNELS[channel.name] = channel
+        server_state.CHANNELS[channel.name] = channel
         channel2 = Channel("test2")
-        channelstream.CHANNELS[channel2.name] = channel2
+        server_state.CHANNELS[channel2.name] = channel2
         user = User("test_user")
-        channelstream.USERS[user.username] = user
+        server_state.USERS[user.username] = user
         user2 = User("test_user2")
-        channelstream.USERS[user2.username] = user2
+        server_state.USERS[user2.username] = user2
         connection = Connection("test_user", "1")
-        channelstream.CONNECTIONS[connection.id] = connection
+        server_state.CONNECTIONS[connection.id] = connection
         connection2 = Connection("test_user", "2")
         connection2.mark_for_gc()
-        channelstream.CONNECTIONS[connection2.id] = connection2
+        server_state.CONNECTIONS[connection2.id] = connection2
         connection3 = Connection("test_user2", "3")
         connection3.mark_for_gc()
-        channelstream.CONNECTIONS[connection3.id] = connection3
+        server_state.CONNECTIONS[connection3.id] = connection3
         connection4 = Connection("test_user2", "4")
-        channelstream.CONNECTIONS[connection4.id] = connection4
+        server_state.CONNECTIONS[connection4.id] = connection4
         user.add_connection(connection)
         user.add_connection(connection2)
         channel.add_connection(connection)
@@ -328,11 +328,11 @@ class TestGC(object):
         channel2.add_connection(connection3)
         channel2.add_connection(connection4)
         channelstream.gc.gc_conns()
-        assert len(channelstream.CONNECTIONS.items()) == 2
-        conns = channelstream.CHANNELS["test"].connections["test_user"]
+        assert len(server_state.CONNECTIONS.items()) == 2
+        conns = server_state.CHANNELS["test"].connections["test_user"]
         assert len(conns) == 1
         assert conns == [connection]
-        conns = channelstream.CHANNELS["test2"].connections["test_user2"]
+        conns = server_state.CHANNELS["test2"].connections["test_user2"]
         assert len(conns) == 1
         assert conns == [connection4]
         assert len(user.connections) == 1
@@ -340,21 +340,21 @@ class TestGC(object):
         connection.mark_for_gc()
         connection4.mark_for_gc()
         channelstream.gc.gc_conns()
-        assert "test_user" not in channelstream.CHANNELS["test"].connections
-        assert "test_user2" not in channelstream.CHANNELS["test2"].connections
-        assert len(channelstream.CHANNELS["test"].connections.items()) == 0
-        assert len(channelstream.CHANNELS["test2"].connections.items()) == 0
+        assert "test_user" not in server_state.CHANNELS["test"].connections
+        assert "test_user2" not in server_state.CHANNELS["test2"].connections
+        assert len(server_state.CHANNELS["test"].connections.items()) == 0
+        assert len(server_state.CHANNELS["test2"].connections.items()) == 0
 
     def test_users_active(self):
         user = User("test_user")
-        channelstream.USERS[user.username] = user
+        server_state.USERS[user.username] = user
         user2 = User("test_user2")
-        channelstream.USERS[user2.username] = user2
+        server_state.USERS[user2.username] = user2
         channelstream.gc.gc_users()
-        assert len(channelstream.USERS.items()) == 2
+        assert len(server_state.USERS.items()) == 2
         user.last_active -= timedelta(days=2)
         channelstream.gc.gc_users()
-        assert len(channelstream.USERS.items()) == 1
+        assert len(server_state.USERS.items()) == 1
 
 
 @pytest.fixture
@@ -396,11 +396,11 @@ class TestConnectViews(object):
             "channels": ["a", "aB"],
             "channel_configs": {"a": {"store_history": True, "history_size": 2}},
         }
-        assert channelstream.CHANNELS == {}
+        assert server_state.CHANNELS == {}
         result = connect(dummy_request)
-        assert len(channelstream.CHANNELS.keys()) == 2
-        assert "username" in channelstream.USERS
-        assert "X" in channelstream.CONNECTIONS
+        assert len(server_state.CHANNELS.keys()) == 2
+        assert "username" in server_state.USERS
+        assert "X" in server_state.CONNECTIONS
         assert result["channels"] == ["a", "aB"]
         assert result["state"] == {"bar": "baz", "key": "foo"}
         assert result["conn_id"] == "X"
@@ -698,9 +698,9 @@ class TestMessageViews(object):
         from channelstream.wsgi_views.server import message
 
         dummy_request.json_body = {}
-        assert channelstream.STATS["total_unique_messages"] == 0
+        assert server_state.STATS["total_unique_messages"] == 0
         result = message(dummy_request)
-        assert channelstream.STATS["total_unique_messages"] == 0
+        assert server_state.STATS["total_unique_messages"] == 0
 
     def test_good_json_no_channel(self, dummy_request):
         from channelstream.wsgi_views.server import message
@@ -713,19 +713,19 @@ class TestMessageViews(object):
                 "message": {"text": "test"},
             }
         ]
-        assert channelstream.STATS["total_unique_messages"] == 0
+        assert server_state.STATS["total_unique_messages"] == 0
         message(dummy_request)
         # change context
         gevent.sleep(0)
-        assert channelstream.STATS["total_unique_messages"] == 1
-        assert len(channelstream.CHANNELS.keys()) == 0
+        assert server_state.STATS["total_unique_messages"] == 1
+        assert len(server_state.CHANNELS.keys()) == 0
 
     def test_good_json_no_channel(self, dummy_request):
         from channelstream.wsgi_views.server import message
 
         channel = Channel("test")
         channel.store_history = True
-        channelstream.CHANNELS[channel.name] = channel
+        server_state.CHANNELS[channel.name] = channel
         msg_payload = {
             "type": "message",
             "user": "system",
@@ -734,12 +734,12 @@ class TestMessageViews(object):
         }
 
         dummy_request.json_body = [msg_payload]
-        assert channelstream.STATS["total_unique_messages"] == 0
+        assert server_state.STATS["total_unique_messages"] == 0
         assert len(channel.history) == 0
         message(dummy_request)
         # change context
         gevent.sleep(0)
-        assert channelstream.STATS["total_unique_messages"] == 1
+        assert server_state.STATS["total_unique_messages"] == 1
         assert len(channel.history) == 1
         msg = channel.history[0]
         assert msg["uuid"] is not None

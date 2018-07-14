@@ -1,10 +1,9 @@
 import logging
 import uuid
 
-import channelstream
-
 from datetime import datetime
 
+from channelstream import server_state
 from channelstream.user import User
 from channelstream.connection import Connection
 from channelstream.channel import Channel
@@ -32,29 +31,29 @@ def connect(
     :param channel_configs:
     :return:
     """
-    with channelstream.lock:
-        if username not in channelstream.USERS:
+    with server_state.lock:
+        if username not in server_state.USERS:
             user = User(username)
             user.state_from_dict(fresh_user_state)
-            channelstream.USERS[username] = user
+            server_state.USERS[username] = user
         else:
-            user = channelstream.USERS[username]
+            user = server_state.USERS[username]
         if state_public_keys is not None:
             user.state_public_keys = state_public_keys
 
         user.state_from_dict(update_user_state)
         connection = Connection(username, conn_id)
-        if connection.id not in channelstream.CONNECTIONS:
-            channelstream.CONNECTIONS[connection.id] = connection
+        if connection.id not in server_state.CONNECTIONS:
+            server_state.CONNECTIONS[connection.id] = connection
         user.add_connection(connection)
         for channel_name in channels:
             # user gets assigned to a channel
-            if channel_name not in channelstream.CHANNELS:
+            if channel_name not in server_state.CHANNELS:
                 channel = Channel(
                     channel_name, channel_config=channel_configs.get(channel_name)
                 )
-                channelstream.CHANNELS[channel_name] = channel
-            channelstream.CHANNELS[channel_name].add_connection(connection)
+                server_state.CHANNELS[channel_name] = channel
+            server_state.CHANNELS[channel_name].add_connection(connection)
         log.info("connecting %s with uuid %s" % (username, connection.id))
         return connection, user
 
@@ -67,15 +66,15 @@ def subscribe(connection=None, channels=None, channel_configs=None):
     :param channel_configs:
     :return:
     """
-    user = channelstream.USERS.get(connection.username)
+    user = server_state.USERS.get(connection.username)
     subscribed_to = []
-    with channelstream.lock:
+    with server_state.lock:
         if user:
             for channel_name in channels:
-                if channel_name not in channelstream.CHANNELS:
+                if channel_name not in server_state.CHANNELS:
                     channel = Channel(channel_name, channel_config=channel_configs)
-                    channelstream.CHANNELS[channel_name] = channel
-                is_found = channelstream.CHANNELS[channel_name].add_connection(
+                    server_state.CHANNELS[channel_name] = channel
+                is_found = server_state.CHANNELS[channel_name].add_connection(
                     connection
                 )
                 if is_found:
@@ -90,13 +89,13 @@ def unsubscribe(connection=None, unsubscribe_channels=None):
     :param unsubscribe_channels:
     :return:
     """
-    user = channelstream.USERS.get(connection.username)
+    user = server_state.USERS.get(connection.username)
     unsubscribed_from = []
-    with channelstream.lock:
+    with server_state.lock:
         if user:
             for channel_name in unsubscribe_channels:
-                if channel_name in channelstream.CHANNELS:
-                    is_found = channelstream.CHANNELS[channel_name].remove_connection(
+                if channel_name in server_state.CHANNELS:
+                    is_found = server_state.CHANNELS[channel_name].remove_connection(
                         connection
                     )
                     if is_found:
@@ -127,7 +126,7 @@ def disconnect(conn_id):
     :param conn_id:
     :return:
     """
-    conn = channelstream.CONNECTIONS.get(conn_id)
+    conn = server_state.CONNECTIONS.get(conn_id)
     if conn is not None:
         conn.mark_for_gc()
         return True
@@ -140,15 +139,15 @@ def set_channel_config(channel_configs):
     :param channel_configs:
     :return:
     """
-    with channelstream.lock:
+    with server_state.lock:
         for channel_name, config in channel_configs.items():
-            if not channelstream.CHANNELS.get(channel_name):
+            if not server_state.CHANNELS.get(channel_name):
                 channel = Channel(
                     channel_name, channel_config=channel_configs.get(channel_name)
                 )
-                channelstream.CHANNELS[channel_name] = channel
+                server_state.CHANNELS[channel_name] = channel
             else:
-                channel = channelstream.CHANNELS[channel_name]
+                channel = server_state.CHANNELS[channel_name]
                 channel.reconfigure_from_dict(channel_configs.get(channel_name))
 
 
@@ -172,7 +171,7 @@ def pass_message(msg, stats):
     stats["total_unique_messages"] += 1
     exclude_users = msg.get("exclude_users") or []
     if msg.get("channel"):
-        channel_inst = channelstream.CHANNELS.get(msg["channel"])
+        channel_inst = server_state.CHANNELS.get(msg["channel"])
         if channel_inst:
             total_sent += channel_inst.add_message(
                 message, pm_users=pm_users, exclude_users=exclude_users
@@ -180,7 +179,7 @@ def pass_message(msg, stats):
     elif pm_users:
         # if pm then iterate over all users and notify about new message!
         for username in pm_users:
-            user_inst = channelstream.USERS.get(username)
+            user_inst = server_state.USERS.get(username)
             if user_inst:
                 total_sent += user_inst.add_message(message)
     stats["total_messages"] += total_sent
