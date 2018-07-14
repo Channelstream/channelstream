@@ -16,15 +16,6 @@ from apispec import APISpec
 log = logging.getLogger(__name__)
 
 
-def get_connection_channels(connection):
-    found_channels = []
-    for channel in six.itervalues(server_state.CHANNELS):
-        user_conns = channel.connections.get(connection.username) or []
-        if connection in user_conns:
-            found_channels.append(channel.name)
-    return sorted(found_channels)
-
-
 class SharedUtils(object):
     def __init__(self, request):
         self.request = request
@@ -162,6 +153,7 @@ def connect(request):
 
     # get info config for channel information
     channels_info = utils.get_common_info(channels, json_body["info"])
+
     return {
         "conn_id": connection.id,
         "state": user.state,
@@ -213,7 +205,7 @@ def subscribe(request, *args):
     )
 
     # get info config for channel information
-    current_channels = get_connection_channels(connection)
+    current_channels = connection.channels
     channels_info = utils.get_common_info(current_channels, json_body["info"])
     return {
         "channels": current_channels,
@@ -261,7 +253,7 @@ def unsubscribe(request, *args):
     )
 
     # get info config for channel information
-    current_channels = get_connection_channels(connection)
+    current_channels = connection.channels
     channels_info = utils.get_common_info(current_channels, json_body["info"])
     return {
         "channels": current_channels,
@@ -287,41 +279,43 @@ def listen(request):
     connection = server_state.CONNECTIONS.get(conn_id)
     if not connection:
         raise HTTPUnauthorized()
-    # mark the conn active
-    connection.mark_activity()
     # attach a queue to connection
     connection.queue = Queue()
-
-    def yield_response():
-        # for chrome issues
-        # yield ' ' * 1024
-        # wait for this to wake up
-        messages = []
-        # block for first message - wake up after a while
-        try:
-            messages.extend(
-                connection.queue.get(timeout=config["wake_connections_after"])
-            )
-        except Empty:
-            pass
-        # get more messages if enqueued takes up total 0.25s
-        while True:
-            try:
-                messages.extend(connection.queue.get(timeout=0.25))
-            except Empty:
-                break
-        cb = request.params.get("callback")
-        if cb:
-            resp = cb + "(" + json.dumps(messages) + ")"
-        else:
-            resp = json.dumps(messages)
-        if six.PY2:
-            yield resp
-        else:
-            yield resp.encode("utf8")
-
-    request.response.app_iter = yield_response()
+    connection.deliver_catchup_messages()
+    request.response.app_iter = yield_response(request, connection, config)
     return request.response
+
+
+def yield_response(request, connection, config):
+    messages = await_data(connection, config)
+    connection.mark_activity()
+    cb = request.params.get("callback")
+    if cb:
+        resp = cb + "(" + json.dumps(messages) + ")"
+    else:
+        resp = json.dumps(messages)
+    if six.PY2:
+        yield resp
+    else:
+        yield resp.encode("utf8")
+
+
+def await_data(connection, config):
+    messages = []
+    # block for first message - wake up after a while
+    try:
+        messages.extend(
+            connection.queue.get(timeout=config["wake_connections_after"])
+        )
+    except Empty:
+        pass
+    # get more messages if enqueued takes up total 0.25
+    while True:
+        try:
+            messages.extend(connection.queue.get(timeout=0.25))
+        except Empty:
+            break
+    return messages
 
 
 @view_config(route_name="legacy_user_state", request_method="POST", renderer="json")

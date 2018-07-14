@@ -1,6 +1,8 @@
 import logging
+
 from datetime import datetime, timedelta
 
+import six
 import gevent
 
 from channelstream import server_state
@@ -60,6 +62,27 @@ class Connection(object):
                 self.mark_for_gc()
                 if self.socket:
                     self.socket.close()
+
+    def deliver_catchup_messages(self):
+        # instantly return catchup messages
+        messages = []
+        for channel in self.channels:
+            channel_inst = server_state.CHANNELS[channel]
+            messages.extend(channel_inst.get_catchup_frames(self.last_active, self.username))
+        [self.add_message(m) for m in messages]
+
+    @property
+    def channels(self):
+        """
+        Return list of channels names connection belongs to
+        :return:
+        """
+        found_channels = []
+        for channel in six.itervalues(server_state.CHANNELS):
+            user_conns = channel.connections.get(self.username) or []
+            if self in user_conns:
+                found_channels.append(channel.name)
+        return sorted(found_channels)
 
     def __json__(self):
         return self.id

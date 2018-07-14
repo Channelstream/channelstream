@@ -14,7 +14,9 @@ class ChatApplicationSocket(WebSocket):
             self.close()
         else:
             # attach a socket to connection
-            server_state.CONNECTIONS[self.conn_id].socket = self
+            connection = server_state.CONNECTIONS[self.conn_id]
+            connection.socket = self
+            connection.deliver_catchup_messages()
 
     def received_message(self, m):
         # this is to allow client heartbeats

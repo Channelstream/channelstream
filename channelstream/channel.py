@@ -48,10 +48,20 @@ class Channel(object):
         if channel_config:
             self.reconfigure_from_dict(channel_config)
         log.info("%s created" % self)
+        log.info("Configuration used: {}".format(channel_config))
         self.mark_activity()
 
     def mark_activity(self):
         self.last_active = datetime.utcnow()
+
+    def get_catchup_frames(self, newer_than, username):
+        found = []
+        for f in self.frames:
+            # either old frame or user is excluded or PM not meant for user
+            if f[0] < newer_than or (f[2] and username in f[2]) or (f[3] and username not in f[3]):
+                continue
+            found.append(process_catchup(f[1]))
+        return found
 
     def reconfigure_from_dict(self, config):
         if config:
@@ -145,9 +155,9 @@ class Channel(object):
         self.add_message(payload)
         return payload
 
-    def add_frame(self, frame):
+    def add_frame(self, frame, exclude_users=None, pm_users=None):
         if self.store_frames:
-            self.frames.append((datetime.now(), frame))
+            self.frames.append((datetime.utcnow(), frame, exclude_users, pm_users))
             self.frames = self.frames[-100:]
 
     def add_to_history(self, message):
@@ -167,7 +177,7 @@ class Channel(object):
         self.mark_activity()
         if not no_history:
             self.add_to_history(message)
-        self.add_frame(message)
+        self.add_frame(message, exclude_users=exclude_users, pm_users=pm_users)
         # message everyone subscribed except excluded
         total_sent = 0
         for user, conns in six.iteritems(self.connections):
@@ -208,3 +218,9 @@ class Channel(object):
 
     def __json__(self, request=None):
         return self.get_info()
+
+
+def process_catchup(m):
+    copied = copy.deepcopy(m)
+    copied['catchup'] = True
+    return copied
