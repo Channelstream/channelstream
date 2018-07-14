@@ -70,7 +70,7 @@ def subscribe(connection=None, channels=None, channel_configs=None):
         if user:
             for channel_name in channels:
                 if channel_name not in server_state.CHANNELS:
-                    channel = Channel(channel_name, channel_config=channel_configs)
+                    channel = Channel(channel_name, channel_config=channel_configs.get(channel_name))
                     server_state.CHANNELS[channel_name] = channel
                 is_found = server_state.CHANNELS[channel_name].add_connection(
                     connection
