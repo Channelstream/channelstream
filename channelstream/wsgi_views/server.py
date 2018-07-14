@@ -281,6 +281,7 @@ def listen(request):
     Handles long-polling connection
     :return:
     """
+    request.handle_cors()
     config = request.registry.settings
     conn_id = request.params.get("conn_id")
     connection = server_state.CONNECTIONS.get(conn_id)
