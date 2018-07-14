@@ -83,17 +83,17 @@ module.exports = {
                 to: path.join(DEMO_STATIC, '[name].[ext]')
             }
         ]),
-        // new webpackUglifyJsPlugin({
-        //     cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),
-        //     debug: true,
-        //     minimize: true,
-        //     sourceMap: false,
-        //     output: {
-        //         comments: false
-        //     },
-        //     compressor: {
-        //         warnings: false
-        //     }
-        // })
+        new webpackUglifyJsPlugin({
+            cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),
+            debug: true,
+            minimize: true,
+            sourceMap: false,
+            output: {
+                comments: false
+            },
+            compressor: {
+                warnings: false
+            }
+        })
     ]
 };

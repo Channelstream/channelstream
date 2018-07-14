@@ -142,6 +142,8 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         channelstreamConnection.longPollUrl = this.appConfig.longPollUrl;
         channelstreamConnection.websocketUrl = this.appConfig.websocketUrl;
         channelstreamConnection.userStateUrl = this.appConfig.userStateUrl;
+        // enable for tests
+        // channelstreamConnection.noWebsocket = true;
 
         // add a mutator for demo purposes - modify the request
         // to inject some state vars to connection json
