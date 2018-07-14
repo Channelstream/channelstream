@@ -1,5 +1,7 @@
+from gevent import monkey
+monkey.patch_all()
+
 import os
-import random
 from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
 
@@ -9,11 +11,8 @@ def main():
 
     with Configurator() as config:
         config.include("pyramid_jinja2")
-        # config.add_static_view(name="static", path=os.path.join(demo_path, "static"))
-        config.add_static_view(path="static", name="static/")
-        config.override_asset(
-            to_override="static", override_with=os.path.join(demo_path, "static")
-        )
+        # small hack to get non-registered app working
+        config.add_static_view(name='static', path='__main__:static')
         # hardcoded for now
         host = "127.0.0.1"
         port = 8000
