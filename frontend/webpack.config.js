@@ -3,6 +3,12 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 var webpackUglifyJsPlugin = require('webpack-uglify-js-plugin');
 var path = require('path');
 
+let CHANNELSTREAM_STATIC = path.resolve(__dirname, '../channelstream/static/');
+let DEMO_STATIC = path.resolve(__dirname, '../demo/static/');
+
+console.error(CHANNELSTREAM_STATIC)
+console.error(DEMO_STATIC)
+
 module.exports = {
     // Tell Webpack which file kicks off our app.
     entry: {
@@ -12,7 +18,7 @@ module.exports = {
     // Tell Weback to output our bundle to ./dist/bundle.js
     output: {
         filename: 'channelstream-[name].js',
-        path: path.resolve(__dirname, '..', 'channelstream', 'static')
+        path: path.resolve(__dirname, 'dist')
     },
     // Tell Webpack which directories to look in to resolve import statements.
     // Normally Webpack will look in node_modules by default but since we’re overriding
@@ -44,17 +50,38 @@ module.exports = {
         new CopyWebpackPlugin([
             {
                 from: path.resolve(__dirname, 'node_modules/web-animations-js'),
-                to: 'web-animations-js'
+                to: path.join(CHANNELSTREAM_STATIC, 'web-animations-js')
             },
             {
                 from: '**/*.js',
                 context: path.resolve(__dirname, 'node_modules/@webcomponents/webcomponentsjs'),
-                to: 'webcomponentsjs'
+                to: path.join(CHANNELSTREAM_STATIC, 'webcomponentsjs')
             },
             {
                 from: path.resolve(__dirname, 'src/channelstream.js'),
-                to: '[name].[ext]'
+                to: path.join(CHANNELSTREAM_STATIC, '[name].[ext]')
             },
+            {
+                from: path.resolve(__dirname, 'dist/channelstream-admin.js'),
+                to: path.join(CHANNELSTREAM_STATIC, '[name].[ext]')
+            },
+            {
+                from: path.resolve(__dirname, 'node_modules/web-animations-js'),
+                to: path.join(DEMO_STATIC, 'web-animations-js')
+            },
+            {
+                from: '**/*.js',
+                context: path.resolve(__dirname, 'node_modules/@webcomponents/webcomponentsjs'),
+                to: path.join(DEMO_STATIC, 'webcomponentsjs')
+            },
+            {
+                from: path.resolve(__dirname, 'src/channelstream.js'),
+                to: path.join(DEMO_STATIC, '[name].[ext]')
+            },
+            {
+                from: path.resolve(__dirname, 'dist/channelstream-demo.js'),
+                to: path.join(DEMO_STATIC, '[name].[ext]')
+            }
         ]),
         // new webpackUglifyJsPlugin({
         //     cacheFolder: path.resolve(__dirname, 'public/cached_uglify/'),

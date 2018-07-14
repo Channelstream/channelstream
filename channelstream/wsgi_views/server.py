@@ -579,12 +579,32 @@ class ServerViews(object):
         """
         return {}
 
-    @view_config(route_name="admin_json", renderer="json", permission="access")
+    @view_config(route_name="admin_json", renderer="json", request_method=('POST', 'GET'), permission="access")
     def admin_json(self):
         """
         Admin json
         ---
         get:
+          tags:
+          - "Admin API"
+          summary: "Return server information in json format for admin panel
+          purposes"
+          description: ""
+          operationId: "admin_json"
+          consumes:
+          - "application/json"
+          produces:
+          - "application/json"
+          parameters:
+          - in: "body"
+            name: "body"
+            description: "Response info configuration"
+          responses:
+            422:
+              description: "Unprocessable Entity"
+            200:
+              description: "Success"
+        post:
           tags:
           - "Admin API"
           summary: "Return server information in json format for admin panel

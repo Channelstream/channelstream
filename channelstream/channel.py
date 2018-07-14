@@ -138,22 +138,30 @@ class Channel(object):
         self.add_message(payload)
         return payload
 
+    def add_frame(self, frame):
+        if self.store_frames:
+            self.frames.append(frame)
+            self.frames = self.frames[-100:]
+
+    def add_to_history(self, message):
+        if self.store_history and message["type"] == "message":
+            self.history.append(message)
+            self.history = self.history[self.history_size * -1 :]
+
+
     def add_message(self, message, pm_users=None, exclude_users=None):
         """
         Sends the message to all connections subscribed to this channel
         """
-        no_history = message.pop("no_history", False)
         message = copy.deepcopy(message)
+        no_history = message.pop("no_history", False)
+        message.update({"channel": self.name})
         pm_users = pm_users or []
         exclude_users = exclude_users or []
         self.last_active = datetime.utcnow()
-        if self.store_history and message["type"] == "message" and not no_history:
-            self.history.append(message)
-            self.history = self.history[self.history_size * -1 :]
-        if self.store_frames:
-            self.frames.append(message)
-            self.frames = self.frames[-100:]
-        message.update({"channel": self.name})
+        if not no_history:
+            self.add_to_history(message)
+        self.add_frame(message)
         # message everyone subscribed except excluded
         total_sent = 0
         for user, conns in six.iteritems(self.connections):

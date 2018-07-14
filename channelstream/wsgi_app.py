@@ -51,8 +51,5 @@ def make_app(server_config):
         script_generator="channelstream.utils:swagger_ui_script_template",
         permission=NO_PERMISSION_REQUIRED,
     )
-
-    if config.registry.settings["demo"]:
-        config.scan("channelstream.wsgi_views.demo")
     app = config.make_wsgi_app()
     return app

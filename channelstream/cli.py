@@ -86,7 +86,7 @@ def cli_start():
         help="port on which the server listens to",
     )
     parser.add_argument("-d", "--debug", dest="debug", help="debug")
-    parser.add_argument("-e", "--demo", dest="demo", help="demo enabled")
+    parser.add_argument("-e", "--demo", dest="demo", help="does nothing, BW.compat")
     parser.add_argument(
         "-x",
         "--allowed_post_ip",
@@ -108,7 +108,6 @@ def cli_start():
         "secret",
         "admin_user",
         "admin_secret",
-        "demo",
         "allow_posting_from",
         "allow_cors",
     )
@@ -131,7 +130,6 @@ def cli_start():
     # convert types
     config["debug"] = asbool(config["debug"])
     config["port"] = int(config["port"])
-    config["demo"] = asbool(config["demo"])
 
     for key in ["allow_posting_from", "allow_cors"]:
         if not config[key]:
@@ -154,9 +152,6 @@ def cli_start():
     server.start()
     log.info("Serving on {}".format(url))
     log.info("Admin interface available on {}/admin".format(url))
-    if config["demo"]:
-        log.info("Demo enabled, visit {}/demo".format(url))
-        log.warning("\n\n!! NEVER run the demo in production !!\n\n")
 
     server = WSGIServer((config["host"], config["port"]), RoutingApplication(config))
     server.serve_forever()

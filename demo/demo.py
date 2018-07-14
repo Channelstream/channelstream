@@ -12,6 +12,18 @@ from requests.auth import HTTPBasicAuth
 
 log = logging.getLogger(__name__)
 
+WELCOME_MESSAGE_TEXT = """
+This is a welcome message that you see upon creating connection/reconnection. 
+Only you see it (it's not stored to history), and is only sent to your user.
+
+There are 3 channels with different configurations:
+
+- pub_chan: notifies about joins/parts, stores history, history size: 10
+- notify: notifies about joins/parts, stores history, doesn't send user state change messages, history size: 50
+- second_channel: doesn't notify about user presence, doesn't store history, doesn't send user state change messages
+"""
+
+
 POSSIBLE_CHANNELS = set(["pub_chan", "second_chanel", "notify"])
 
 CHANNEL_CONFIGS = {
@@ -54,32 +66,6 @@ def make_server_request(request, payload, endpoint, auth=None):
     return response
 
 
-def remove_data_from_demo_response(server_response):
-    """
-    Removes user info from second_channel for demo purpose
-    you do not need this in real application
-    :param server_response:
-    :return:
-    """
-    channels = server_response["channels_info"]["channels"]
-    second_channel = channels.get("second_channel")
-    if second_channel:
-        second_channel["users"] = []
-    return server_response
-
-
-WELCOME_MESSAGE_TEXT = """
-This is a welcome message that you see upon creating connection/reconnection. 
-Only you see it (it's not stored to history), and is only sent to your user.
-
-There are 3 channels with different configurations:
-
-- pub_chan: notifies about joins/parts, stores history, history size: 10
-- notify: notifies about joins/parts, stores history, doesn't send user state change messages, history size: 50
-- second_channel: doesn't notify about user presence, doesn't store history, doesn't send user state change messages
-"""
-
-
 def send_welcome_message(request, username):
     """
     Sends a private message to specific channel to single user
@@ -104,10 +90,9 @@ def send_welcome_message(request, username):
 class DemoViews(object):
     def __init__(self, request):
         self.request = request
-        self.request.handle_cors()
         self.request.response.headers.add("Cache-Control", "no-cache, no-store")
 
-    @view_config(route_name="demo", renderer="templates/demo.jinja2")
+    @view_config(route_name="/", renderer="templates/demo.jinja2")
     def demo(self):
         """Render demo page"""
         random_name = "anon_%s" % random.randint(1, 999999)
@@ -115,17 +100,17 @@ class DemoViews(object):
 
     @view_config(match_param=["section=demo", "action=connect"], request_method="POST")
     def connect(self):
-        """handle authorization of users trying to connect"""
+        """handle authorization of users trying to connect/reconnect"""
         channels = self.request.json_body.get("channels") or []
-        if channels:
-            POSSIBLE_CHANNELS.intersection(channels)
         random_name = "anon_%s" % random.randint(1, 999999)
         username = self.request.json_body.get("username", random_name)
         state = self.request.json_body.get("state", {})
         payload = {
             "username": username,
             # 'conn_id': str(uuid.uuid4()),
+            # where user should be subscribed
             "channels": channels,
+            # what default state should be set when user is created on channelstream end
             "fresh_user_state": {
                 "email": None,
                 "status": None,
@@ -133,15 +118,19 @@ class DemoViews(object):
                 "bar": 1,
                 "bool": True,
             },
+            # update state to this values if user object already exists
             "user_state": state,
+            # what state keys should be visible to other users
             "state_public_keys": ["email", "status", "bar", "color"],
-            "info": {"return_public_state": True},  # return only public state
+            # return only public state in response
+            "info": {"return_public_state": True},
+            # set chanel configurations if channels don't exist yet
             "channel_configs": CHANNEL_CONFIGS,
         }
         result = make_server_request(self.request, payload, "/connect")
         self.request.response.status = result.status_code
         server_response = result.json()
-        server_response = remove_data_from_demo_response(server_response)
+        # add a demo message when user connects after a while
         gevent.spawn_later(5, send_welcome_message, self.request, username)
         return server_response
 
@@ -168,8 +157,6 @@ class DemoViews(object):
     def subscribe(self):
         """"can be used to subscribe specific connection to other channels"""
         request_data = self.request.json_body
-        channels = request_data["channels"]
-        POSSIBLE_CHANNELS.intersection(channels)
         payload = {
             "conn_id": request_data.get("conn_id", ""),
             "channels": request_data.get("channels", []),
@@ -178,7 +165,6 @@ class DemoViews(object):
         result = make_server_request(self.request, payload, "/subscribe")
         self.request.response.status = result.status_code
         server_response = result.json()
-        server_response = remove_data_from_demo_response(server_response)
         return server_response
 
     @view_config(
@@ -194,7 +180,6 @@ class DemoViews(object):
         result = make_server_request(self.request, payload, "/unsubscribe")
         self.request.response.status = result.status_code
         server_response = result.json()
-        server_response = remove_data_from_demo_response(server_response)
         return server_response
 
     @view_config(match_param=["section=demo", "action=message"], request_method="POST")

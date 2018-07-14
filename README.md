@@ -8,9 +8,13 @@ Basic usage::
     YOUR_PYTHON_ENV/bin/channelstream -i filename.ini
 
 
-You can also see simple pyramid/angularjs demo included, open your browser and point it to following url::
+You can also see simple pyramid demo included in the repository
 
-    http://127.0.0.1:8000/demo
+    YOUR_PYTHON_ENV/bin/python demo/app.py
+
+Open your browser and point it to following url::
+
+    http://127.0.0.1:6543
 
 **To run the demo you will need to have the `requests` package installed in your environment**
 
@@ -19,12 +23,11 @@ Possible config options for the server::
     YOUR_PYTHON_ENV/bin/channelstream -h
 
 
-The server can also be configured via ini files (channelstream -i filename), example::
+The server can (and should be) also be configured via ini files (channelstream -i filename), example::
 
     [channelstream]
     debug = 0
     port = 8000
-    demo_app_url = http://127.0.0.1
     secret = YOURSECRET
     admin_secret = YOURADMINSECRET
     allow_posting_from = 127.0.0.1,
@@ -35,7 +38,7 @@ The server can also be configured via ini files (channelstream -i filename), exa
 
 ** USAGE **
 
-Refer to channelstream/wsgi_views/demo.py for example usage.
+Refer to demo/demo.py for example usage.
 
 ** Security model **
 
