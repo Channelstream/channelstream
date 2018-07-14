@@ -120,6 +120,8 @@ class Channel(object):
             "timestamp": self.last_active,
             "channel": self.name,
             "message": {"action": action},
+            "state": None,
+            "catchup": False,
         }
         if action == "joined":
             payload["state"] = server_state.USERS[username].public_state
@@ -136,6 +138,7 @@ class Channel(object):
             "type": "user_state_change",
             "user": user_inst.username,
             "timestamp": self.last_active,
+            "catchup": False,
             "channel": self.name,
             "message": {"state": user_inst.public_state, "changed": public_changed},
         }

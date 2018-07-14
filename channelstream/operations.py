@@ -163,6 +163,8 @@ def pass_message(msg, stats):
         "no_history": msg.get("no_history"),
         "type": "message",
         "timestamp": msg["timestamp"],
+        "catchup": False,
+        "edited": None,
     }
     pm_users = msg.get("pm_users", [])
     total_sent = 0
