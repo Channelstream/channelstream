@@ -282,7 +282,7 @@ def listen(request):
     if not connection:
         raise HTTPUnauthorized()
     # mark the conn active
-    connection.last_active = datetime.utcnow()
+    connection.mark_activity()
     # attach a queue to connection
     connection.queue = Queue()
 

@@ -11,4 +11,3 @@ lock = RLock()
 CHANNELS = {}
 USERS = {}
 CONNECTIONS = {}
-MESSAGE_STATUS = {"NORMAL": 1, "CATCHUP": 2}

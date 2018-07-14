@@ -1,8 +1,6 @@
 import logging
 import uuid
 
-from datetime import datetime
-
 from channelstream import server_state
 from channelstream.user import User
 from channelstream.connection import Connection
@@ -112,7 +110,7 @@ def change_user_state(user_inst=None, user_state=None):
     """
     changed = user_inst.state_from_dict(user_state)
     # mark active
-    user_inst.last_active = datetime.utcnow()
+    user_inst.mark_activity()
     if changed:
         channels = user_inst.get_channels()
         for channel in [c for c in channels if c.notify_state]:

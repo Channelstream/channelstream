@@ -14,14 +14,18 @@ class Connection(object):
 
     def __init__(self, username, conn_id):
         self.username = username  # hold user id/name of connection
-        self.last_active = datetime.utcnow()
+        self.last_active = None
         self.socket = None
         self.queue = None
         self.id = conn_id
+        self.mark_activity()
         gevent.spawn_later(5, self.heartbeat)
 
     def __repr__(self):
         return "<Connection: id:%s, owner:%s>" % (self.id, self.username)
+
+    def mark_activity(self):
+        self.last_active = datetime.utcnow()
 
     def add_message(self, message=None):
         """ Sends the message to the client connection """
@@ -33,10 +37,10 @@ class Connection(object):
                 # payload needs to be converted to JSON now as it gets
                 # piped to client
                 self.socket.send(json.dumps([message] if message else []))
-                now = datetime.utcnow()
-                self.last_active = now
-                server_state.USERS[self.username].last_active = now
-            except Exception:
+                self.mark_activity()
+                server_state.USERS[self.username].mark_activity()
+            except Exception as exc:
+                log.debug(exc)
                 self.mark_for_gc()
         elif self.queue:
             # handle long polling

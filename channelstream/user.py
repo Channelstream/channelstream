@@ -18,6 +18,10 @@ class User(object):
         self.state = {}
         self.state_public_keys = []
         self.connections = []  # holds ids of connections
+        self.last_active = None
+        self.mark_activity()
+
+    def mark_activity(self):
         self.last_active = datetime.utcnow()
 
     def __repr__(self):
@@ -30,7 +34,7 @@ class User(object):
         if connection not in self.connections:
             self.connections.append(connection)
         # mark active
-        self.last_active = datetime.utcnow()
+        self.mark_activity()
         return connection
 
     def add_message(self, message):
@@ -38,7 +42,7 @@ class User(object):
         Send a message to all connections of this user
         """
         # mark active
-        self.last_active = datetime.utcnow()
+        self.mark_activity()
         for connection in self.connections:
             connection.add_message(message)
         return len(self.connections)

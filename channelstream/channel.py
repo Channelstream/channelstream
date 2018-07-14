@@ -32,7 +32,7 @@ class Channel(object):
         self.uuid = str(uuid.uuid4()).replace("-", "")
         self.name = name
         self.long_name = long_name
-        self.last_active = datetime.utcnow()
+        self.last_active = None
         self.connections = {}
         self.notify_presence = False
         self.broadcast_presence_with_user_lists = False
@@ -43,11 +43,15 @@ class Channel(object):
         self.store_frames = True
         self.history_size = 10
         self.history = []
-        # store frames for fetching when long polling connection reconnects
+        # store frames for fetching when connection is established
         self.frames = []
         if channel_config:
             self.reconfigure_from_dict(channel_config)
         log.info("%s created" % self)
+        self.mark_activity()
+
+    def mark_activity(self):
+        self.last_active = datetime.utcnow()
 
     def reconfigure_from_dict(self, config):
         if config:
@@ -107,7 +111,7 @@ class Channel(object):
                 }
                 connected_users.append(user_data)
 
-        self.last_active = datetime.utcnow()
+        self.mark_activity()
         payload = {
             "uuid": str(uuid.uuid4()).replace("-", ""),
             "type": "presence",
@@ -123,7 +127,7 @@ class Channel(object):
         return payload
 
     def send_user_state(self, user_inst, changed):
-        self.last_active = datetime.utcnow()
+        self.mark_activity()
 
         public_changed = [x for x in changed if x["key"] in user_inst.public_state]
 
@@ -140,7 +144,7 @@ class Channel(object):
 
     def add_frame(self, frame):
         if self.store_frames:
-            self.frames.append(frame)
+            self.frames.append((datetime.now(), frame))
             self.frames = self.frames[-100:]
 
     def add_to_history(self, message):
@@ -157,7 +161,7 @@ class Channel(object):
         message.update({"channel": self.name})
         pm_users = pm_users or []
         exclude_users = exclude_users or []
-        self.last_active = datetime.utcnow()
+        self.mark_activity()
         if not no_history:
             self.add_to_history(message)
         self.add_frame(message)

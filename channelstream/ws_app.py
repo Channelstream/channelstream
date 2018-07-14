@@ -1,5 +1,4 @@
 from six.moves.urllib.parse import parse_qs
-from datetime import datetime
 
 from ws4py.websocket import WebSocket
 
@@ -19,13 +18,12 @@ class ChatApplicationSocket(WebSocket):
 
     def received_message(self, m):
         # this is to allow client heartbeats
-        now = datetime.utcnow()
         if self.conn_id in server_state.CONNECTIONS:
             connection = server_state.CONNECTIONS[self.conn_id]
-            connection.last_active = now
+            connection.mark_activity()
             user = server_state.USERS.get(connection.username)
             if user:
-                user.last_active = now
+                user.mark_activity()
 
     def closed(self, code, reason=""):
         self.environ.pop("ws4py.app")
