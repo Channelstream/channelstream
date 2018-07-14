@@ -270,7 +270,12 @@ def unsubscribe(request, *args):
     }
 
 
-@view_config(route_name="api_listen", request_method="GET", renderer="json")
+@view_config(
+    route_name="api_listen",
+    request_method="GET",
+    renderer="json",
+    permission=NO_PERMISSION_REQUIRED,
+)
 def listen(request):
     """
     Handles long-polling connection
