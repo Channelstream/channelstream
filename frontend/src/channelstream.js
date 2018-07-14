@@ -291,7 +291,7 @@
             this.websocket.onopen = this._handleListenOpen.bind(this);
             this.websocket.onclose = this._handleWebsocketCloseEvent.bind(this);
             this.websocket.onerror = this._handleListenErrorEvent.bind(this);
-            this.websocket.onmessage = this._handleListenMessageEvent.bind(this);
+            this.websocket.onmessage = this._handleListenWSMessageEvent.bind(this);
         },
         /**
          * Opens long-poll connection.
@@ -416,19 +416,19 @@
             }
             console.log('connectErrorCallback', request, data);
         },
-
+        /**
+         * Handles long-polling payloads
+         */
         _handleListenMessageEvent: function (data) {
-            var parsedData = null;
-            // comes from iron-ajax
-            if (data) {
-                parsedData = JSON.parse(data.data);
-                // comes from websocket
-                setTimeout(this.openLongPoll.bind(this), 0);
-            } else {
-                parsedData = JSON.parse(data);
-            }
+            setTimeout(this.openLongPoll.bind(this), 0);
+            this.listenMessageCallback(data);
+        },
+        /**
+         * Handles ws payloads
+         */
+        _handleListenWSMessageEvent: function (data) {
+            var parsedData = JSON.parse(data.data);
             this.listenMessageCallback(parsedData);
-
         },
 
         /**
