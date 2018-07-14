@@ -3,6 +3,9 @@ from os import path
 from io import open
 import re
 
+from channelstream import __version__
+
+
 here = path.abspath(path.dirname(__file__))
 REQUIREMENTS = open(path.join(here, "requirements.txt")).readlines()
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
@@ -16,10 +19,13 @@ def parse_req(req):
 
 
 requires = [_f for _f in REQUIREMENTS if _f]
+version = "{}.{}.{}".format(
+    __version__["major"], __version__["minor"], __version__["patch"]
+)
 
 setup(
     name="channelstream",
-    version="0.6.1",
+    version=version,
     description="Websocket server supporting channels/users communication",
     classifiers=["Intended Audience :: Developers"],
     author="Marcin Lulek",

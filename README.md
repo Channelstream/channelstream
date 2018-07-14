@@ -38,7 +38,7 @@ The server can (and should be) also be configured via ini files (channelstream -
 
 ** USAGE **
 
-Refer to demo/demo.py for example usage.
+Refer to `demo/demo.py` and API explorer for example usage.
 
 ** Security model **
 
@@ -58,13 +58,9 @@ All messages need to be signed with a HMAC of destination endpoint ::
     signer = TimestampSigner(request.registry.settings['secret'])
     sig_for_server = signer.sign('/connect')
     secret_headers = {'x-channelstream-secret': sig_for_server,
-                      'x-channelstream-endpoint': endpoint,
                       'Content-Type': 'application/json'}
     response = requests.post(url, data=json.dumps(payload),
                              headers=secret_headers).json()
-
-The function accepts endpoint in form of '/messages' if you want to send a message
- to users. This will be validated on socketio server side.
 
 
 
@@ -167,7 +163,8 @@ expects a json request in form of::
     {
     "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
     "channel_configs": {"CHAN_NAME1": {"notify_presence": true, "history_size": 50}}, # channel_configs key is optional
-    "conn_id": "CONNECTION_ID"}
+    "conn_id": "CONNECTION_ID"
+    }
 
 /unsubscribe
 ----------------------------
@@ -176,7 +173,8 @@ expects a json request in form of::
 
     {
     "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
-    "conn_id": "CONNECTION_ID"}
+    "conn_id": "CONNECTION_ID"
+    }
 
 
 /user_state
@@ -229,6 +227,7 @@ examples:
     "channel": "CHAN_NAME"
     }
 
+Currently following message types are emited: `message`, `presence`, `user_state_change`
 
 Installation and Setup
 ======================
