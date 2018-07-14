@@ -1,7 +1,7 @@
 gevent>=1.1
 ws4py>=0.3.5
 marshmallow==2.15.0
-apispec
+apispec>=0.39.0
 colander
 pyramid>=1.8
 pyramid_jinja2
