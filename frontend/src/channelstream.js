@@ -49,7 +49,8 @@
                 this.request.send(JSON.stringify(this.body));
             }
             else {
-                this.request.open(this.type, this.url);
+                this.request.open('GET', this.url);
+                this.request.send();
             }
         };
     }
