@@ -1,4 +1,5 @@
 import datetime
+import uuid
 import pkg_resources
 
 from pyramid.authorization import ACLAuthorizationPolicy
@@ -13,6 +14,10 @@ from channelstream.wsgi_views.wsgi_security import APIFactory
 
 def datetime_adapter(obj, request):
     return obj.isoformat()
+
+
+def uuid_adapter(obj, request):
+    return str(obj)
 
 
 def make_app(server_config):
@@ -37,6 +42,7 @@ def make_app(server_config):
 
     json_renderer = JSON(serializer=json.dumps, indent=4)
     json_renderer.add_adapter(datetime.datetime, datetime_adapter)
+    json_renderer.add_adapter(uuid.UUID, uuid_adapter)
     config.add_renderer("json", json_renderer)
 
     config.add_request_method("channelstream.utils.handle_cors", "handle_cors")
