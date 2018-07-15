@@ -62,15 +62,22 @@ class Connection(object):
                 if self.socket:
                     self.socket.close()
 
-    def deliver_catchup_messages(self):
-        # instantly return catchup messages
+    def get_catchup_messages(self):
         messages = []
+        # return catchup messages for channels
         for channel in self.channels:
             channel_inst = server_state.CHANNELS[channel]
             messages.extend(
                 channel_inst.get_catchup_frames(self.last_active, self.username)
             )
-        [self.add_message(m) for m in messages]
+        # and users
+        messages.extend(
+            server_state.USERS[self.username].get_catchup_frames(self.last_active)
+        )
+        return messages
+
+    def deliver_catchup_messages(self):
+        [self.add_message(m) for m in self.get_catchup_messages()]
 
     @property
     def channels(self):

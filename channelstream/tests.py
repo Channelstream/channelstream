@@ -765,6 +765,50 @@ class TestMessageViews(object):
         assert msg["channel"] == msg_payload["channel"]
         assert msg["timestamp"] is not None
 
+    def test_catchup_messages(self, dummy_request):
+        from channelstream.wsgi_views.server import message, connect
+
+        dummy_request.json_body = {
+            "username": "test1",
+            "channels": ["test"],
+            "channel_configs": {"test": {"store_history": True, "history_size": 2}},
+        }
+        connect(dummy_request)
+        msg_payload = {
+            "type": "message",
+            "user": "system",
+            "channel": "test",
+            "message": {"text": "test3"},
+        }
+        dummy_request.json_body = [msg_payload]
+        message(dummy_request)
+        # add pm message to non-existing user
+        wrong_user_msg_payload = {
+            "type": "message",
+            "user": "system",
+            "channel": "test",
+            "message": {"text": "test1"},
+            "pm_users": ["test2"],
+        }
+        msg_payload = {
+            "type": "message",
+            "user": "system",
+            "channel": "test",
+            "message": {"text": "test2"},
+            "pm_users": ["test1"],
+        }
+        dummy_request.json_body = [wrong_user_msg_payload, msg_payload]
+        message(dummy_request)
+        # change context
+        gevent.sleep(0)
+        connection = server_state.USERS["test1"].connections[0]
+        messages = connection.get_catchup_messages()
+        assert len(messages) == 2
+        assert messages[0]["timestamp"] > connection.last_active
+        assert messages[0]["message"]["text"] == "test3"
+        assert messages[1]["timestamp"] > connection.last_active
+        assert messages[1]["message"]["text"] == "test2"
+
 
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
 class TestChannelConfigView(object):

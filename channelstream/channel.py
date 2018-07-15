@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 from channelstream import server_state
+from channelstream.utils import process_catchup
 
 log = logging.getLogger(__name__)
 
@@ -222,9 +223,3 @@ class Channel(object):
 
     def __json__(self, request=None):
         return self.get_info()
-
-
-def process_catchup(m):
-    copied = copy.deepcopy(m)
-    copied["catchup"] = True
-    return copied

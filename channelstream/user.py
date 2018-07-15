@@ -5,6 +5,7 @@ from datetime import datetime
 
 import six
 from channelstream import server_state
+from channelstream.utils import process_catchup
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +19,8 @@ class User(object):
         self.state = {}
         self.state_public_keys = []
         self.connections = []  # holds ids of connections
+        # store frames for fetching when connection is established
+        self.frames = []
         self.last_active = None
         self.mark_activity()
 
@@ -26,6 +29,13 @@ class User(object):
 
     def __repr__(self):
         return "<User:%s, connections:%s>" % (self.username, len(self.connections))
+
+    def add_frame(self, frame):
+        self.frames.append((datetime.utcnow(), frame))
+        self.frames = self.frames[-50:]
+
+    def get_catchup_frames(self, newer_than):
+        return [process_catchup(f[1]) for f in self.frames if f[0] > newer_than]
 
     def add_connection(self, connection):
         """
@@ -42,6 +52,7 @@ class User(object):
         Send a message to all connections of this user
         """
         # mark active
+        self.add_frame(message)
         self.mark_activity()
         for connection in self.connections:
             connection.add_message(message)

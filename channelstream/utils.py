@@ -1,3 +1,4 @@
+import copy
 import uuid
 import marshmallow
 
@@ -46,3 +47,9 @@ def uuid_from_string(str_uuid):
         return uuid.UUID(str_uuid)
     except (ValueError, AttributeError):
         raise marshmallow.ValidationError("Wrong UUID format")
+
+
+def process_catchup(m):
+    copied = copy.deepcopy(m)
+    copied["catchup"] = True
+    return copied
