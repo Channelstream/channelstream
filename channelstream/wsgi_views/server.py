@@ -380,7 +380,7 @@ def shared_messages(request):
         if not msg.get("channel") and not msg.get("pm_users", []):
             continue
         gevent.spawn(operations.pass_message, msg, server_state.STATS)
-    return True
+    return data
 
 
 # @view_config(route_name="api_v1_messages", request_method="POST", renderer="json")
@@ -413,8 +413,7 @@ def messages_post(request):
         200:
           description: "Success"
     """
-    shared_messages(request)
-    return True
+    return shared_messages(request)
 
 
 @view_config(route_name="legacy_message", request_method="POST", renderer="json")
@@ -447,8 +446,7 @@ def message(request):
         200:
           description: "Success"
     """
-    shared_messages(request)
-    return True
+    return shared_messages(request)
 
 
 # @view_config(route_name="api_v1_messages", request_method="PATCH", renderer="json")
