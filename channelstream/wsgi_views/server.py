@@ -270,8 +270,19 @@ def unsubscribe(request, *args):
 )
 def listen(request):
     """
-    Handles long-polling connection
-    :return:
+    Handles long polling connections
+    ---
+    get:
+      tags:
+      - "Client API"
+      summary: "Handles long polling connections"
+      description: ""
+      operationId: "listen"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Success"
     """
     request.handle_cors()
     config = request.registry.settings
@@ -304,9 +315,7 @@ def await_data(connection, config):
     messages = []
     # block for first message - wake up after a while
     try:
-        messages.extend(
-            connection.queue.get(timeout=config["wake_connections_after"])
-        )
+        messages.extend(connection.queue.get(timeout=config["wake_connections_after"]))
     except Empty:
         pass
     # get more messages if enqueued takes up total 0.25
@@ -365,6 +374,50 @@ def user_state(request):
     }
 
 
+def shared_messages(request):
+    schema = schemas.MessageBodySchema(context={"request": request}, many=True)
+    data = schema.load(request.json_body).data
+    for msg in data:
+        if not msg.get("channel") and not msg.get("pm_users", []):
+            continue
+        gevent.spawn(operations.pass_message, msg, server_state.STATS)
+    return True
+
+
+# @view_config(route_name="api_v1_messages", request_method="POST", renderer="json")
+def messages_post(request):
+    """
+    Send message to channels and/or users
+    ---
+    post:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "V1 API (future stable)"
+      summary: "Send message to channels and/or users"
+      description: ""
+      operationId: "message"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Request JSON body"
+        required: true
+        schema:
+          $ref: "#/definitions/MessagesBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
+    """
+    shared_messages(request)
+    return True
+
+
 @view_config(route_name="legacy_message", request_method="POST", renderer="json")
 def message(request):
     """
@@ -378,6 +431,40 @@ def message(request):
       summary: "Send message to channels and/or users"
       description: ""
       operationId: "message"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Request JSON body"
+        required: true
+        schema:
+          $ref: "#/definitions/MessagesBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
+    """
+    shared_messages(request)
+    return True
+
+
+# @view_config(route_name="api_v1_messages", request_method="PATCH", renderer="json")
+def messages_patch(request):
+    """
+    Edit existing message in history and emit changes
+    ---
+    patch:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "V1 API (future stable)"
+      summary: "Edit existing message in history and emit changes"
+      description: ""
+      operationId: "edit_messages"
       consumes:
       - "application/json"
       produces:
@@ -414,7 +501,7 @@ def disconnect(request):
     ---
     get:
       tags:
-      - "Legacy API"
+      - "Client API"
       summary: "Permanently remove connection from server"
       description: ""
       operationId: "disconnect"
@@ -435,7 +522,7 @@ def disconnect(request):
           description: "Success"
     post:
       tags:
-      - "Legacy API"
+      - "Client API"
       summary: "Permanently remove connection from server"
       description: ""
       operationId: "disconnect"
@@ -590,7 +677,7 @@ class ServerViews(object):
         ---
         get:
           tags:
-          - "Admin API"
+          - "Legacy Admin API"
           summary: "Return server information in json format for admin panel
           purposes"
           description: ""
@@ -610,7 +697,7 @@ class ServerViews(object):
               description: "Success"
         post:
           tags:
-          - "Admin API"
+          - "Legacy Admin API"
           summary: "Return server information in json format for admin panel
           purposes"
           description: ""
@@ -698,22 +785,30 @@ class ServerViews(object):
         spec.definition("SubscribeBody", schema=schemas.SubscribeBodySchema)
         spec.definition("UnsubscribeBody", schema=schemas.UnsubscribeBodySchema)
         spec.definition("UserStateBody", schema=schemas.UserStateBodySchema)
-        spec.definition("MessageBody", schema=schemas.MessageBodySchema(many=True))
+        spec.definition("MessagesBody", schema=schemas.MessageBodySchema(many=True))
+        spec.definition("MessageBody", schema=schemas.MessageBodySchema())
         spec.definition("DisconnectBody", schema=schemas.DisconnectBodySchema)
         spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
         spec.definition("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)
 
+        # legacy api
         add_pyramid_paths(spec, "legacy_connect", request=self.request)
         add_pyramid_paths(spec, "legacy_subscribe", request=self.request)
         add_pyramid_paths(spec, "legacy_unsubscribe", request=self.request)
         add_pyramid_paths(spec, "legacy_user_state", request=self.request)
         add_pyramid_paths(spec, "legacy_message", request=self.request)
+        add_pyramid_paths(spec, "legacy_edit_message", request=self.request)
+        add_pyramid_paths(spec, "legacy_delete_message", request=self.request)
         add_pyramid_paths(spec, "legacy_channel_config", request=self.request)
         add_pyramid_paths(spec, "legacy_info", request=self.request)
 
         add_pyramid_paths(spec, "api_listen", request=self.request)
         add_pyramid_paths(spec, "api_listen_ws", request=self.request)
         add_pyramid_paths(spec, "api_disconnect", request=self.request)
+
+        # v1 api
+        # do not expose this yet
+        # add_pyramid_paths(spec, "api_v1_messages", request=self.request)
 
         add_pyramid_paths(spec, "admin_json", request=self.request)
         spec_dict = spec.to_dict()
