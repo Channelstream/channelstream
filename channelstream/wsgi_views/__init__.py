@@ -6,6 +6,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def add_v1_routes(config):
+    config.add_route("api_v1_messages", "/messages")
+
+
 def includeme(config):
     config.add_static_view("static", path="channelstream:static/")
     config.add_route("CORS_route", "/*foo", request_method="OPTIONS")
@@ -28,6 +32,8 @@ def includeme(config):
     config.add_route("legacy_unsubscribe", "/unsubscribe")
     config.add_route("legacy_user_state", "/user_state")
     config.add_route("legacy_message", "/message")
+    config.add_route("legacy_edit_message", "/messages_edit")
+    config.add_route("legacy_delete_message", "/messages_delete")
     config.add_route("legacy_channel_config", "/channel_config")
     config.add_route("legacy_info", "/info")
 
@@ -35,6 +41,9 @@ def includeme(config):
     config.add_route("api_listen", "/listen")
     config.add_route("api_listen_ws", "/ws")
     config.add_route("api_disconnect", "/disconnect")
+
+    # do not expose V1 API yet
+    # config.include(add_v1_routes, route_prefix='/api/v1/')
 
     config.add_route("section_action", "/{section}/{action}")
 
