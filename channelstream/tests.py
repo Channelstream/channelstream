@@ -8,7 +8,7 @@ import pytest
 import mock
 import gevent
 from datetime import datetime, timedelta
-from gevent.queue import Queue, Empty
+from gevent.queue import Queue
 import marshmallow
 from pyramid import testing
 from channelstream import server_state
@@ -16,7 +16,6 @@ import channelstream.gc
 from channelstream.channel import Channel
 from channelstream.connection import Connection
 from channelstream.user import User
-import channelstream.operations as operations
 
 test_uuids = [
     uuid.UUID("12345678-1234-5678-1234-567812345678"),
@@ -201,8 +200,9 @@ class TestChannel(object):
         connection = Connection("test_user", conn_id=test_uuids[1])
         user.add_connection(connection)
         channel = Channel("test")
+        server_state.CHANNELS[channel.name] = channel
         channel.add_connection(connection)
-        [channel] == user.get_channels()
+        assert [channel] == user.get_channels()
 
     def test_user_multi_assignment(self):
         user = User("test_user")
@@ -717,24 +717,6 @@ class TestMessageViews(object):
         assert server_state.STATS["total_unique_messages"] == 0
         result = message(dummy_request)
         assert server_state.STATS["total_unique_messages"] == 0
-
-    def test_good_json_no_channel(self, dummy_request):
-        from channelstream.wsgi_views.server import message
-
-        dummy_request.json_body = [
-            {
-                "type": "message",
-                "user": "system",
-                "channel": "test",
-                "message": {"text": "test"},
-            }
-        ]
-        assert server_state.STATS["total_unique_messages"] == 0
-        message(dummy_request)
-        # change context
-        gevent.sleep(0)
-        assert server_state.STATS["total_unique_messages"] == 1
-        assert len(server_state.CHANNELS.keys()) == 0
 
     def test_good_json_no_channel(self, dummy_request):
         from channelstream.wsgi_views.server import message

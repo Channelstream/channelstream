@@ -16,11 +16,7 @@ from channelstream.gc import gc_conns_forever, gc_users_forever
 from channelstream.policy_server import client_handle
 from channelstream.ws_app import ChatApplicationSocket
 
-from ws4py.server.geventserver import (
-    WebSocketWSGIApplication,
-    WebSocketWSGIHandler,
-    WSGIServer,
-)
+from ws4py.server.geventserver import WebSocketWSGIApplication, WSGIServer
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

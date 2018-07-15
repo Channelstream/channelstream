@@ -1,7 +1,7 @@
 import uuid
 
 import marshmallow
-from marshmallow import validate, fields, ValidationError
+from marshmallow import fields, ValidationError
 from marshmallow.base import FieldABC
 import collections
 from apispec.ext.marshmallow.openapi import OpenAPIConverter
@@ -24,9 +24,9 @@ def validate_username(username):
         raise marshmallow.ValidationError("Unknown user")
 
 
-def add_missing_fields(data, original, fields):
+def add_missing_fields(data, original, form_fields):
     for key, val in original.items():
-        if key not in fields:
+        if key not in form_fields:
             data[key] = val
     return data
 

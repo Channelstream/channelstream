@@ -59,8 +59,8 @@ class User(object):
         return len(self.connections)
 
     def state_from_dict(self, state_dict):
+        changed = []
         if isinstance(state_dict, dict):
-            changed = []
             for k, v in six.iteritems(state_dict):
                 if self.state.get(k) != v:
                     self.state[k] = v

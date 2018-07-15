@@ -776,7 +776,7 @@ class ServerViews(object):
         spec = APISpec(
             title="Channelstream API",
             version="0.7.0",
-            plugins=["apispec.ext.marshmallow"],
+            plugins=("apispec.ext.marshmallow",),
         )
         spec.definition("ConnectBody", schema=schemas.ConnectBodySchema)
         spec.definition("SubscribeBody", schema=schemas.SubscribeBodySchema)
