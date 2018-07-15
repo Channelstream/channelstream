@@ -5,8 +5,7 @@ from datetime import datetime, timedelta
 import six
 import gevent
 
-from channelstream import server_state
-from .ext_json import json
+from channelstream import server_state, patched_json as json
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ class Connection(object):
                 self.mark_activity()
                 server_state.USERS[self.username].mark_activity()
             except Exception as exc:
-                log.debug(exc)
+                log.info(exc)
                 self.mark_for_gc()
         elif self.queue:
             # handle long polling
@@ -68,7 +67,9 @@ class Connection(object):
         messages = []
         for channel in self.channels:
             channel_inst = server_state.CHANNELS[channel]
-            messages.extend(channel_inst.get_catchup_frames(self.last_active, self.username))
+            messages.extend(
+                channel_inst.get_catchup_frames(self.last_active, self.username)
+            )
         [self.add_message(m) for m in messages]
 
     @property

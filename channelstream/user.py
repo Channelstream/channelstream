@@ -13,7 +13,7 @@ class User(object):
     """ represents a unique user of the system """
 
     def __init__(self, username):
-        self.uuid = str(uuid.uuid4()).replace("-", "")
+        self.uuid = uuid.uuid4()
         self.username = username
         self.state = {}
         self.state_public_keys = []

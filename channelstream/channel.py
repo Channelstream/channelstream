@@ -29,7 +29,7 @@ class Channel(object):
         :param long_name:
         :param channel_config:
         """
-        self.uuid = str(uuid.uuid4()).replace("-", "")
+        self.uuid = uuid.uuid4()
         self.name = name
         self.long_name = long_name
         self.last_active = None
@@ -58,7 +58,11 @@ class Channel(object):
         found = []
         for f in self.frames:
             # either old frame or user is excluded or PM not meant for user
-            if f[0] < newer_than or (f[2] and username in f[2]) or (f[3] and username not in f[3]):
+            if (
+                f[0] < newer_than
+                or (f[2] and username in f[2])
+                or (f[3] and username not in f[3])
+            ):
                 continue
             found.append(process_catchup(f[1]))
         return found
@@ -123,7 +127,7 @@ class Channel(object):
 
         self.mark_activity()
         payload = {
-            "uuid": str(uuid.uuid4()).replace("-", ""),
+            "uuid": uuid.uuid4(),
             "type": "presence",
             "user": username,
             "users": connected_users,
@@ -144,7 +148,7 @@ class Channel(object):
         public_changed = [x for x in changed if x["key"] in user_inst.public_state]
 
         payload = {
-            "uuid": str(uuid.uuid4()).replace("-", ""),
+            "uuid": uuid.uuid4(),
             "type": "user_state_change",
             "user": user_inst.username,
             "timestamp": self.last_active,
@@ -222,5 +226,5 @@ class Channel(object):
 
 def process_catchup(m):
     copied = copy.deepcopy(m)
-    copied['catchup'] = True
+    copied["catchup"] = True
     return copied

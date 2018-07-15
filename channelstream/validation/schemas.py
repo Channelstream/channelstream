@@ -39,7 +39,7 @@ class ChannelInfoBodySchema(ChannelstreamSchema):
 class ConnectBodySchema(ChannelstreamSchema):
     username = fields.String(required=True, validate=validate.Length(min=1, max=512))
 
-    conn_id = fields.String(missing=gen_uuid, validate=validate.Length(min=1, max=256))
+    conn_id = fields.UUID(missing=gen_uuid)
 
     channels = fields.List(
         fields.String(validate=validate.Length(min=1, max=256)),
@@ -67,10 +67,7 @@ class ConnectBodySchema(ChannelstreamSchema):
 
 
 class SubscribeBodySchema(ChannelstreamSchema):
-    conn_id = fields.String(
-        required=True,
-        validate=[validate.Length(min=1, max=256), validate_connection_id],
-    )
+    conn_id = fields.UUID(required=True, validate=[validate_connection_id])
 
     channels = fields.List(
         fields.String(
@@ -112,6 +109,7 @@ class UserStateBodySchema(ChannelstreamSchema):
 
 
 class MessageBodySchema(ChannelstreamSchema):
+    uuid = fields.UUID(default=gen_uuid, missing=gen_uuid)
     timestamp = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
     user = fields.String(required=True, validate=validate.Length(min=1, max=512))
     message = fields.Dict()
@@ -126,7 +124,7 @@ class MessageBodySchema(ChannelstreamSchema):
 
 
 class DisconnectBodySchema(ChannelstreamSchema):
-    conn_id = fields.String(
+    conn_id = fields.UUID(
         required=True,
         validate=[validate.Length(min=1, max=256), validate_connection_id],
     )

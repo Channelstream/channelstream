@@ -11,7 +11,7 @@ converter = OpenAPIConverter("2.0.0")
 
 
 def gen_uuid():
-    return str(uuid.uuid4()).replace("-", "")
+    return uuid.uuid4()
 
 
 def validate_connection_id(conn_id):

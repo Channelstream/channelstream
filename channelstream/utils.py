@@ -1,3 +1,6 @@
+import uuid
+import marshmallow
+
 from pyramid.renderers import render
 
 
@@ -36,3 +39,10 @@ def swagger_ui_script_template(request, spec_route_name, **kwargs):
     :return:
     """
     return render("templates/explorer.jinja2", value=(), request=request)
+
+
+def uuid_from_string(str_uuid):
+    try:
+        return uuid.UUID(str_uuid)
+    except (ValueError, AttributeError):
+        raise marshmallow.ValidationError("Wrong UUID format")

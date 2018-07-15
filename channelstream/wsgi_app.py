@@ -1,6 +1,7 @@
 import datetime
 import uuid
-import pkg_resources
+
+from channelstream import patched_json as json
 
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.authentication import BasicAuthAuthenticationPolicy
@@ -8,7 +9,6 @@ from pyramid.config import Configurator
 from pyramid.renderers import JSON
 from pyramid.security import NO_PERMISSION_REQUIRED
 
-from channelstream.ext_json import json
 from channelstream.wsgi_views.wsgi_security import APIFactory
 
 

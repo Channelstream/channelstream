@@ -8,9 +8,8 @@ from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
 from pyramid_apispec.helpers import add_pyramid_paths
 
-from channelstream import operations, server_state
+from channelstream import operations, server_state, utils, patched_json as json
 from channelstream.validation import schemas
-from channelstream.ext_json import json
 from apispec import APISpec
 
 log = logging.getLogger(__name__)
@@ -286,7 +285,7 @@ def listen(request):
     """
     request.handle_cors()
     config = request.registry.settings
-    conn_id = request.params.get("conn_id")
+    conn_id = utils.uuid_from_string(request.params.get("conn_id"))
     connection = server_state.CONNECTIONS.get(conn_id)
     if not connection:
         raise HTTPUnauthorized()

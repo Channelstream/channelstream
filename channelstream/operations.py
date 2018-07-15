@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from channelstream import server_state
 from channelstream.user import User
@@ -70,7 +69,9 @@ def subscribe(connection=None, channels=None, channel_configs=None):
         if user:
             for channel_name in channels:
                 if channel_name not in server_state.CHANNELS:
-                    channel = Channel(channel_name, channel_config=channel_configs.get(channel_name))
+                    channel = Channel(
+                        channel_name, channel_config=channel_configs.get(channel_name)
+                    )
                     server_state.CHANNELS[channel_name] = channel
                 is_found = server_state.CHANNELS[channel_name].add_connection(
                     connection
@@ -157,7 +158,7 @@ def pass_message(msg, stats):
     :return:
     """
     message = {
-        "uuid": str(uuid.uuid4()).replace("-", ""),
+        "uuid": msg["uuid"],
         "user": msg.get("user"),
         "message": msg["message"],
         "no_history": msg.get("no_history"),

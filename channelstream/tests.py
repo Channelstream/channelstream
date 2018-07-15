@@ -3,6 +3,7 @@ from gevent import monkey
 monkey.patch_all()
 
 import pprint
+import uuid
 import pytest
 import mock
 import gevent
@@ -16,6 +17,18 @@ from channelstream.channel import Channel
 from channelstream.connection import Connection
 from channelstream.user import User
 import channelstream.operations as operations
+
+test_uuids = [
+    uuid.UUID("12345678-1234-5678-1234-567812345678"),
+    uuid.UUID("22345678-1234-5678-1234-567812345678"),
+    uuid.UUID("32345678-1234-5678-1234-567812345678"),
+    uuid.UUID("42345678-1234-5678-1234-567812345678"),
+    uuid.UUID("52345678-1234-5678-1234-567812345678"),
+    uuid.UUID("62345678-1234-5678-1234-567812345678"),
+    uuid.UUID("72345678-1234-5678-1234-567812345678"),
+    uuid.UUID("82345678-1234-5678-1234-567812345678"),
+    uuid.UUID("92345678-1234-5678-1234-567812345678"),
+]
 
 
 @pytest.fixture
@@ -64,7 +77,7 @@ class TestChannel(object):
         assert getattr(channel, prop) == value
 
     def test_add_connection(self):
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         channel = Channel("test")
         channel.add_connection(connection)
         assert len(channel.connections["test_user"]) == 1
@@ -73,9 +86,9 @@ class TestChannel(object):
         assert repr(channel) == "<Channel: test, connections:1>"
 
     def test_remove_connection(self):
-        connection = Connection("test_user", conn_id="A")
-        connection2 = Connection("test_user2", conn_id="B")
-        connection3 = Connection("test_user", conn_id="C")
+        connection = Connection("test_user", conn_id=test_uuids[1])
+        connection2 = Connection("test_user2", conn_id=test_uuids[2])
+        connection3 = Connection("test_user", conn_id=test_uuids[3])
         channel = Channel("test")
         channel.add_connection(connection)
         channel.add_connection(connection2)
@@ -89,14 +102,14 @@ class TestChannel(object):
 
     def test_remove_non_existant_connection(self):
         channel = Channel("test")
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         channel.remove_connection(connection)
         assert "test_user" not in channel.connections
 
     def test_remove_connection_w_presence(self):
         user = User("test_user")
         server_state.USERS[user.username] = user
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         user.add_connection(connection)
         config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
         channel = Channel("test", channel_config=config)
@@ -106,7 +119,7 @@ class TestChannel(object):
     def test_add_connection_w_presence(self):
         user = User("test_user")
         server_state.USERS[user.username] = user
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         user.add_connection(connection)
         config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
         channel = Channel("test", channel_config=config)
@@ -117,7 +130,7 @@ class TestChannel(object):
 
     def test_presence_message(self):
         user = User("test_user")
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         user.add_connection(connection)
         channel = Channel("test")
         channel.add_connection(connection)
@@ -133,12 +146,12 @@ class TestChannel(object):
         user.state_from_dict({"key": "1", "key2": "2"})
         user.state_public_keys = ["key2"]
         server_state.USERS[user.username] = user
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         user.add_connection(connection)
         user2 = User("test_user2")
         user2.state_from_dict({"key": "1", "key2": "2"})
         server_state.USERS[user2.username] = user2
-        connection2 = Connection("test_user2", conn_id="A")
+        connection2 = Connection("test_user2", conn_id=test_uuids[2])
         user2.add_connection(connection2)
         config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
         channel = Channel("test", channel_config=config)
@@ -172,7 +185,7 @@ class TestChannel(object):
         user = User("test_user")
         changed = user.state_from_dict({"key": "1", "key2": "2"})
         user.state_public_keys = ["key2"]
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         user.add_connection(connection)
         channel = Channel("test")
         channel.add_connection(connection)
@@ -185,7 +198,7 @@ class TestChannel(object):
 
     def test_user_single_assignment(self):
         user = User("test_user")
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         user.add_connection(connection)
         channel = Channel("test")
         channel.add_connection(connection)
@@ -193,9 +206,9 @@ class TestChannel(object):
 
     def test_user_multi_assignment(self):
         user = User("test_user")
-        connection = Connection("test_user", conn_id="A")
-        connection2 = Connection("test_user", conn_id="A2")
-        connection3 = Connection("test_user", conn_id="A3")
+        connection = Connection("test_user", conn_id=test_uuids[1])
+        connection2 = Connection("test_user", conn_id=test_uuids[2])
+        connection3 = Connection("test_user", conn_id=test_uuids[3])
         user.add_connection(connection)
         user.add_connection(connection2)
         user.add_connection(connection3)
@@ -213,27 +226,27 @@ class TestChannel(object):
 class TestConnection(object):
     def test_create_defaults(self):
         now = datetime.utcnow()
-        connection = Connection("test", "X")
+        connection = Connection("test", test_uuids[1])
         assert connection.username == "test"
         assert now <= connection.last_active
         assert connection.socket is None
         assert connection.queue is None
-        assert connection.id == "X"
+        assert connection.id == test_uuids[1]
 
     def test_mark_for_gc(self):
         long_time_ago = datetime.utcnow() - timedelta(days=50)
-        connection = Connection("test", "X")
+        connection = Connection("test", test_uuids[1])
         connection.mark_for_gc()
         assert connection.last_active < long_time_ago
 
     def test_message(self):
-        connection = Connection("test", "X")
+        connection = Connection("test", test_uuids[1])
         connection.queue = Queue()
         connection.add_message({"message": "test"})
         assert connection.queue.get() == [{"message": "test"}]
 
     def test_heartbeat(self):
-        connection = Connection("test", "X")
+        connection = Connection("test", test_uuids[1])
         connection.queue = Queue()
         connection.heartbeat()
         assert connection.queue.get() == []
@@ -250,9 +263,9 @@ class TestUser(object):
 
     def test_messages(self):
         user = User("test_user")
-        connection = Connection("test_user", conn_id="A")
+        connection = Connection("test_user", conn_id=test_uuids[1])
         connection.queue = Queue()
-        connection2 = Connection("test_user", conn_id="B")
+        connection2 = Connection("test_user", conn_id=test_uuids[2])
         connection2.queue = Queue()
         user.add_connection(connection)
         user.add_connection(connection2)
@@ -273,13 +286,13 @@ class TestGC(object):
         server_state.USERS[user.username] = user
         user2 = User("test_user2")
         server_state.USERS[user2.username] = user2
-        connection = Connection("test_user", "1")
+        connection = Connection("test_user", test_uuids[1])
         server_state.CONNECTIONS[connection.id] = connection
-        connection2 = Connection("test_user", "2")
+        connection2 = Connection("test_user", test_uuids[2])
         server_state.CONNECTIONS[connection2.id] = connection2
-        connection3 = Connection("test_user2", "3")
+        connection3 = Connection("test_user2", test_uuids[3])
         server_state.CONNECTIONS[connection3.id] = connection3
-        connection4 = Connection("test_user2", "4")
+        connection4 = Connection("test_user2", test_uuids[4])
         server_state.CONNECTIONS[connection4.id] = connection4
         user.add_connection(connection)
         user.add_connection(connection2)
@@ -309,15 +322,15 @@ class TestGC(object):
         server_state.USERS[user.username] = user
         user2 = User("test_user2")
         server_state.USERS[user2.username] = user2
-        connection = Connection("test_user", "1")
+        connection = Connection("test_user", test_uuids[1])
         server_state.CONNECTIONS[connection.id] = connection
-        connection2 = Connection("test_user", "2")
+        connection2 = Connection("test_user", test_uuids[2])
         connection2.mark_for_gc()
         server_state.CONNECTIONS[connection2.id] = connection2
-        connection3 = Connection("test_user2", "3")
+        connection3 = Connection("test_user2", test_uuids[3])
         connection3.mark_for_gc()
         server_state.CONNECTIONS[connection3.id] = connection3
-        connection4 = Connection("test_user2", "4")
+        connection4 = Connection("test_user2", test_uuids[4])
         server_state.CONNECTIONS[connection4.id] = connection4
         user.add_connection(connection)
         user.add_connection(connection2)
@@ -389,7 +402,7 @@ class TestConnectViews(object):
 
         dummy_request.json_body = {
             "username": "username",
-            "conn_id": "X",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz"},
             "state_public_keys": ["bar"],
@@ -400,10 +413,10 @@ class TestConnectViews(object):
         result = connect(dummy_request)
         assert len(server_state.CHANNELS.keys()) == 2
         assert "username" in server_state.USERS
-        assert "X" in server_state.CONNECTIONS
+        assert test_uuids[1] in server_state.CONNECTIONS
         assert result["channels"] == ["a", "aB"]
         assert result["state"] == {"bar": "baz", "key": "foo"}
-        assert result["conn_id"] == "X"
+        assert result["conn_id"] == test_uuids[1]
         channels_info = result["channels_info"]["channels"]
         assert len(channels_info.keys()) == 2
         assert channels_info["a"]["total_users"] == 1
@@ -430,7 +443,7 @@ class TestUserStateViews(object):
 
         dummy_request.json_body = {
             "username": "test",
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz"},
             "state_public_keys": ["bar"],
@@ -497,7 +510,7 @@ class TestSubscribeViews(object):
 
         dummy_request.json_body = {
             "username": "test",
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz"},
             "state_public_keys": ["bar"],
@@ -506,7 +519,7 @@ class TestSubscribeViews(object):
         }
         connect(dummy_request)
         dummy_request.json_body = {
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "channels": ["b"],
             "channel_configs": {
                 "a": {"notify_presence": True},
@@ -542,7 +555,7 @@ class TestUnsubscribeViews(object):
 
         dummy_request.json_body = {
             "username": "test",
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz"},
             "state_public_keys": ["bar"],
@@ -550,7 +563,10 @@ class TestUnsubscribeViews(object):
             "channel_configs": {"a": {"store_history": True, "history_size": 2}},
         }
         connect(dummy_request)
-        dummy_request.json_body = {"conn_id": "x", "channels": ["aC", "a"]}
+        dummy_request.json_body = {
+            "conn_id": str(test_uuids[1]),
+            "channels": ["aC", "a"],
+        }
         result = unsubscribe(dummy_request)
         assert sorted(result["channels"]) == sorted(["aB"])
 
@@ -559,7 +575,7 @@ class TestUnsubscribeViews(object):
 
         dummy_request.json_body = {
             "username": "test",
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz"},
             "state_public_keys": ["bar"],
@@ -568,7 +584,7 @@ class TestUnsubscribeViews(object):
         }
 
         connect(dummy_request)
-        dummy_request.json_body = {"conn_id": "x", "channels": ["d"]}
+        dummy_request.json_body = {"conn_id": str(test_uuids[1]), "channels": ["d"]}
         result = unsubscribe(dummy_request)
         assert sorted(result["channels"]) == sorted(["a", "aB", "aC"])
 
@@ -577,7 +593,7 @@ class TestUnsubscribeViews(object):
 
         dummy_request.json_body = {
             "username": "test",
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz"},
             "state_public_keys": ["bar"],
@@ -585,7 +601,7 @@ class TestUnsubscribeViews(object):
             "channel_configs": {"a": {"store_history": True, "history_size": 2}},
         }
         connect(dummy_request)
-        dummy_request.json_body = {"conn_id": "x", "channels": ["a"]}
+        dummy_request.json_body = {"conn_id": str(test_uuids[1]), "channels": ["a"]}
         result = unsubscribe(dummy_request)
         assert len(result["channels"]) == 0
         assert result["channels_info"]["users"] == []
@@ -607,7 +623,7 @@ class TestInfoView(object):
 
         dummy_request.json_body = {
             "username": "test1",
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz"},
             "state_public_keys": ["bar"],
@@ -617,7 +633,7 @@ class TestInfoView(object):
         connect(dummy_request)
         dummy_request.json_body = {
             "username": "test2",
-            "conn_id": "y",
+            "conn_id": test_uuids[2],
             "fresh_user_state": {"key": "foo1"},
             "user_state": {"bar": "baz1"},
             "state_public_keys": ["key"],
@@ -658,7 +674,7 @@ class TestInfoView(object):
 
         dummy_request.json_body = {
             "username": "test1",
-            "conn_id": "x",
+            "conn_id": str(test_uuids[1]),
             "fresh_user_state": {"key": "foo"},
             "user_state": {"bar": "baz", "private": "p1"},
             "state_public_keys": ["bar"],

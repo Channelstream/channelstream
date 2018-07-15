@@ -2,13 +2,13 @@ from six.moves.urllib.parse import parse_qs
 
 from ws4py.websocket import WebSocket
 
-from channelstream import server_state
+from channelstream import server_state, utils
 
 
 class ChatApplicationSocket(WebSocket):
     def opened(self):
         self.qs = parse_qs(self.environ["QUERY_STRING"])
-        self.conn_id = self.qs.get("conn_id", "-")[0]
+        self.conn_id = utils.uuid_from_string(self.qs.get("conn_id")[0])
         if self.conn_id not in server_state.CONNECTIONS:
             # close connection instantly if user played with id
             self.close()
