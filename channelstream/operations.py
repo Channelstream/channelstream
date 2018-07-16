@@ -157,30 +157,23 @@ def pass_message(msg, stats):
     :param stats:
     :return:
     """
-    message = {
-        "uuid": msg["uuid"],
-        "user": msg.get("user"),
-        "message": msg["message"],
-        "no_history": msg.get("no_history"),
-        "type": "message",
-        "timestamp": msg["timestamp"],
-        "catchup": False,
-        "edited": None,
-    }
-    pm_users = msg.get("pm_users", [])
+
+    msg["catchup"] = False
+    msg["edited"] = None
+    msg["type"] = "message"
+
     total_sent = 0
     stats["total_unique_messages"] += 1
-    exclude_users = msg.get("exclude_users") or []
     if msg.get("channel"):
         channel_inst = server_state.CHANNELS.get(msg["channel"])
         if channel_inst:
             total_sent += channel_inst.add_message(
-                message, pm_users=pm_users, exclude_users=exclude_users
+                msg, pm_users=msg["pm_users"], exclude_users=msg["exclude_users"]
             )
-    elif pm_users:
+    elif msg["pm_users"]:
         # if pm then iterate over all users and notify about new message!
-        for username in pm_users:
+        for username in msg["pm_users"]:
             user_inst = server_state.USERS.get(username)
             if user_inst:
-                total_sent += user_inst.add_message(message)
+                total_sent += user_inst.add_message(msg)
     stats["total_messages"] += total_sent

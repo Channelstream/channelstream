@@ -57,15 +57,15 @@ class Channel(object):
 
     def get_catchup_frames(self, newer_than, username):
         found = []
-        for f in self.frames:
+        for t, f in self.frames:
             # either old frame or user is excluded or PM not meant for user
             if (
-                f[0] < newer_than
-                or (f[2] and username in f[2])
-                or (f[3] and username not in f[3])
+                t < newer_than
+                or (f["exclude_users"] and username in f["exclude_users"])
+                or (f["pm_users"] and username not in f["pm_users"])
             ):
                 continue
-            found.append(process_catchup(f[1]))
+            found.append(process_catchup(f))
         return found
 
     def reconfigure_from_dict(self, config):
@@ -130,6 +130,9 @@ class Channel(object):
         payload = {
             "uuid": uuid.uuid4(),
             "type": "presence",
+            "no_history": False,
+            "pm_users": [],
+            "exclude_users": [],
             "user": username,
             "users": connected_users,
             "timestamp": self.last_active,
@@ -151,6 +154,9 @@ class Channel(object):
         payload = {
             "uuid": uuid.uuid4(),
             "type": "user_state_change",
+            "no_history": False,
+            "pm_users": [],
+            "exclude_users": [],
             "user": user_inst.username,
             "timestamp": self.last_active,
             "catchup": False,
@@ -160,9 +166,9 @@ class Channel(object):
         self.add_message(payload)
         return payload
 
-    def add_frame(self, frame, exclude_users=None, pm_users=None):
+    def add_frame(self, frame):
         if self.store_frames:
-            self.frames.append((datetime.utcnow(), frame, exclude_users, pm_users))
+            self.frames.append((datetime.utcnow(), frame))
             self.frames = self.frames[-100:]
 
     def add_to_history(self, message):
@@ -174,17 +180,19 @@ class Channel(object):
         """
         Sends the message to all connections subscribed to this channel
         """
-        message = copy.deepcopy(message)
-        no_history = message.pop("no_history", False)
-        message.update({"channel": self.name})
         pm_users = pm_users or []
         exclude_users = exclude_users or []
         self.mark_activity()
-        if not no_history:
+        if not message['no_history']:
             self.add_to_history(message)
-        self.add_frame(message, exclude_users=exclude_users, pm_users=pm_users)
-        # message everyone subscribed except excluded
+        self.add_frame(message)
+        message = copy.deepcopy(message)
+        # do not leak delivery info
+        del message['no_history']
+        del message['pm_users']
+        del message['exclude_users']
         total_sent = 0
+        # message everyone subscribed except excluded
         for user, conns in six.iteritems(self.connections):
             if not exclude_users or user not in exclude_users:
                 for connection in conns:

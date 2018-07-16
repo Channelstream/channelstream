@@ -167,17 +167,83 @@ class TestChannel(object):
     def test_history(self):
         config = {"store_history": True, "history_size": 3}
         channel = Channel("test", long_name="long name", channel_config=config)
-        channel.add_message({"message": "test1", "type": "message"})
-        channel.add_message({"message": "test2", "type": "message"})
-        channel.add_message({"message": "test3", "type": "message"})
-        channel.add_message({"message": "test4", "type": "message", "no_history": True})
-        channel.add_message({"message": "test5", "type": "message"})
+        channel.add_message(
+            {
+                "channel": "test",
+                "message": "test1",
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            }
+        )
+        channel.add_message(
+            {
+                "channel": "test",
+                "message": "test2",
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            }
+        )
+        channel.add_message(
+            {
+                "channel": "test",
+                "message": "test3",
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            }
+        )
+        channel.add_message(
+            {
+                "channel": "test",
+                "message": "test4",
+                "type": "message",
+                "no_history": True,
+                "pm_users": [],
+                "exclude_users": [],
+            }
+        )
+        channel.add_message(
+            {
+                "channel": "test",
+                "message": "test5",
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            }
+        )
 
         assert len(channel.history) == 3
         assert channel.history == [
-            {"channel": "test", "message": "test2", "type": "message"},
-            {"channel": "test", "message": "test3", "type": "message"},
-            {"channel": "test", "message": "test5", "type": "message"},
+            {
+                "channel": "test",
+                "message": "test2",
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            },
+            {
+                "channel": "test",
+                "message": "test3",
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            },
+            {
+                "channel": "test",
+                "message": "test5",
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            },
         ]
 
     def test_user_state(self):
