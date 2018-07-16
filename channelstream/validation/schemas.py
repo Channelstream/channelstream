@@ -120,7 +120,20 @@ class MessageBodySchema(ChannelstreamSchema):
     exclude_users = fields.List(
         fields.String(missing=lambda: [], validate=validate.Length(min=1, max=512))
     )
-    channel = fields.String(validate=validate.Length(min=1, max=256))
+    channel = fields.String(validate=validate.Length(min=1, max=256), missing=None)
+
+    @marshmallow.post_load(pass_original=True)
+    def _add_unknown(self, data, original):
+        data['edited'] = None
+        return data
+
+
+class MessageBodyEditSchema(ChannelstreamSchema):
+    uuid = fields.UUID(default=gen_uuid, missing=gen_uuid)
+    timestamp = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
+    user = fields.String(required=True, validate=validate.Length(min=1, max=512))
+    message = fields.Dict()
+    edited = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
 
 
 class DisconnectBodySchema(ChannelstreamSchema):
