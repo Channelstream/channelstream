@@ -118,13 +118,13 @@ class MessageBodySchema(ChannelstreamSchema):
         fields.String(validate=validate.Length(min=1, max=512)), missing=lambda: []
     )
     exclude_users = fields.List(
-        fields.String(missing=lambda: [], validate=validate.Length(min=1, max=512))
+        fields.String(validate=validate.Length(min=1, max=512)), missing=lambda: []
     )
     channel = fields.String(validate=validate.Length(min=1, max=256), missing=None)
 
-    @marshmallow.post_load(pass_original=True)
-    def _add_unknown(self, data, original):
-        data['edited'] = None
+    @marshmallow.post_load()
+    def _add_unknown(self, data):
+        data["edited"] = None
         return data
 
 
