@@ -376,11 +376,10 @@ def user_state(request):
 def shared_messages(request):
     schema = schemas.MessageBodySchema(context={"request": request}, many=True)
     data = schema.load(request.json_body).data
+    data = [m for m in data if m.get("channel") or m.get("pm_users")]
     for msg in data:
-        if not msg.get("channel") and not msg.get("pm_users", []):
-            continue
         gevent.spawn(operations.pass_message, msg, server_state.STATS)
-    return data
+    return list(data)
 
 
 # @view_config(route_name="api_v1_messages", request_method="POST", renderer="json")
