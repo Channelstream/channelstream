@@ -65,6 +65,7 @@ class Channel(object):
                 or (f["pm_users"] and username not in f["pm_users"])
             ):
                 continue
+
             found.append(process_catchup(f))
         return found
 
@@ -132,7 +133,7 @@ class Channel(object):
             "type": "presence",
             "no_history": False,
             "pm_users": [],
-            "exclude_users": [],
+            "exclude_users": [username],
             "user": username,
             "users": connected_users,
             "timestamp": self.last_active,
@@ -143,7 +144,7 @@ class Channel(object):
         }
         if action == "joined":
             payload["state"] = server_state.USERS[username].public_state
-        self.add_message(payload, exclude_users=[username])
+        self.add_message(payload, exclude_users=payload["exclude_users"])
         return payload
 
     def send_user_state(self, user_inst, changed):
