@@ -52,4 +52,7 @@ def uuid_from_string(str_uuid):
 def process_catchup(m):
     copied = copy.deepcopy(m)
     copied["catchup"] = True
+    copied.pop('pm_users', None)
+    copied.pop('exclude_users', None)
+    copied.pop('no_history', None)
     return copied
