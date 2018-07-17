@@ -1,5 +1,6 @@
 import logging
 import uuid
+import copy
 
 from datetime import datetime
 
@@ -20,6 +21,7 @@ class User(object):
         self.state_public_keys = []
         self.connections = []  # holds ids of connections
         # store frames for fetching when connection is established
+        # those frames will store private messages
         self.frames = []
         self.last_active = None
         self.mark_activity()
@@ -52,6 +54,10 @@ class User(object):
         Send a message to all connections of this user
         """
         # mark active
+        message = copy.deepcopy(message)
+        message.pop("no_history", None)
+        message.pop("pm_users", None)
+        message.pop("exclude_users", None)
         self.add_frame(message)
         self.mark_activity()
         for connection in self.connections:
@@ -83,6 +89,15 @@ class User(object):
             if channel.connections.get(self.username):
                 channels.append(channel)
         return channels
+
+    def alter_message(self, to_edit):
+        for f, msg in self.frames:
+            if msg["uuid"] == to_edit["uuid"] and msg['type'] == 'message':
+                msg.update(to_edit)
+                altered = copy.deepcopy(msg)
+                altered["type"] = "message:edit"
+                self.add_message(altered)
+                break
 
     def __json__(self, request=None):
         return self.get_info()

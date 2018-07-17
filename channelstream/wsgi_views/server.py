@@ -448,7 +448,7 @@ def message(request):
     return shared_messages(request)
 
 
-# @view_config(route_name="api_v1_messages", request_method="PATCH", renderer="json")
+@view_config(route_name="legacy_message", request_method="PATCH", renderer="json")
 def messages_patch(request):
     """
     Edit existing message in history and emit changes
@@ -457,7 +457,7 @@ def messages_patch(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "V1 API (future stable)"
+      - "Legacy API"
       summary: "Edit existing message in history and emit changes"
       description: ""
       operationId: "edit_messages"
@@ -471,7 +471,7 @@ def messages_patch(request):
         description: "Request JSON body"
         required: true
         schema:
-          $ref: "#/definitions/MessageBody"
+          $ref: "#/definitions/MessageEditBody"
       responses:
         422:
           description: "Unprocessable Entity"
@@ -479,13 +479,11 @@ def messages_patch(request):
           description: "Success"
     """
 
-    schema = schemas.MessageBodySchema(context={"request": request}, many=True)
+    schema = schemas.MessageEditBodySchema(context={"request": request}, many=True)
     data = schema.load(request.json_body).data
     for msg in data:
-        if not msg.get("channel") and not msg.get("pm_users", []):
-            continue
-        gevent.spawn(operations.pass_message, msg, server_state.STATS)
-    return True
+        gevent.spawn(operations.edit_message, msg)
+    return data
 
 
 @view_config(
@@ -783,6 +781,7 @@ class ServerViews(object):
         spec.definition("UserStateBody", schema=schemas.UserStateBodySchema)
         spec.definition("MessagesBody", schema=schemas.MessageBodySchema(many=True))
         spec.definition("MessageBody", schema=schemas.MessageBodySchema())
+        spec.definition("MessageEditBody", schema=schemas.MessageEditBodySchema(many=True))
         spec.definition("DisconnectBody", schema=schemas.DisconnectBodySchema)
         spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
         spec.definition("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)

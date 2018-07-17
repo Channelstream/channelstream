@@ -335,7 +335,14 @@ class TestUser(object):
         connection2.queue = Queue()
         user.add_connection(connection)
         user.add_connection(connection2)
-        user.add_message({"type": "message"})
+        user.add_message(
+            {
+                "type": "message",
+                "no_history": False,
+                "pm_users": [],
+                "exclude_users": [],
+            }
+        )
         assert len(user.connections) == 2
         assert len(user.connections[0].queue.get()) == 1
         assert len(user.connections[1].queue.get()) == 1
@@ -856,6 +863,50 @@ class TestMessageViews(object):
         assert messages[0]["message"]["text"] == "test3"
         assert messages[1]["timestamp"] > connection.last_active
         assert messages[1]["message"]["text"] == "test2"
+
+
+@pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
+class TestMessageEditViews(object):
+    def test_empty_json(self, dummy_request):
+        from channelstream.wsgi_views.server import message
+
+        dummy_request.json_body = {}
+        result = message(dummy_request)
+        assert result == []
+
+    def test_good_json_no_channel(self, dummy_request):
+        from channelstream.wsgi_views.server import message, messages_patch
+
+        channel = Channel("test")
+        channel.store_history = True
+        server_state.CHANNELS[channel.name] = channel
+        msg_payload = {"user": "system", "channel": "test", "message": {"text": "test"}}
+        dummy_request.json_body = [msg_payload]
+        message(dummy_request)
+        # change context
+        gevent.sleep(0)
+        msg = channel.history[0]
+        assert msg["message"] == msg_payload["message"]
+        edit_payload = {
+            "uuid": msg["uuid"],
+            "user": "edited_system",
+            "timestamp": "2010-01-01T01:01",
+            "edited": "2010-01-01T01:02",
+            "message": {"text": "edited_message"},
+        }
+        dummy_request.json_body = [edit_payload]
+        response = messages_patch(dummy_request)[0]
+        gevent.sleep(0)
+        assert msg["user"] == response["user"]
+        assert msg["message"] == response["message"]
+        assert msg["edited"] == response["edited"]
+        assert msg["timestamp"] == response["timestamp"]
+        frame = channel.frames[0][1]
+        assert id(frame) == id(msg)
+        assert frame["user"] == response["user"]
+        assert frame["message"] == response["message"]
+        assert frame["edited"] == response["edited"]
+        assert frame["timestamp"] == response["timestamp"]
 
 
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")

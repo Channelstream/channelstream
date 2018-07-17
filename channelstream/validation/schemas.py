@@ -128,10 +128,10 @@ class MessageBodySchema(ChannelstreamSchema):
         return data
 
 
-class MessageBodyEditSchema(ChannelstreamSchema):
-    uuid = fields.UUID(default=gen_uuid, missing=gen_uuid)
-    timestamp = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
-    user = fields.String(required=True, validate=validate.Length(min=1, max=512))
+class MessageEditBodySchema(ChannelstreamSchema):
+    uuid = fields.UUID(required=True)
+    timestamp = fields.DateTime()
+    user = fields.String(validate=validate.Length(min=1, max=512))
     message = fields.Dict()
     edited = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
 

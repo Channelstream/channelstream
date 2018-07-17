@@ -1,5 +1,7 @@
 import logging
 
+import six
+
 from channelstream import server_state
 from channelstream.user import User
 from channelstream.connection import Connection
@@ -177,3 +179,19 @@ def pass_message(msg, stats):
             if user_inst:
                 total_sent += user_inst.add_message(msg)
     stats["total_messages"] += total_sent
+
+
+def edit_message(msg):
+    """
+
+    :param msg:
+    :param stats:
+    :return:
+    """
+
+    # this will be computationally heavy, but at same time edits do not happen often
+    for channel_inst in six.itervalues(server_state.CHANNELS):
+        channel_inst.alter_message(msg)
+
+    for user_inst in six.itervalues(server_state.USERS):
+        user_inst.alter_message(msg)

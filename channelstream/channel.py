@@ -45,6 +45,7 @@ class Channel(object):
         self.history_size = 10
         self.history = []
         # store frames for fetching when connection is established
+        # those frames will store channel messages including presence ones
         self.frames = []
         if channel_config:
             self.reconfigure_from_dict(channel_config)
@@ -184,14 +185,14 @@ class Channel(object):
         pm_users = pm_users or []
         exclude_users = exclude_users or []
         self.mark_activity()
-        if not message['no_history']:
+        if not message["no_history"]:
             self.add_to_history(message)
         self.add_frame(message)
         message = copy.deepcopy(message)
         # do not leak delivery info
-        del message['no_history']
-        del message['pm_users']
-        del message['exclude_users']
+        del message["no_history"]
+        del message["pm_users"]
+        del message["exclude_users"]
         total_sent = 0
         # message everyone subscribed except excluded
         for user, conns in six.iteritems(self.connections):
@@ -229,6 +230,37 @@ class Channel(object):
         chan_info["users"] = sorted(chan_info["users"])
         chan_info["total_users"] = len(chan_info["users"])
         return chan_info
+
+    def alter_message(self, to_edit):
+        found_history = False
+        for msg in self.history:
+            if msg["uuid"] == to_edit["uuid"]:
+                found_history = True
+                msg.update(to_edit)
+                altered = copy.deepcopy(msg)
+                altered["type"] = "message:edit"
+                self.add_message(
+                    altered,
+                    pm_users=altered["pm_users"],
+                    exclude_users=altered["exclude_users"],
+                )
+                break
+        # if found history then reference in frames will be also updated,
+        # otherwise search frames for channels that do not store history
+        if found_history:
+            return
+
+        for f, msg in self.frames:
+            if msg["uuid"] == to_edit["uuid"] and msg['type'] == 'message':
+                msg.update(to_edit)
+                altered = copy.deepcopy(msg)
+                altered["type"] = "message:edit"
+                self.add_message(
+                    altered,
+                    pm_users=altered["pm_users"],
+                    exclude_users=altered["exclude_users"],
+                )
+                break
 
     def __json__(self, request=None):
         return self.get_info()
