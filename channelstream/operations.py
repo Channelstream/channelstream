@@ -195,3 +195,19 @@ def edit_message(msg):
 
     for user_inst in six.itervalues(server_state.USERS):
         user_inst.alter_message(msg)
+
+
+def delete_message(msg):
+    """
+
+    :param msg:
+    :param stats:
+    :return:
+    """
+
+    # this will be computationally heavy, but at same time deletes do not happen often
+    for channel_inst in six.itervalues(server_state.CHANNELS):
+        channel_inst.delete_message(msg)
+
+    for user_inst in six.itervalues(server_state.USERS):
+        user_inst.delete_message(msg)

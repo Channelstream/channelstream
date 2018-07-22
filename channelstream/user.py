@@ -99,5 +99,23 @@ class User(object):
                 self.add_message(altered)
                 break
 
+    def delete_message(self, to_delete):
+        deleted = None
+        for i, frame in enumerate(self.frames):
+            msg = frame[1]
+            if msg["uuid"] == to_delete["uuid"] and msg['type'] == 'message':
+                deleted = copy.deepcopy(msg)
+                self.frames.pop(i)
+                deleted["type"] = "message:deleted"
+                deleted["no_history"] = True
+                break
+
+        if deleted:
+            self.add_message(
+                deleted,
+                pm_users=deleted["pm_users"],
+                exclude_users=deleted["exclude_users"],
+            )
+
     def __json__(self, request=None):
         return self.get_info()

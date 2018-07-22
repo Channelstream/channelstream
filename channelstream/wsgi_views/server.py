@@ -382,6 +382,7 @@ def shared_messages(request):
     return list(data)
 
 
+# prepare v1 version
 # @view_config(route_name="api_v1_messages", request_method="POST", renderer="json")
 def messages_post(request):
     """
@@ -483,6 +484,44 @@ def messages_patch(request):
     data = schema.load(request.json_body).data
     for msg in data:
         gevent.spawn(operations.edit_message, msg)
+    return data
+
+
+@view_config(route_name="legacy_message", request_method="DELETE", renderer="json")
+def messages_delete(request):
+    """
+    Delete message from history and emit changes
+    ---
+    delete:
+      security:
+        - APIKeyHeader: []
+      tags:
+      - "Legacy API"
+      summary: "Delete message from history and  emit changes"
+      description: ""
+      operationId: "messages_delete"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Request JSON body"
+        required: true
+        schema:
+          $ref: "#/definitions/MessagesDeleteBody"
+      responses:
+        422:
+          description: "Unprocessable Entity"
+        200:
+          description: "Success"
+    """
+
+    schema = schemas.MessagesDeleteBodySchema(context={"request": request}, many=True)
+    data = schema.load(request.json_body).data
+    for msg in data:
+        gevent.spawn(operations.delete_message, msg)
     return data
 
 
@@ -777,6 +816,7 @@ class ServerViews(object):
         spec.definition("MessagesBody", schema=schemas.MessageBodySchema(many=True))
         spec.definition("MessageBody", schema=schemas.MessageBodySchema())
         spec.definition("MessageEditBody", schema=schemas.MessageEditBodySchema(many=True))
+        spec.definition("MessagesDeleteBody", schema=schemas.MessagesDeleteBodySchema(many=True))
         spec.definition("DisconnectBody", schema=schemas.DisconnectBodySchema)
         spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
         spec.definition("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)
@@ -787,8 +827,6 @@ class ServerViews(object):
         add_pyramid_paths(spec, "legacy_unsubscribe", request=self.request)
         add_pyramid_paths(spec, "legacy_user_state", request=self.request)
         add_pyramid_paths(spec, "legacy_message", request=self.request)
-        add_pyramid_paths(spec, "legacy_edit_message", request=self.request)
-        add_pyramid_paths(spec, "legacy_delete_message", request=self.request)
         add_pyramid_paths(spec, "legacy_channel_config", request=self.request)
         add_pyramid_paths(spec, "legacy_info", request=self.request)
 

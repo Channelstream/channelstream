@@ -136,6 +136,10 @@ class MessageEditBodySchema(ChannelstreamSchema):
     edited = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
 
 
+class MessagesDeleteBodySchema(ChannelstreamSchema):
+    uuid = fields.UUID(required=True)
+
+
 class DisconnectBodySchema(ChannelstreamSchema):
     conn_id = fields.UUID(
         required=True,

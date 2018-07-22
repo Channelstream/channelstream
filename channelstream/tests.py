@@ -909,6 +909,36 @@ class TestMessageEditViews(object):
         assert frame["timestamp"] == response["timestamp"]
 
 
+class TestMessageDeleteViews(object):
+    def test_empty_json(self, dummy_request):
+        from channelstream.wsgi_views.server import messages_delete
+
+        dummy_request.json_body = []
+        result = messages_delete(dummy_request)
+        assert result == []
+
+    def test_good_json_no_channel(self, dummy_request):
+        from channelstream.wsgi_views.server import message, messages_delete
+
+        channel = Channel("test")
+        channel.store_history = True
+        server_state.CHANNELS[channel.name] = channel
+        msg_payload = {"user": "system", "channel": "test", "message": {"text": "test"}}
+        dummy_request.json_body = [msg_payload]
+        message(dummy_request)
+        # change context
+        gevent.sleep(0)
+        msg = channel.history[0]
+        assert msg["message"] == msg_payload["message"]
+        dummy_request.json_body = [{"uuid": str(msg["uuid"])}]
+        response = messages_delete(dummy_request)
+        gevent.sleep(0)
+        assert response[0]["uuid"] == msg["uuid"]
+        assert len(channel.history) == 0
+        assert len(channel.frames) == 1
+        assert channel.frames[0][1]['type'] == 'message:deleted'
+
+
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
 class TestChannelConfigView(object):
     def test_empty_json(self, dummy_request):
