@@ -742,11 +742,6 @@ class ServerViews(object):
             "uptime": uptime,
         }
 
-    # @view_config(route_name='api_explorer', permission=NO_PERMISSION_REQUIRED,
-    #              renderer='templates/explorer.jinja2')
-    # def api_explorer(self):
-    #     return {}
-
     @view_config(
         route_name="openapi_spec", permission=NO_PERMISSION_REQUIRED, renderer="json"
     )

@@ -107,7 +107,6 @@ class DemoViews(object):
         state = self.request.json_body.get("state", {})
         payload = {
             "username": username,
-            # 'conn_id': str(uuid.uuid4()),
             # where user should be subscribed
             "channels": channels,
             # what default state should be set when user is created on channelstream end
