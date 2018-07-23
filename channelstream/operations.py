@@ -191,7 +191,8 @@ def edit_message(msg):
 
     if msg.get("channel"):
         channel_inst = server_state.CHANNELS.get(msg["channel"])
-        channel_inst.alter_message(msg)
+        if channel_inst:
+            channel_inst.alter_message(msg)
     elif msg["pm_users"]:
         # if pm then iterate over all users and notify about new message!
         for username in msg["pm_users"]:
