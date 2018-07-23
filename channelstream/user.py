@@ -92,27 +92,16 @@ class User(object):
         return channels
 
     def alter_message(self, to_edit):
-        altered = None
-        found = False
         # normally tried to get channel and user from history
         for f, msg in self.frames:
             if msg["uuid"] == to_edit["uuid"] and msg["type"] == "message":
-                found = True
                 msg.update(
                     {k: v for k, v in six.iteritems(to_edit) if k in MSG_EDITABLE_KEYS}
                 )
-                altered = msg
                 break
-
-        # but edited message might not be in history/frames anymore, so use the info sent
-        # via REST
-        if altered is None:
-            altered = to_edit
-
-        altered = copy.deepcopy(altered)
+        altered = copy.deepcopy(to_edit)
         altered["type"] = "message:edit"
         self.add_message(altered)
-        return found
 
     def delete_message(self, to_delete):
         deleted = None

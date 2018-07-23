@@ -234,7 +234,6 @@ class Channel(object):
         return chan_info
 
     def alter_message(self, to_edit):
-        altered = None
         found = False
         for msg in self.history:
             if msg["uuid"] == to_edit["uuid"]:
@@ -242,14 +241,12 @@ class Channel(object):
                 msg.update(
                     {k: v for k, v in six.iteritems(to_edit) if k in MSG_EDITABLE_KEYS}
                 )
-                altered = msg
                 break
         # if found history then reference in frames will be also updated,
         # otherwise search frames for channels that do not store history
         if not found:
             for f, msg in self.frames:
                 if msg["uuid"] == to_edit["uuid"] and msg["type"] == "message":
-                    found = True
                     msg.update(
                         {
                             k: v
@@ -257,23 +254,14 @@ class Channel(object):
                             if k in MSG_EDITABLE_KEYS
                         }
                     )
-                    altered = msg
                     break
-
-        # but edited message might not be in history/frames anymore, so use the info sent
-        # via REST
-        if altered is None:
-            altered = to_edit
-
-        altered = copy.deepcopy(altered)
+        altered = copy.deepcopy(to_edit)
         altered["type"] = "message:edit"
         self.add_message(
             altered,
             pm_users=altered["pm_users"],
             exclude_users=altered["exclude_users"],
         )
-
-        return found
 
     def delete_message(self, to_delete):
         deleted = None

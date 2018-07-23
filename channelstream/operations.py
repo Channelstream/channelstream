@@ -189,18 +189,15 @@ def edit_message(msg):
     :return:
     """
 
-    # this will be computationally heavy, but at same time edits do not happen often
-    found = False
-    for channel_inst in six.itervalues(server_state.CHANNELS):
-        if channel_inst.alter_message(msg):
-            found = True
-            break
-    if found:
-        return
-
-    for user_inst in six.itervalues(server_state.USERS):
-        if user_inst.alter_message(msg):
-            break
+    if msg.get("channel"):
+        channel_inst = server_state.CHANNELS.get(msg["channel"])
+        channel_inst.alter_message(msg)
+    elif msg["pm_users"]:
+        # if pm then iterate over all users and notify about new message!
+        for username in msg["pm_users"]:
+            user_inst = server_state.USERS.get(username)
+            if user_inst:
+                user_inst.alter_message(msg)
 
 
 def delete_message(msg):

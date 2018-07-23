@@ -890,6 +890,7 @@ class TestMessageEditViews(object):
         edit_payload = {
             "uuid": msg["uuid"],
             "user": "edited_system",
+            "channel": "test",
             "timestamp": "2010-01-01T01:01",
             "edited": "2010-01-01T01:02",
             "message": {"text": "edited_message"},
