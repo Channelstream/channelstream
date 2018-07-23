@@ -2,7 +2,7 @@ from gevent import monkey
 monkey.patch_all()
 
 import os
-from wsgiref.simple_server import make_server
+from gevent.pywsgi import WSGIServer
 from pyramid.config import Configurator
 
 
@@ -40,7 +40,7 @@ def main():
         config.scan("demo")
         app = config.make_wsgi_app()
 
-    server = make_server("0.0.0.0", 6543, app)
+    server = WSGIServer(("0.0.0.0", 6543), app)
     print(
         "Assuming Channelstream server is runnng on http://{host}:{port}".format(
             host=host, port=port
