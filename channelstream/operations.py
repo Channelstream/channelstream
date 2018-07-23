@@ -190,11 +190,17 @@ def edit_message(msg):
     """
 
     # this will be computationally heavy, but at same time edits do not happen often
+    found = False
     for channel_inst in six.itervalues(server_state.CHANNELS):
-        channel_inst.alter_message(msg)
+        if channel_inst.alter_message(msg):
+            found = True
+            break
+    if found:
+        return
 
     for user_inst in six.itervalues(server_state.USERS):
-        user_inst.alter_message(msg)
+        if user_inst.alter_message(msg):
+            break
 
 
 def delete_message(msg):

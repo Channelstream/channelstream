@@ -7,6 +7,8 @@ from datetime import datetime
 
 from channelstream import server_state
 from channelstream.utils import process_catchup
+from channelstream.validation import MSG_EDITABLE_KEYS
+
 
 log = logging.getLogger(__name__)
 
@@ -232,35 +234,46 @@ class Channel(object):
         return chan_info
 
     def alter_message(self, to_edit):
-        found_history = False
+        altered = None
+        found = False
         for msg in self.history:
             if msg["uuid"] == to_edit["uuid"]:
-                found_history = True
-                msg.update(to_edit)
-                altered = copy.deepcopy(msg)
-                altered["type"] = "message:edit"
-                self.add_message(
-                    altered,
-                    pm_users=altered["pm_users"],
-                    exclude_users=altered["exclude_users"],
+                found = True
+                msg.update(
+                    {k: v for k, v in six.iteritems(to_edit) if k in MSG_EDITABLE_KEYS}
                 )
+                altered = msg
                 break
         # if found history then reference in frames will be also updated,
         # otherwise search frames for channels that do not store history
-        if found_history:
-            return
+        if not found:
+            for f, msg in self.frames:
+                if msg["uuid"] == to_edit["uuid"] and msg["type"] == "message":
+                    found = True
+                    msg.update(
+                        {
+                            k: v
+                            for k, v in six.iteritems(to_edit)
+                            if k in MSG_EDITABLE_KEYS
+                        }
+                    )
+                    altered = msg
+                    break
 
-        for f, msg in self.frames:
-            if msg["uuid"] == to_edit["uuid"] and msg['type'] == 'message':
-                msg.update(to_edit)
-                altered = copy.deepcopy(msg)
-                altered["type"] = "message:edit"
-                self.add_message(
-                    altered,
-                    pm_users=altered["pm_users"],
-                    exclude_users=altered["exclude_users"],
-                )
-                break
+        # but edited message might not be in history/frames anymore, so use the info sent
+        # via REST
+        if altered is None:
+            altered = to_edit
+
+        altered = copy.deepcopy(altered)
+        altered["type"] = "message:edit"
+        self.add_message(
+            altered,
+            pm_users=altered["pm_users"],
+            exclude_users=altered["exclude_users"],
+        )
+
+        return found
 
     def delete_message(self, to_delete):
         deleted = None
@@ -274,7 +287,7 @@ class Channel(object):
 
         for i, frame in enumerate(self.frames):
             msg = frame[1]
-            if msg["uuid"] == to_delete["uuid"] and msg['type'] == 'message':
+            if msg["uuid"] == to_delete["uuid"] and msg["type"] == "message":
                 deleted = copy.deepcopy(msg)
                 self.frames.pop(i)
                 deleted["type"] = "message:deleted"

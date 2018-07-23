@@ -10,6 +10,9 @@ from channelstream import server_state
 converter = OpenAPIConverter("2.0.0")
 
 
+MSG_EDITABLE_KEYS = ("uuid", "timestamp", "user", "message", "edited")
+
+
 def gen_uuid():
     return uuid.uuid4()
 

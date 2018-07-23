@@ -108,12 +108,7 @@ class UserStateBodySchema(ChannelstreamSchema):
     )
 
 
-class MessageBodySchema(ChannelstreamSchema):
-    uuid = fields.UUID(default=gen_uuid, missing=gen_uuid)
-    timestamp = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
-    user = fields.String(required=True, validate=validate.Length(min=1, max=512))
-    message = fields.Dict()
-    no_history = fields.Boolean(missing=False)
+class PayloadDeliveryInfo(ChannelstreamSchema):
     pm_users = fields.List(
         fields.String(validate=validate.Length(min=1, max=512)), missing=lambda: []
     )
@@ -121,6 +116,14 @@ class MessageBodySchema(ChannelstreamSchema):
         fields.String(validate=validate.Length(min=1, max=512)), missing=lambda: []
     )
     channel = fields.String(validate=validate.Length(min=1, max=256), missing=None)
+    no_history = fields.Boolean(missing=False)
+
+
+class MessageBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
+    uuid = fields.UUID(default=gen_uuid, missing=gen_uuid)
+    timestamp = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
+    user = fields.String(required=True, validate=validate.Length(min=1, max=512))
+    message = fields.Dict()
 
     @marshmallow.post_load()
     def _add_unknown(self, data):
@@ -128,7 +131,7 @@ class MessageBodySchema(ChannelstreamSchema):
         return data
 
 
-class MessageEditBodySchema(ChannelstreamSchema):
+class MessageEditBodySchema(MessageBodySchema):
     uuid = fields.UUID(required=True)
     timestamp = fields.DateTime()
     user = fields.String(validate=validate.Length(min=1, max=512))
@@ -136,7 +139,7 @@ class MessageEditBodySchema(ChannelstreamSchema):
     edited = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
 
 
-class MessagesDeleteBodySchema(ChannelstreamSchema):
+class MessagesDeleteBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
     uuid = fields.UUID(required=True)
 
 

@@ -7,6 +7,7 @@ from datetime import datetime
 import six
 from channelstream import server_state
 from channelstream.utils import process_catchup
+from channelstream.validation import MSG_EDITABLE_KEYS
 
 log = logging.getLogger(__name__)
 
@@ -91,19 +92,34 @@ class User(object):
         return channels
 
     def alter_message(self, to_edit):
+        altered = None
+        found = False
+        # normally tried to get channel and user from history
         for f, msg in self.frames:
-            if msg["uuid"] == to_edit["uuid"] and msg['type'] == 'message':
-                msg.update(to_edit)
-                altered = copy.deepcopy(msg)
-                altered["type"] = "message:edit"
-                self.add_message(altered)
+            if msg["uuid"] == to_edit["uuid"] and msg["type"] == "message":
+                found = True
+                msg.update(
+                    {k: v for k, v in six.iteritems(to_edit) if k in MSG_EDITABLE_KEYS}
+                )
+                altered = msg
                 break
+
+        # but edited message might not be in history/frames anymore, so use the info sent
+        # via REST
+        if altered is None:
+            altered = to_edit
+
+        altered = copy.deepcopy(altered)
+        altered["type"] = "message:edit"
+        self.add_message(altered)
+        return found
 
     def delete_message(self, to_delete):
         deleted = None
+        # normally tried to get channel and user from history
         for i, frame in enumerate(self.frames):
             msg = frame[1]
-            if msg["uuid"] == to_delete["uuid"] and msg['type'] == 'message':
+            if msg["uuid"] == to_delete["uuid"] and msg["type"] == "message":
                 deleted = copy.deepcopy(msg)
                 self.frames.pop(i)
                 deleted["type"] = "message:deleted"
