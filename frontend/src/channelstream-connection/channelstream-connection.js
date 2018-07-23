@@ -14,6 +14,8 @@ import '../channelstream.js';
  disconnect-url="http://127.0.0.1:8000/disconnect"
  subscribe-url="http://127.0.0.1:8000/demo/subscribe"
  message-url="http://127.0.0.1:8000/demo/message"
+ message-edit-url="http://127.0.0.1:8000/demo/edit"
+ message-delete-url="http://127.0.0.1:8000/demo/delete"
  long-poll-url="http://127.0.0.1:8000/listen"
  websocket-url="http://127.0.0.1:8000/ws"
  channels-url='["channel1", "channel2"]' />
@@ -153,6 +155,8 @@ class ChannelStreamConnectionElement extends HTMLElement {
         this.mutators = {
             connect: [],
             message: [],
+            messageEdit: [],
+            messageDelete: [],
             subscribe: [],
             unsubscribe: [],
             disconnect: [],
@@ -169,6 +173,8 @@ class ChannelStreamConnectionElement extends HTMLElement {
         this.unsubscribeUrl = '';
         this.userStateUrl = '';
         this.messageUrl = '';
+        this.messageEditUrl = '';
+        this.messageDeleteUrl = '';
         this.longPollUrl = '';
         this.shouldReconnect = true;
         this.heartbeats = true;
@@ -215,6 +221,8 @@ class ChannelStreamConnectionElement extends HTMLElement {
         this.connection.subscribeUrl = this.subscribeUrl;
         this.connection.unsubscribeUrl = this.unsubscribeUrl;
         this.connection.messageUrl = this.messageUrl;
+        this.connection.messageEditUrl = this.messageEditUrl;
+        this.connection.messageDeleteUrl = this.messageDeleteUrl;
         this.connection.longPollUrl = this.longPollUrl;
         this.connection.websocketUrl = this.websocketUrl;
         this.connection.userStateUrl = this.userStateUrl;
@@ -224,7 +232,6 @@ class ChannelStreamConnectionElement extends HTMLElement {
         this.connection.channelsChangedCallback = this._channelsChangedCallback.bind(this);
         this.connection.connectCallback = this._connectCallback.bind(this);
         // this.connection.connectErrorCallback = this._connectErrorCallback.bind(this);
-        //this.connection.connectionClosedCallback
         this.connection.disconnectCallback = this._disconnectCallback.bind(this);
         //this.connection.listenCloseCallback
         this.connection.listenErrorCallback = this._listenErrorCallback.bind(this);
@@ -232,6 +239,10 @@ class ChannelStreamConnectionElement extends HTMLElement {
         this.connection.listenOpenedCallback = this._listenOpenedCallback.bind(this);
         this.connection.messageCallback = this._messageCallback.bind(this);
         this.connection.messageErrorCallback = this._messageErrorCallback.bind(this);
+        this.connection.messageEditCallback = this._messageEditCallback.bind(this);
+        this.connection.messageEditErrorCallback = this._messageEditErrorCallback.bind(this);
+        this.connection.messageDeleteCallback = this._messageDeleteCallback.bind(this);
+        this.connection.messageDeleteErrorCallback = this._messageDeleteErrorCallback.bind(this);
         this.connection.setUserStateCallback = this._setUserStateCallback.bind(this);
         this.connection.setUserStateErrorCallback = this._setUserStateErrorCallback.bind(this);
         //this.connection.startListeningCallback
@@ -298,13 +309,29 @@ class ChannelStreamConnectionElement extends HTMLElement {
     }
 
     /**
-     * Sends a message to the server.
+     * Send a message to the backend.
      *
      */
     message(message) {
         return this.connection.message(message);
     }
 
+    /**
+     * Edit a message in channelstream.
+     *
+     */
+    edit(message) {
+        return this.connection.edit(message);
+    }
+
+    /**
+     * Delete a message in channelstream.
+     *
+     */
+    delete(message) {
+        return this.connection.delete(message);
+    }
+    
     _channelsChangedCallback(channels) {
         // do not fire the event if set() didn't mutate anything
         // is this a reliable way to do it?
@@ -396,6 +423,38 @@ class ChannelStreamConnectionElement extends HTMLElement {
         }));
     }
 
+    _messageEditCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-message-edit-sent', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    _messageEditErrorCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-message-edit-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    _messageDeleteCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-message-delete-sent', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    _messageDeleteErrorCallback(request, data) {
+        this.dispatchEvent(new CustomEvent('channelstream-message-delete-error', {
+            detail: {request:request, data:data},
+            bubbles: true,
+            composed: true
+        }));
+    }
+    
     _subscribeCallback(request, data) {
         this.dispatchEvent(new CustomEvent('channelstream-subscribed', {
             detail: {request:request, data:data},

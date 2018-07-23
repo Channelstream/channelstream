@@ -120,11 +120,23 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         }
     }
 
-    /** sends the message via channelstream conn manageer */
-    sendMessage(event) {
+    /** send the message via channelstream conn manager */
+    messageSend(event) {
         this.getConnection().message(event.detail);
     }
 
+    /** edit the message via channelstream conn manager */
+    messageEdit(event) {
+        console.dir(this.getConnection());
+        this.getConnection().edit(event.detail);
+    }
+
+    /** delete the message via channelstream conn manager */
+    messageDelete(event) {
+        console.dir(this.getConnection());
+        this.getConnection().delete(event.detail);
+    }
+    
     changeStatus(event) {
         var stateUpdates = event.detail;
         this.getConnection().updateUserState({user_state: stateUpdates});
@@ -139,6 +151,8 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         channelstreamConnection.subscribeUrl = this.appConfig.subscribeUrl;
         channelstreamConnection.unsubscribeUrl = this.appConfig.unsubscribeUrl;
         channelstreamConnection.messageUrl = this.appConfig.messageUrl;
+        channelstreamConnection.messageEditUrl = this.appConfig.messageEditUrl;
+        channelstreamConnection.messageDeleteUrl = this.appConfig.messageDeleteUrl;
         channelstreamConnection.longPollUrl = this.appConfig.longPollUrl;
         channelstreamConnection.websocketUrl = this.appConfig.websocketUrl;
         channelstreamConnection.userStateUrl = this.appConfig.userStateUrl;
@@ -154,7 +168,9 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
 
         this.addEventListener('channelpicker-subscribe', this.subscribeToChannel);
         this.addEventListener('change-status', this.changeStatus);
-        this.addEventListener('send-message', this.sendMessage);
+        this.addEventListener('message-send', this.messageSend);
+        this.addEventListener('message-edit', this.messageEdit);
+        this.addEventListener('message-delete', this.messageDelete);
 
     }
 

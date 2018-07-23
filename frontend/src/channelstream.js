@@ -80,6 +80,10 @@
         userStateUrl: '',
         /** URL used in `message()`. */
         messageUrl: '',
+        /** URL used in `editMessage()`. */
+        messageEditUrl: '',
+        /** URL used in `deleteMessage()`. */
+        messageDeleteUrl: '',
         /** Long-polling connection url. */
         longPollUrl: '',
         /** Long-polling connection url. */
@@ -103,6 +107,8 @@
         mutators: {
             connect: [],
             message: [],
+            messageEdit: [],
+            messageDelete: [],
             subscribe: [],
             unsubscribe: [],
             disconnect: [],
@@ -240,7 +246,7 @@
         },
 
         /**
-         * Sends a message to the server.
+         * Sends a message to the web application backend.
          *
          */
         message: function (message) {
@@ -254,6 +260,39 @@
             request.handleResponse = this._handleMessage.bind(this);
             request.execute();
         },
+
+        /**
+         * Sends a delete request to the web application backend.
+         *
+         */
+        delete: function (message) {
+            var request = new ChannelStreamRequest();
+            request.url = this.messageDeleteUrl;
+            request.body = message;
+            for (var i = 0; i < this.mutators.messageDelete.length; i++) {
+                this.mutators.messageDelete[i](request);
+            }
+            request.handleError = this._handleMessageDeleteError.bind(this);
+            request.handleResponse = this._handleMessageDelete.bind(this);
+            request.execute();
+        },
+
+        /**
+         * Sends a edit request to the web application backend.
+         *
+         */
+        edit: function (message) {
+            var request = new ChannelStreamRequest();
+            request.url = this.messageEditUrl;
+            request.body = message;
+            for (var i = 0; i < this.mutators.messageEdit.length; i++) {
+                this.mutators.messageEdit[i](request);
+            }
+            request.handleError = this._handleMessageEditError.bind(this);
+            request.handleResponse = this._handleMessageEdit.bind(this);
+            request.execute();
+        },
+        
         /**
          * Opens "long lived" (websocket/longpoll) connection to the channelstream server.
          *
@@ -533,6 +572,62 @@
                 return;
             }
             console.log('messageErrorCallback', request, data)
+        },
+
+        _handleMessageEdit: function (request, data) {
+            this.messageEditCallback(request, data);
+        },
+
+        /**
+         * Fired on successful message() call
+         */
+        messageEditCallback: function (request, data) {
+            if (!this.debug) {
+                return;
+            }
+            console.log('messageCallback', request, data);
+        },
+
+        _handleMessageEditError: function (request, data) {
+            this.messageEditErrorCallback(request, data);
+        },
+
+        /**
+         * Fired on edit() call error
+         */
+        messageEditErrorCallback: function (request, data) {
+            if (!this.debug) {
+                return;
+            }
+            console.log('messageEditErrorCallback', request, data)
+        },
+
+        _handleMessageDelete: function (request, data) {
+            this.messageDeleteCallback(request, data);
+        },
+
+        /**
+         * Fired on successful message() call
+         */
+        messageDeleteCallback: function (request, data) {
+            if (!this.debug) {
+                return;
+            }
+            console.log('messageCallback', request, data);
+        },
+
+        _handleMessageDeleteError: function (request, data) {
+            this.messageDeleteErrorCallback(request, data);
+        },
+
+        /**
+         * Fired on delete() call error
+         */
+        messageDeleteErrorCallback: function (request, data) {
+            if (!this.debug) {
+                return;
+            }
+            console.log('messageDeleteErrorCallback', request, data)
         },
 
         _handleSubscribe: function (request, data) {

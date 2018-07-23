@@ -9,7 +9,7 @@ class ChatMessageList extends connect(store)(LitElement) {
         return 'chat-message-list';
     }
 
-    _render({messages, selectedChannel}){
+    _render({messages, selectedChannel, user}){
         return html`
         <style>
             .message-list {
@@ -21,7 +21,7 @@ class ChatMessageList extends connect(store)(LitElement) {
         
         <div class="message-list">
         ${(messages.channelMessages[selectedChannel] || []).map((message, index) => html`
-        <chat-message message=${messages.messages[message]}></chat-message>
+        <chat-message message=${messages.messages[message]} user=${user}></chat-message>
         `)}
         </div>
         `
@@ -30,7 +30,8 @@ class ChatMessageList extends connect(store)(LitElement) {
     static get properties() {
         return {
             messages: Array,
-            selectedChannel: String
+            selectedChannel: String,
+            user: Object
         };
     }
 
@@ -44,6 +45,7 @@ class ChatMessageList extends connect(store)(LitElement) {
     _stateChanged(state) {
         this.messages = state.chatView.messages;
         this.selectedChannel = state.chatView.ui.selectedChannel;
+        this.user = state.user;
     }
 }
 

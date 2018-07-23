@@ -1,6 +1,7 @@
 import {LitElement, html} from '@polymer/lit-element';
 
 import '@polymer/iron-image/iron-image.js';
+import '@polymer/paper-icon-button/paper-icon-button.js';
 import '../../../chat-avatar/chat-avatar.js'
 
 
@@ -13,7 +14,16 @@ class ChatMessage extends LitElement {
         return true;
     }
 
-    _render({message}){
+    _render({message, user}){
+
+        let editIcons = ``;
+        if (message.user === user.username){
+            editIcons = html`
+            <paper-icon-button icon="create" on-tap=${(e) => this.messageEdit(message)}></paper-icon-button>
+            <paper-icon-button icon="delete" on-tap=${(e) => this.messageDelete(message)}></paper-icon-button>
+            `;
+        }
+
         return html`
         <style>
             :host {
@@ -48,7 +58,7 @@ class ChatMessage extends LitElement {
         </style>
         <chat-avatar username=${message.user} email=${message.email}></chat-avatar>
         <div class$="message ${message.type}">
-            <div>[${message.channel}] <strong>${message.user}</strong></div>
+            <div>[${message.channel}] <strong>${message.user}</strong> ${editIcons}</div>
             <div><span class="timestamp">${message.timestamp.split('.')[0]}</span>:
                 <span class="text">${this._messageText(message)}</span></div>
         </div>
@@ -62,7 +72,8 @@ class ChatMessage extends LitElement {
 
     static get properties() {
         return {
-            message: Object
+            message: Object,
+            user: Object
         };
     }
 
@@ -79,9 +90,26 @@ class ChatMessage extends LitElement {
         else{
             return `User ${message.message.action}`
         }
-
-
     }
+
+    messageEdit(message){
+        console.log('messageEdit', {message});
+        this.dispatchEvent(new CustomEvent('message-edit', {
+            detail: {message},
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    messageDelete(message){
+        console.log('messageDelete', {message});
+        this.dispatchEvent(new CustomEvent('message-delete', {
+            detail: {message},
+            bubbles: true,
+            composed: true
+        }));
+    }
+
 }
 
 customElements.define(ChatMessage.is, ChatMessage);

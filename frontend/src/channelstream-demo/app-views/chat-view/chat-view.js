@@ -99,9 +99,9 @@ class ChatView extends connect(store)(LitElement) {
         </div>
         <iron-form id="message-form" on-iron-form-presubmit=${(e) => this.formPresubmit(e)}>
             <form method="post">
-                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.sendMessage(e)}></iron-a11y-keys>
+                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.messageSend(e)}></iron-a11y-keys>
                 <paper-input id="message-input" name="message" label="Your message"></paper-input>
-                <paper-icon-button icon="icons:send" on-tap=${(e) => this.sendMessage(e)}></paper-icon-button>
+                <paper-icon-button icon="icons:send" on-tap=${(e) => this.messageSend(e)}></paper-icon-button>
                 <br/>
                 ${dialogButton}
                 <chat-channel-picker subscribedChannels=${user.subscribedChannels}
@@ -173,11 +173,11 @@ class ChatView extends connect(store)(LitElement) {
 
     /** sends the signal that will pass the message to the
      * channelstream-connection element */
-    sendMessage(event) {
+    messageSend(event) {
         event.preventDefault();
         let msgForm = this.shadowRoot.querySelector('#message-form');
         let formData = msgForm.serializeForm();
-        this.dispatchEvent(new CustomEvent('send-message',
+        this.dispatchEvent(new CustomEvent('message-send',
             {
                 detail: {
                     message: {
