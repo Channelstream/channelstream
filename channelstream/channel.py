@@ -264,30 +264,24 @@ class Channel(object):
         )
 
     def delete_message(self, to_delete):
-        deleted = None
         for i, msg in enumerate(self.history):
             if msg["uuid"] == to_delete["uuid"]:
-                deleted = copy.deepcopy(msg)
                 self.history.pop(i)
-                deleted["type"] = "message:deleted"
-                deleted["no_history"] = True
                 break
 
         for i, frame in enumerate(self.frames):
             msg = frame[1]
             if msg["uuid"] == to_delete["uuid"] and msg["type"] == "message":
-                deleted = copy.deepcopy(msg)
                 self.frames.pop(i)
-                deleted["type"] = "message:deleted"
-                deleted["no_history"] = True
                 break
 
-        if deleted:
-            self.add_message(
-                deleted,
-                pm_users=deleted["pm_users"],
-                exclude_users=deleted["exclude_users"],
-            )
+        deleted = copy.deepcopy(to_delete)
+        deleted["type"] = "message:deleted"
+        self.add_message(
+            deleted,
+            pm_users=deleted["pm_users"],
+            exclude_users=deleted["exclude_users"],
+        )
 
     def __json__(self, request=None):
         return self.get_info()

@@ -208,9 +208,13 @@ def delete_message(msg):
     :return:
     """
 
-    # this will be computationally heavy, but at same time deletes do not happen often
-    for channel_inst in six.itervalues(server_state.CHANNELS):
-        channel_inst.delete_message(msg)
-
-    for user_inst in six.itervalues(server_state.USERS):
-        user_inst.delete_message(msg)
+    if msg.get("channel"):
+        channel_inst = server_state.CHANNELS.get(msg["channel"])
+        if channel_inst:
+            channel_inst.delete_message(msg)
+    elif msg["pm_users"]:
+        # if pm then iterate over all users and notify about new message!
+        for username in msg["pm_users"]:
+            user_inst = server_state.USERS.get(username)
+            if user_inst:
+                user_inst.delete_message(msg)

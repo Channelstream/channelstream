@@ -931,7 +931,7 @@ class TestMessageDeleteViews(object):
         gevent.sleep(0)
         msg = channel.history[0]
         assert msg["message"] == msg_payload["message"]
-        dummy_request.json_body = [{"uuid": str(msg["uuid"])}]
+        dummy_request.json_body = [{"uuid": str(msg["uuid"]), "channel": "test"}]
         response = messages_delete(dummy_request)
         gevent.sleep(0)
         assert response[0]["uuid"] == msg["uuid"]
