@@ -204,6 +204,9 @@ class MessageEditBodySchema(MessageBodySchema):
     message = fields.Dict()
     edited = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
 
+    @marshmallow.post_load()
+    def _add_unknown(self, data):
+        return data
 
 class MessagesDeleteBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
     uuid = fields.UUID(
