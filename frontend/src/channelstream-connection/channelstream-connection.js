@@ -1,4 +1,4 @@
-import '../channelstream.js';
+import {ChannelStreamConnection} from '../channelstream.js';
 
 /**
  *
@@ -181,7 +181,7 @@ class ChannelStreamConnectionElement extends HTMLElement {
         this.increaseBounceIv = 2000;
         this.noWebsocket = false;
         this.connected = false;
-        this.connection = window.ChannelStreamConnection;
+        this.connection = ChannelStreamConnection;
     }
 
 

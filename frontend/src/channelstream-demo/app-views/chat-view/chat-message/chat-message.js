@@ -2,6 +2,7 @@ import {LitElement, html} from '@polymer/lit-element';
 
 import '@polymer/iron-image/iron-image.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
+import '@polymer/paper-input/paper-input';
 import '../../../chat-avatar/chat-avatar.js'
 
 
@@ -24,10 +25,30 @@ class ChatMessage extends LitElement {
             `;
         }
 
+        let messageNode = ``
+
+
+        if (this.edited){
+            messageNode = html`
+            <form onsubmit="return false;">
+            <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.messageEdited(e)}></iron-a11y-keys>
+                <paper-input name="message" label="Message" value="${message.message.text}"></paper-input>
+                <paper-icon-button icon="icons:send" on-tap=${(e) => this.messageEdited(e)}></paper-icon-button>
+            </form>`;
+        }
+        else{
+            messageNode = html`<span class="text">${this._messageText(message)}</span>`;
+        }
+
         return html`
         <style>
             :host {
                 display: block;
+            }
+        
+            paper-input{
+                width: 80%;
+                display: inline-block;
             }
         
             chat-avatar {
@@ -60,7 +81,7 @@ class ChatMessage extends LitElement {
         <div class$="message ${message.type}">
             <div>[${message.channel}] <strong>${message.user}</strong> ${editIcons}</div>
             <div><span class="timestamp">${message.timestamp.split('.')[0]}</span>:
-                <span class="text">${this._messageText(message)}</span></div>
+                ${messageNode}</div>
         </div>
         <br clear="both"/>
         `
@@ -73,7 +94,8 @@ class ChatMessage extends LitElement {
     static get properties() {
         return {
             message: Object,
-            user: Object
+            user: Object,
+            edited: Boolean
         };
     }
 
@@ -92,19 +114,25 @@ class ChatMessage extends LitElement {
         }
     }
 
-    messageEdit(message){
-        console.log('messageEdit', {message});
+    messageEdit(){
+        this.edited = true;
+    }
+
+    messageEdited(event){
+        event.preventDefault();
+        let message = {...this.message, message:{...this.message.message}};
+        message.message.text = this.shadowRoot.querySelector('paper-input').value;
+        this.edited = false;
         this.dispatchEvent(new CustomEvent('message-edit', {
-            detail: {message},
+            detail: message,
             bubbles: true,
             composed: true
         }));
     }
 
-    messageDelete(message){
-        console.log('messageDelete', {message});
+    messageDelete(){
         this.dispatchEvent(new CustomEvent('message-delete', {
-            detail: {message},
+            detail: {...this.message, message:{...this.message.message}},
             bubbles: true,
             composed: true
         }));

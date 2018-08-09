@@ -126,14 +126,12 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
     }
 
     /** edit the message via channelstream conn manager */
-    messageEdit(event) {
-        console.dir(this.getConnection());
+    messageEdit(event){
         this.getConnection().edit(event.detail);
     }
 
     /** delete the message via channelstream conn manager */
     messageDelete(event) {
-        console.dir(this.getConnection());
         this.getConnection().delete(event.detail);
     }
     

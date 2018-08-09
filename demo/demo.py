@@ -38,7 +38,7 @@ CHANNEL_CONFIGS = {
 }
 
 
-def make_server_request(request, payload, endpoint, auth=None):
+def make_server_request(request, payload, endpoint, auth=None, method='post'):
     """
     makes a json request to channelstream server endpoint signing the request and sending the payload
     :param request:
@@ -57,7 +57,7 @@ def make_server_request(request, payload, endpoint, auth=None):
         "Content-Type": "application/json",
     }
     url = "http://127.0.0.1:%s%s" % (server_port, endpoint)
-    response = requests.post(
+    response = getattr(requests, method)(
         url, data=json.dumps(payload), headers=secret_headers, auth=auth
     )
     if response.status_code >= 400:
@@ -182,7 +182,7 @@ class DemoViews(object):
         return server_response
 
     @view_config(match_param=["section=demo", "action=message"], request_method="POST")
-    def message(self):
+    def message_post(self):
         """send message to channel/users"""
         request_data = self.request.json_body
         payload = {
@@ -231,5 +231,26 @@ class DemoViews(object):
         result = make_server_request(
             self.request, {}, "/admin/admin.json", auth=basic_auth
         )
+        self.request.response.status = result.status_code
+        return result.json()
+
+    @view_config(match_param=["section=demo", "action=message"], request_method="DELETE")
+    def message_delete(self):
+        payload = {
+            "uuid": self.request.json_body['uuid'],
+            "channel": self.request.json_body['channel'],
+        }
+        result = make_server_request(self.request, [payload], "/message", method='delete')
+        self.request.response.status = result.status_code
+        return result.json()
+
+    @view_config(match_param=["section=demo", "action=message"], request_method="PATCH")
+    def message_patch(self):
+        payload = {
+            "uuid": self.request.json_body['uuid'],
+            "channel": self.request.json_body['channel'],
+            "message": self.request.json_body['message']
+        }
+        result = make_server_request(self.request, [payload], "/message", method='patch')
         self.request.response.status = result.status_code
         return result.json()
