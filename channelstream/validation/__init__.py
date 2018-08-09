@@ -13,6 +13,11 @@ converter = OpenAPIConverter("2.0.0")
 MSG_EDITABLE_KEYS = ("uuid", "timestamp", "user", "message", "edited")
 
 
+try:
+    base_types = (unicode, basestring)
+except NameError:
+    base_types = (str,)
+
 def gen_uuid():
     return uuid.uuid4()
 
@@ -63,7 +68,7 @@ class UserStateField(fields.Field):
 
     def _deserialize(self, value, attr, data):
         if (
-            not isinstance(value, (str, bytes))
+            not isinstance(value, base_types)
             and not isinstance(value, float)
             and not isinstance(value, int)
             and not isinstance(value, bool)
