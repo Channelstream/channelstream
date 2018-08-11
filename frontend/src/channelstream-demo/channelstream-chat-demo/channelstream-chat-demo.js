@@ -94,13 +94,16 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         for (let message of event.detail.messages) {
             // add message
             // console.info('message', message);
-            if (['message', 'presence'].indexOf(message.type) !== -1) {
-                let messageMappings = {};
-                // for (let channel of Object.entries(data.channels_info.channels)) {
-                //     messageMappings[channel[0]] = channel[1].history;
-                // }
+            if ( message.type === 'message' || message.type === 'presence') {
                 store.dispatch(chatViewMessagesActions.setChannelMessages({[message.channel]: [message]}));
-
+            }
+            if (message.type === 'message:edit') {
+                console.log('message EDIT')
+                // store.dispatch(chatViewMessagesActions.setChannelMessages({[message.channel]: [message]}));
+            }
+            if (message.type === 'message:delete') {
+                console.log('message Delete')
+                // store.dispatch(chatViewMessagesActions.setChannelMessages({[message.channel]: [message]}));
             }
             // update users on presence message
             if (message.type === 'presence') {

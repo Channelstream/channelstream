@@ -87,8 +87,8 @@ class ConnectBodySchema(ChannelstreamSchema):
         values=UserStateField(allow_none=True),
         keys=fields.String(),
         description="Update user state to values in this dictionary, "
-                    "values not present in dict are kept intact, valid values are: "
-                    "string, int, float and boolean",
+        "values not present in dict are kept intact, valid values are: "
+        "string, int, float and boolean",
     )
     channel_configs = BackportedDict(
         missing=lambda: {},
@@ -207,6 +207,7 @@ class MessageEditBodySchema(MessageBodySchema):
     @marshmallow.post_load()
     def _add_unknown(self, data):
         return data
+
 
 class MessagesDeleteBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
     uuid = fields.UUID(

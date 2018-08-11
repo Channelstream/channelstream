@@ -815,8 +815,12 @@ class ServerViews(object):
         spec.definition("UserStateBody", schema=schemas.UserStateBodySchema)
         spec.definition("MessagesBody", schema=schemas.MessageBodySchema(many=True))
         spec.definition("MessageBody", schema=schemas.MessageBodySchema())
-        spec.definition("MessageEditBody", schema=schemas.MessageEditBodySchema(many=True))
-        spec.definition("MessagesDeleteBody", schema=schemas.MessagesDeleteBodySchema(many=True))
+        spec.definition(
+            "MessageEditBody", schema=schemas.MessageEditBodySchema(many=True)
+        )
+        spec.definition(
+            "MessagesDeleteBody", schema=schemas.MessagesDeleteBodySchema(many=True)
+        )
         spec.definition("DisconnectBody", schema=schemas.DisconnectBodySchema)
         spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
         spec.definition("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)

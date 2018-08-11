@@ -112,7 +112,7 @@ class User(object):
                 break
 
         deleted = copy.deepcopy(to_delete)
-        deleted["type"] = "message:deleted"
+        deleted["type"] = "message:delete"
         self.add_message(
             deleted,
             pm_users=deleted["pm_users"],

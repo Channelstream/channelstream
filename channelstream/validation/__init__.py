@@ -18,6 +18,7 @@ try:
 except NameError:
     base_types = (str,)
 
+
 def gen_uuid():
     return uuid.uuid4()
 

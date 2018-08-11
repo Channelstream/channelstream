@@ -937,7 +937,7 @@ class TestMessageDeleteViews(object):
         assert response[0]["uuid"] == msg["uuid"]
         assert len(channel.history) == 0
         assert len(channel.frames) == 1
-        assert channel.frames[0][1]['type'] == 'message:deleted'
+        assert channel.frames[0][1]["type"] == "message:delete"
 
 
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
