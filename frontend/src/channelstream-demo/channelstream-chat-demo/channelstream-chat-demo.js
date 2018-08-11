@@ -103,7 +103,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
             }
             if (message.type === 'message:delete') {
                 console.log('message Delete')
-                // store.dispatch(chatViewMessagesActions.setChannelMessages({[message.channel]: [message]}));
+                store.dispatch(chatViewMessagesActions.deleteChannelMessages([message.uuid]));
             }
             // update users on presence message
             if (message.type === 'presence') {

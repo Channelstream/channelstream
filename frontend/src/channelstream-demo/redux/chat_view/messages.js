@@ -2,12 +2,17 @@
 
 export const types = {
     SET_CHANNEL_MESSAGES: 'chatView/SET_CHANNEL_MESSAGES',
+    DELETE_CHANNEL_MESSAGES: 'chatView/DELETE_CHANNEL_MESSAGES',
 };
 
 export const actions = {
     setChannelMessages: (messages) => ({
         type: types.SET_CHANNEL_MESSAGES,
         messages: messages
+    }),
+    deleteChannelMessages: (message_ids) => ({
+        type: types.DELETE_CHANNEL_MESSAGES,
+        message_ids: message_ids
     })
 };
 
@@ -24,9 +29,9 @@ export const reducer = (state = INITIAL_STATE, action) => {
     if (typeof state === 'undefined') {
         return INITIAL_STATE;
     }
+    let newChannelMessages = {};
     switch (action.type) {
         case types.SET_CHANNEL_MESSAGES:
-            let newChannelMessages = {};
             for (let key in state.channelMessages){
                 newChannelMessages[key] = [...state.channelMessages[key]];
             }
@@ -47,6 +52,22 @@ export const reducer = (state = INITIAL_STATE, action) => {
                     }
                 }
             }
+            break;
+        case types.DELETE_CHANNEL_MESSAGES:
+            for (let key in state.channelMessages){
+                newChannelMessages[key] = [...state.channelMessages[key].filter(uuid => action.message_ids.indexOf(uuid) === -1)];
+            }
+            let newMessages = {}
+            for (let uuid in state.messages){
+                if (action.message_ids.indexOf(uuid) === -1){
+                    newMessages[uuid] = state.messages[uuid]
+                }
+            }
+            state = {
+                messages: newMessages,
+                allIds: [...state.allIds.filter(uuid => action.message_ids.indexOf(uuid) === -1)],
+                channelMessages: newChannelMessages
+            };
             break;
     }
     return state;
