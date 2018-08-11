@@ -95,14 +95,13 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
             // add message
             // console.info('message', message);
             if ( message.type === 'message' || message.type === 'presence') {
-                store.dispatch(chatViewMessagesActions.setChannelMessages({[message.channel]: [message]}));
+                store.dispatch(chatViewMessagesActions.setChannelMessages([message]));
             }
             if (message.type === 'message:edit') {
-                console.log('message EDIT')
-                // store.dispatch(chatViewMessagesActions.setChannelMessages({[message.channel]: [message]}));
+                message.type = 'message';
+                store.dispatch(chatViewMessagesActions.editChannelMessages([message]));
             }
             if (message.type === 'message:delete') {
-                console.log('message Delete')
                 store.dispatch(chatViewMessagesActions.deleteChannelMessages([message.uuid]));
             }
             // update users on presence message
@@ -218,11 +217,9 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         store.dispatch(userActions.setChannels(data.channels));
         store.dispatch(chatViewUsersActions.setUserStates(data.channels_info.users));
         store.dispatch(chatViewChannelActions.setChannelStates(data.channels_info.channels));
-        let messageMappings = {};
         for (let channel of Object.entries(data.channels_info.channels)) {
-            messageMappings[channel[0]] = channel[1].history;
+            store.dispatch(chatViewMessagesActions.setChannelMessages(channel[1].history));
         }
-        store.dispatch(chatViewMessagesActions.setChannelMessages(messageMappings));
     }
 
     subscribeToChannel(event) {
@@ -246,11 +243,9 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         store.dispatch(userActions.setChannels(data.channels));
         store.dispatch(chatViewUsersActions.setUserStates(channelInfo.users));
         store.dispatch(chatViewChannelActions.setChannelStates(channelInfo.channels));
-        let messageMappings = {};
         for (let channel of Object.entries(channelInfo.channels)) {
-            messageMappings[channel[0]] = channel[1].history;
+            store.dispatch(chatViewMessagesActions.setChannelMessages(channel[1].history));
         }
-        store.dispatch(chatViewMessagesActions.setChannelMessages(messageMappings));
     }
 
     handleUnsubscribed(event) {

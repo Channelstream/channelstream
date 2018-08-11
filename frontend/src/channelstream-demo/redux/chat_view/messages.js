@@ -3,6 +3,7 @@
 export const types = {
     SET_CHANNEL_MESSAGES: 'chatView/SET_CHANNEL_MESSAGES',
     DELETE_CHANNEL_MESSAGES: 'chatView/DELETE_CHANNEL_MESSAGES',
+    EDIT_CHANNEL_MESSAGES: 'chatView/EDIT_CHANNEL_MESSAGES',
 };
 
 export const actions = {
@@ -13,7 +14,11 @@ export const actions = {
     deleteChannelMessages: (message_ids) => ({
         type: types.DELETE_CHANNEL_MESSAGES,
         message_ids: message_ids
-    })
+    }),
+    editChannelMessages: (messages) => ({
+        type: types.EDIT_CHANNEL_MESSAGES,
+        messages: messages
+    }),
 };
 
 const INITIAL_STATE = {
@@ -30,6 +35,7 @@ export const reducer = (state = INITIAL_STATE, action) => {
         return INITIAL_STATE;
     }
     let newChannelMessages = {};
+    let newMessages = {};
     switch (action.type) {
         case types.SET_CHANNEL_MESSAGES:
             for (let key in state.channelMessages){
@@ -40,24 +46,35 @@ export const reducer = (state = INITIAL_STATE, action) => {
                 allIds: [...state.allIds],
                 channelMessages: newChannelMessages
             };
-            for (let messageInfo of Object.entries(action.messages)) {
-                for (let msg of messageInfo[1]) {
-                    state.messages[msg.uuid] = msg;
-                    if (!state.channelMessages.hasOwnProperty(messageInfo[0])) {
-                        state.channelMessages[messageInfo[0]] = [];
-                    }
-                    if (state.allIds.indexOf(msg.uuid) === -1) {
-                        state.allIds.push(msg.uuid);
-                        state.channelMessages[messageInfo[0]].push(msg.uuid);
-                    }
+            for (let message of action.messages) {
+                state.messages[message.uuid] = message;
+                if (!state.channelMessages.hasOwnProperty(message.channel)) {
+                    state.channelMessages[message.channel] = [];
+                }
+                if (state.allIds.indexOf(message.uuid) === -1) {
+                    state.allIds.push(message.uuid);
+                    state.channelMessages[message.channel].push(message.uuid);
                 }
             }
             break;
+        case types.EDIT_CHANNEL_MESSAGES:
+            newMessages = {...state.messages};
+            for(let message of action.messages){
+                if (newMessages.hasOwnProperty(message.uuid)){
+                    newMessages[message.uuid] = {...newMessages[message.uuid], ...message}
+                }
+            }
+            state = {
+                messages: newMessages,
+                allIds: [...state.allIds],
+                channelMessages: {...state.channelMessages}
+            };
+            break;
+
         case types.DELETE_CHANNEL_MESSAGES:
             for (let key in state.channelMessages){
                 newChannelMessages[key] = [...state.channelMessages[key].filter(uuid => action.message_ids.indexOf(uuid) === -1)];
             }
-            let newMessages = {}
             for (let uuid in state.messages){
                 if (action.message_ids.indexOf(uuid) === -1){
                     newMessages[uuid] = state.messages[uuid]
