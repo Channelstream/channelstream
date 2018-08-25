@@ -47,5 +47,4 @@ def includeme(config):
 
 
 def handle_CORS(request):
-    request.handle_cors()
     return ""

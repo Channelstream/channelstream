@@ -283,7 +283,6 @@ def listen(request):
         200:
           description: "Success"
     """
-    request.handle_cors()
     config = request.registry.settings
     conn_id = utils.uuid_from_string(request.params.get("conn_id"))
     connection = server_state.CONNECTIONS.get(conn_id)
@@ -685,7 +684,6 @@ def info(request):
 class ServerViews(object):
     def __init__(self, request):
         self.request = request
-        self.request.handle_cors()
         self.utils = SharedUtils(request)
 
     @view_config(

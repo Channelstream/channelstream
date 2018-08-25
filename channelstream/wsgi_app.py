@@ -45,6 +45,8 @@ def make_app(server_config):
     json_renderer.add_adapter(uuid.UUID, uuid_adapter)
     config.add_renderer("json", json_renderer)
 
+    config.add_subscriber('channelstream.subscribers.handle_new_request',
+                          'pyramid.events.NewRequest')
     config.add_request_method("channelstream.utils.handle_cors", "handle_cors")
     config.include("channelstream.wsgi_views")
     config.scan("channelstream.wsgi_views.server")

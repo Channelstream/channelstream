@@ -18,7 +18,7 @@ def handle_cors(request):
 
     request.response.headers.add("XDomainRequestAllowed", "1")
     request.response.headers.add(
-        "Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT"
+        "Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH"
     )
     request.response.headers.add(
         "Access-Control-Allow-Headers",
