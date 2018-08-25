@@ -218,6 +218,5 @@ class MessagesDeleteBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
 
 class DisconnectBodySchema(ChannelstreamSchema):
     conn_id = fields.UUID(
-        required=True,
-        validate=[validate.Length(min=1, max=256), validate_connection_id],
+        required=True
     )
