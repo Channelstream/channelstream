@@ -79,7 +79,12 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         this.channels = state.chatView.channels;
         this.users = state.chatView.users;
         this.page = state.app.selectedPage;
-        if (oldUser && oldUser.username !== this.user.username){
+    }
+
+    update(changedProps){
+        super.update();
+        let changedUser = changedProps.get('user');
+        if (changedUser && changedUser.username !== this.user.username){
             this.handleUserChange();
         }
     }

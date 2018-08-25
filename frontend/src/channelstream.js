@@ -232,7 +232,7 @@ export const ChannelStreamConnection = {
      */
     disconnect: function () {
         let request = new ChannelStreamRequest();
-        request.url = this.disconnectUrl;
+        request.url = this.disconnectUrl + '?conn_id=' + this.connectionId;
         request.body = {
             conn_id: this.connectionId
         };
