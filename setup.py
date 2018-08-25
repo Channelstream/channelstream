@@ -7,18 +7,24 @@ from channelstream import __version__
 
 
 here = path.abspath(path.dirname(__file__))
-REQUIREMENTS = open(path.join(here, "requirements.txt")).readlines()
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 compiled = re.compile("([^=><]*).*")
 
+requires = [
+    "gevent>=1.1",
+    "ws4py>=0.3.5",
+    "marshmallow==2.15.0",
+    "dateutils",
+    "pyramid>=1.8",
+    "pyramid_jinja2",
+    "pyramid_apispec>=0.2",
+    "itsdangerous",
+    "requests",
+    "six",
+]
 
-def parse_req(req):
-    return compiled.search(req).group(1).strip()
-
-
-requires = [_f for _f in REQUIREMENTS if _f]
 version = "{}.{}.{}".format(
     __version__["major"], __version__["minor"], __version__["patch"]
 )
