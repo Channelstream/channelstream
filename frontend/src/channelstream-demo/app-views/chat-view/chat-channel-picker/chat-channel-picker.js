@@ -8,13 +8,13 @@ class ChatChannelPicker extends LitElement {
         return 'chat-channel-picker';
     }
 
-    _render({possibleChannels, subscribedChannels}) {
+    render() {
         return html`
-        ${possibleChannels.map((channel) => html`
-        <paper-button raised on-tap=${(e) => this.subscribeToChannel(e, channel)}>
-        <iron-icon icon="icons:${(subscribedChannels.indexOf(channel) !== -1 ? 'check-box' : 'check-box-outline-blank')}">
+        ${this.possibleChannels.map((channel) => html`
+        <paper-button raised @tap=${(e) => this.subscribeToChannel(e, channel)}>
+        <iron-icon .icon="icons:${(this.subscribedChannels.indexOf(channel) !== -1 ? 'check-box' : 'check-box-outline-blank')}">
         </iron-icon>
-        ${subscribedChannels.indexOf(channel) !== -1 ? 'Connected to ' : 'Connect to'} "${channel}"
+        ${this.subscribedChannels.indexOf(channel) !== -1 ? 'Connected to ' : 'Connect to'} "${channel}"
         </paper-button>`)}
         `
     }

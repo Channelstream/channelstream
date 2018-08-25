@@ -3,7 +3,7 @@ import {LitElement, html} from '@polymer/lit-element';
 
 class AppDebug extends LitElement {
 
-    _render({data}) {
+    render() {
         return html`
         <style>
             pre{
@@ -11,7 +11,7 @@ class AppDebug extends LitElement {
                 border: 1px solid;
             }
         </style>
-        <pre>${JSON.stringify(data, null, 4)}</pre>
+        <pre>${JSON.stringify(this.data, null, 4)}</pre>
         `
     }
 

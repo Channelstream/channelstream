@@ -15,23 +15,26 @@ import {actions as currentActions} from './redux/current_actions';
 
 class ServerInfo extends LitElement {
 
-    _render({channels, serverStats, selectedChannel}) {
+    render() {
 
+        let channels = this.channels;
+        let serverStats = this.serverStats;
+        let selectedChannel = this.selectedChannel;
         let channelInfo = html`No channel selected`;
 
         if (selectedChannel) {
             let channel = channels.filter((i) => i.uuid === selectedChannel)[0];
 
             channelInfo = html`
-                        <paper-card heading="channel: ${channel.name}" class$="channel-${channel.uuid}">
+                        <paper-card .heading="channel: ${channel.name}" class="channel-${channel.uuid}">
             <div class="card-actions">
                 <span>
-                <paper-button raised toggles on-tap=${(e) => this.toggleHistory(channel.uuid)}">
+                <paper-button raised toggles  @tap=${(e) => this.toggleHistory(channel.uuid)}">
                     <iron-icon icon="icons:history"></iron-icon>History</paper-button>
                 <paper-tooltip position="top" animation-delay="0">Shows this channels history</paper-tooltip>
                 </span>
                 <span>
-                <paper-button raised toggles on-tap=${(e) => this.toggleUsers(channel.uuid)}">
+                <paper-button raised toggles  @tap=${(e) => this.toggleUsers(channel.uuid)}">
                     <iron-icon icon="social:people-outline"></iron-icon>Users</paper-button>
                 <paper-tooltip position="top" animation-delay="0">Shows currently connected users</paper-tooltip>
                 </span>
@@ -44,18 +47,18 @@ class ServerInfo extends LitElement {
                         <li><strong>Total users</strong>: ${channel.total_users}</li>
                     </ul>
                     <p><strong>Config</strong></p>
-                    <app-debug data="${channel.settings}"></app-debug>
+                    <app-debug .data="${channel.settings}"></app-debug>
 
-                    <iron-collapse class$="channel-history-${channel.uuid}">
+                    <iron-collapse class="channel-history-${channel.uuid}">
                         <div class="history-holder">
                             <strong>Message history:</strong>
                             ${channel.history.map((item) => html`
-                            <app-debug data="${item}"></app-debug>
+                            <app-debug .data="${item}"></app-debug>
                             `)}
                         </div>
                     </iron-collapse>
 
-                    <iron-collapse class$="channel-users-${channel.uuid}">
+                    <iron-collapse class="channel-users-${channel.uuid}">
                         <div class="users-holder">
                             <strong>Connected users:</strong>
                             ${channel.users.map((item) => html`
@@ -162,7 +165,7 @@ class ServerInfo extends LitElement {
             <div class="column-left">
             <ul>
             ${repeat(channels, (channel) => channel.name, (channel, index) => html`
-            <li><paper-button on-click=${(e) => this.selectChannel(channel.uuid)}>${index + 1} - ${channel.name}</paper-button></li>
+            <li><paper-button  @click="${(e) => this.selectChannel(channel.uuid)}">${index + 1} - ${channel.name}</paper-button></li>
             `)}
             </ul>
             </div>
@@ -186,7 +189,6 @@ class ServerInfo extends LitElement {
     }
 
     selectChannel(channelId) {
-        console.log('sc', channelId)
         this.selectedChannel = channelId;
     }
 

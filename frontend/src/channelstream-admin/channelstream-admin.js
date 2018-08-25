@@ -44,7 +44,7 @@ const fetchServerInfo = (url, store) => {
 
 class ChannelStreamAdmin extends connect(store)(LitElement) {
 
-    _render({channels, serverStats}) {
+    render() {
         return html`
         <style>
             #admin-page-progress {
@@ -54,9 +54,8 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
             }
         </style>
 
-        <paper-progress id="admin-page-progress" indeterminate disabled?=${this.currentActions.active.length === 0}></paper-progress>
-
-        <server-info channels=${channels} serverStats=${serverStats}></server-info>
+        <paper-progress id="admin-page-progress" indeterminate ?disabled=${this.currentActions.active.length === 0}></paper-progress>
+        <server-info .channels=${this.channels} .serverStats=${this.serverStats}></server-info>
         `;
     }
 
@@ -66,7 +65,6 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
 
     static get properties() {
         return {
-            appConfig: Object,
             channels: Array,
             serverStats: Object,
             currentActions: Object
@@ -118,4 +116,4 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
 
 customElements.define(ChannelStreamAdmin.is, ChannelStreamAdmin);
 
-export {fetchServerInfo};
+export {fetchServerInfo, ChannelStreamAdmin};

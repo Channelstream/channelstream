@@ -15,11 +15,10 @@ import {actions as chatViewMessagesActions} from '../redux/chat_view/messages';
 
 class ChannelStreamChatDemo extends connect(store)(LitElement) {
 
-    _render({user, page}) {
+    render() {
         let currentPage;
-        if (page === 'chat'){ currentPage = html`<chat-view></chat-view>`};
-        if (page === 'admin'){ currentPage =  html`<admin-view></admin-view>`};
-
+        if (this.page === 'chat'){ currentPage = html`<chat-view></chat-view>`};
+        if (this.page === 'admin'){ currentPage =  html`<admin-view></admin-view>`};
         return html`
         <style>
             .pad-content {
@@ -33,21 +32,22 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
             }
 
         </style>
+       
         <channelstream-connection
                 id="channelstream-connection"
-                username=${user.username}
-                channels=${user.subscribedChannels}
-                on-channelstream-listen-message=${(e) => this.receivedMessage(e)}
-                on-channelstream-connected=${(e) => this.handleConnected(e)}
-                on-channelstream-subscribed=${(e) => this.handleSubscribed(e)}
-                on-channelstream-unsubscribed=${(e) => this.handleUnsubscribed(e)}
-                on-channelstream-channels-changed=${(e) => this.handleChannelsChange(e)}>
+                .username=${this.user.username}
+                .channels=${this.user.subscribedChannels}
+                @channelstream-listen-message=${(e) => this.receivedMessage(e)}
+                @channelstream-connected=${(e) => this.handleConnected(e)}
+                @channelstream-subscribed=${(e) => this.handleSubscribed(e)}
+                @channelstream-unsubscribed=${(e) => this.handleUnsubscribed(e)}
+                @channelstream-channels-changed=${(e) => this.handleChannelsChange(e)}>
         </channelstream-connection>
 
         <app-toolbar>
-            <span class="title">Channelstream Demo - Hello ${user.username}</span>
+            <span class="title">Channelstream Demo - Hello ${this.user.username}</span>
 
-            <paper-tabs selected=${page} attr-for-selected="name" on-selected-changed=${(e) => this.changedTab(e)}>
+            <paper-tabs .selected=${this.page} attr-for-selected="name" @selected-changed=${(e) => this.changedTab(e)}>
                 <paper-tab name="chat">Chat</paper-tab>
                 <paper-tab name="admin">Admin Stats</paper-tab>
             </paper-tabs>
@@ -65,7 +65,6 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
 
     static get properties() {
         return {
-            appConfig: Object,
             isReady: Boolean,
             user: Object,
             channels: Array,
@@ -75,10 +74,14 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
     }
 
     _stateChanged(state) {
+        let oldUser = this.user;
         this.user = state.user;
         this.channels = state.chatView.channels;
         this.users = state.chatView.users;
         this.page = state.app.selectedPage;
+        if (oldUser && oldUser.username !== this.user.username){
+            this.handleUserChange();
+        }
     }
 
     constructor() {
@@ -143,8 +146,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
     }
 
     /** kicks off the connection */
-    connectedCallback() {
-        super.connectedCallback();
+    firstRendered() {
         var channelstreamConnection = this.shadowRoot.querySelector('channelstream-connection');
         channelstreamConnection.connectUrl = this.appConfig.connectUrl;
         channelstreamConnection.disconnectUrl = this.appConfig.disconnectUrl;
@@ -171,24 +173,14 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         this.addEventListener('message-send', this.messageSend);
         this.addEventListener('message-edit', this.messageEdit);
         this.addEventListener('message-delete', this.messageDelete);
-
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
     }
 
-    _didRender(props, changedProps, prevProps){
-        if (changedProps.user && prevProps.user){
-            this.handleUserChange(changedProps.user, prevProps.user);
-        }
-    }
-
     /** creates new connection on name change */
-    handleUserChange(newObj, oldObj) {
-        if (oldObj.username === newObj.username) {
-            return;
-        }
+    handleUserChange() {
         var connection = this.getConnection();
         connection.disconnect();
         connection.connect();

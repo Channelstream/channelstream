@@ -4,7 +4,7 @@ import gravatar from './gravatarjs.js';
 
 class ChatAvatar extends LitElement {
 
-    _render({email, username}){
+    render(){
         return html`
         <style>
             iron-image {
@@ -17,7 +17,7 @@ class ChatAvatar extends LitElement {
                 @apply(--chat-avatar-mixin);
             }
         </style>
-        <iron-image sizing="cover" src=${this._getAvatar(username, email)} preload fade></iron-image>
+        <iron-image sizing="cover" .src=${this._getAvatar(this.username, this.email)} preload fade></iron-image>
         `
     }
 

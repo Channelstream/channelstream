@@ -15,29 +15,35 @@ class ChatMessage extends LitElement {
         return true;
     }
 
-    _render({message, user}){
-
+    render(){
         let editIcons = ``;
-        if (message.user === user.username){
+        let messageNode = ``;
+        let messageText;
+
+        if (this.message.user === this.user.username){
             editIcons = html`
-            <paper-icon-button icon="create" on-tap=${(e) => this.messageEdit(message)}></paper-icon-button>
-            <paper-icon-button icon="delete" on-tap=${(e) => this.messageDelete(message)}></paper-icon-button>
+            <paper-icon-button icon="create" @tap=${(e) => this.messageEdit()}></paper-icon-button>
+            <paper-icon-button icon="delete" @tap=${(e) => this.messageDelete()}></paper-icon-button>
             `;
         }
 
-        let messageNode = ``
-
+        if (this.message.type === 'message'){
+            messageText = this.message.message.text
+        }
+        else{
+            messageText = `User ${this.message.message.action}`
+        }
 
         if (this.edited){
             messageNode = html`
             <form onsubmit="return false;">
-            <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.messageEdited(e)}></iron-a11y-keys>
-                <paper-input name="message" label="Message" value="${message.message.text}"></paper-input>
-                <paper-icon-button icon="icons:send" on-tap=${(e) => this.messageEdited(e)}></paper-icon-button>
+            <iron-a11y-keys id="a11y" keys="enter" @keys-pressed=${(e) => this.messageEdited(e)}></iron-a11y-keys>
+                <paper-input name="message" label="Message" .value="${this.message.message.text}"></paper-input>
+                <paper-icon-button icon="icons:send" @tap=${(e) => this.messageEdited(e)}></paper-icon-button>
             </form>`;
         }
         else{
-            messageNode = html`<span class="text">${this._messageText(message)}</span>`;
+            messageNode = html`<span class="text">${messageText}</span>`;
         }
 
         return html`
@@ -77,10 +83,10 @@ class ChatMessage extends LitElement {
             }
 
         </style>
-        <chat-avatar username=${message.user} email=${message.email}></chat-avatar>
-        <div class$="message ${message.type}">
-            <div>[${message.channel}] <strong>${message.user}</strong> ${editIcons}</div>
-            <div><span class="timestamp">${message.timestamp.split('.')[0]}</span>:
+        <chat-avatar .username=${this.message.user} .email=${this.message.email}></chat-avatar>
+        <div class="message ${this.message.type}">
+            <div>[${this.message.channel}] <strong>${this.message.user}</strong> ${editIcons}</div>
+            <div><span class="timestamp">${this.message.timestamp.split('.')[0]}</span>:
                 ${messageNode}</div>
         </div>
         <br clear="both"/>
@@ -103,15 +109,6 @@ class ChatMessage extends LitElement {
         super();
         // this is just for some debug fun
         this.random = Math.random();
-    }
-
-    _messageText(message) {
-        if (message.type === 'message'){
-            return message.message.text
-        }
-        else{
-            return `User ${message.message.action}`
-        }
     }
 
     messageEdit(){

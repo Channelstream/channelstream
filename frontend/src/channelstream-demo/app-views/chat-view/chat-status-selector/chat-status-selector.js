@@ -6,7 +6,7 @@ import '@polymer/paper-item/paper-item.js';
 
 class ChatStatusSelector extends LitElement {
 
-    _render({selected}) {
+    render() {
         return html`
         <style>
             paper-item {
@@ -15,7 +15,7 @@ class ChatStatusSelector extends LitElement {
         </style>
         <paper-dropdown-menu label="Status Color">
             <paper-listbox slot="dropdown-content" class="dropdown-content" 
-            on-selected-changed=${(e) => this._changeColor(e)} attr-for-selected="value">
+            @selected-changed=${(e) => this._changeColor(e)} attr-for-selected="value">
                 <paper-item value="black">Black</paper-item>
                 <paper-item value="red">Red</paper-item>
                 <paper-item value="green">Green</paper-item>

@@ -9,7 +9,7 @@ class ChatMessageList extends connect(store)(LitElement) {
         return 'chat-message-list';
     }
 
-    _render({messages, selectedChannel, user}){
+    render(){
         return html`
         <style>
             .message-list {
@@ -20,8 +20,8 @@ class ChatMessageList extends connect(store)(LitElement) {
         </style>
         
         <div class="message-list">
-        ${(messages.channelMessages[selectedChannel] || []).map((message, index) => html`
-        <chat-message message=${messages.messages[message]} user=${user}></chat-message>
+        ${(this.messages.channelMessages[this.selectedChannel] || []).map((message, index) => html`
+        <chat-message .message=${this.messages.messages[message]} .user=${this.user}></chat-message>
         `)}
         </div>
         `
@@ -35,7 +35,8 @@ class ChatMessageList extends connect(store)(LitElement) {
         };
     }
 
-    _didRender(props, changedProps, prevProps){
+    update(){
+        super.update();
         setTimeout(() => {
             let listElem = this.shadowRoot.querySelector('.message-list');
             listElem.scrollTop = listElem.scrollHeight;

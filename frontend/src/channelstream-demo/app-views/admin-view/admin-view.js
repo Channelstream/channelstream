@@ -9,7 +9,7 @@ import {fetchServerInfo} from '../../../channelstream-admin/channelstream-admin'
 
 class AdminView extends connect(store)(LitElement) {
 
-    _render({channels, serverStats}) {
+    render() {
         return html`
         <style>
             #admin-page-progress {
@@ -19,9 +19,9 @@ class AdminView extends connect(store)(LitElement) {
             }
         </style>
 
-        <paper-progress id="admin-page-progress" indeterminate disabled?=${this.currentActions.active.length === 0}></paper-progress>
+        <paper-progress id="admin-page-progress" indeterminate ?disabled=${this.currentActions.active.length === 0}></paper-progress>
 
-        <server-info channels=${channels} serverStats=${serverStats}></server-info>
+        <server-info .channels=${this.channels} .serverStats=${this.serverStats}></server-info>
         `;
     }
     
@@ -31,25 +31,10 @@ class AdminView extends connect(store)(LitElement) {
 
     static get properties() {
         return {
-            appConfig: {
-                type: Array,
-                value: () => {
-                    return window.AppConf;
-                }
-            },
-            channels: {
-                type: Array
-            },
-            serverStats: {
-                type: Object
-            },
-            currentActions: {
-                type: Array
-            },
-            ironSelected: {
-                type: Boolean,
-                observer: 'ironChange'
-            },
+            channels: Array,
+            serverStats: Object,
+            currentActions: Array,
+            ironSelected: Boolean
         };
     }
 
@@ -65,10 +50,16 @@ class AdminView extends connect(store)(LitElement) {
         this.currentActions = state.currentActions;
     }
 
-    ready() {
-        super.ready();
+    connectedCallback() {
+        super.connectedCallback();
         // refresh data when document is attached to dom
         this.refresh();
+        this._addInterval();
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this._clearInterval();
     }
 
     refresh() {
@@ -82,16 +73,6 @@ class AdminView extends connect(store)(LitElement) {
     _clearInterval() {
         if (this.interval) {
             clearInterval(this.interval);
-        }
-    }
-
-    ironChange(newVal, oldVal) {
-        // refresh the data every 5s
-        if (newVal) {
-            this._addInterval();
-        }
-        else {
-            this._clearInterval();
         }
     }
 

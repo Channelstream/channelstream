@@ -22,12 +22,12 @@ import {actions as channelViewUiActions} from '../../redux/chat_view/ui';
 class ChatView extends connect(store)(LitElement) {
 
 
-    _render({user, possibleChannels, selectedChannel}) {
+    render() {
 
         let dialogButton = null;
-        if (user.anonymous){
+        if (this.user.anonymous){
             dialogButton = html`
-                <paper-button on-tap=${(e) => this.openDialog(e)} raised>
+                <paper-button @tap=${(e) => this.openDialog(e)} raised>
                 <iron-icon icon="social:person-outline"></iron-icon>
                 Change username
                 </paper-button>
@@ -67,8 +67,8 @@ class ChatView extends connect(store)(LitElement) {
             <p>Log in to post messages</p>
 
             <iron-form id="login-form">
-            <form method="post" on-iron-form-presubmit=${(e) => this.formPresubmit(e)}>
-                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.changeUser(e)}></iron-a11y-keys>
+            <form method="post" @iron-form-presubmit=${(e) => this.formPresubmit(e)}>
+                <iron-a11y-keys id="a11y" keys="enter" @keys-pressed=${(e) => this.changeUser(e)}></iron-a11y-keys>
                 <paper-input label="User Name" name="username" min-length="1" auto-validate required></paper-input>
                 <paper-input label="Email" name="email" min-length="1" auto-validate required></paper-input>
             </form>
@@ -76,36 +76,35 @@ class ChatView extends connect(store)(LitElement) {
 
 
             <div class="buttons">
-                <paper-button on-tap=${(e) => this.changeUser(e)} autofocus>Confirm credentials</paper-button>
+                <paper-button @tap=${(e) => this.changeUser(e)} autofocus>Confirm credentials</paper-button>
             </div>
         </paper-dialog>
 
         <div id="column-holder">
             <div class="left-column">
-                <paper-tabs selected=${selectedChannel} attr-for-selected="name"
-                            on-selected-changed=${(e) => this.selectedChannelChanged(e)}>
-                            
-                    ${user.subscribedChannels.map((channel) => html`
-                    <paper-tab name=${channel}>Channel: ${channel}</paper-tab>
+                <paper-tabs .selected=${this.selectedChannel} attr-for-selected="name"
+                            @selected-changed=${(e) => this.selectedChannelChanged(e)}>
+                    ${this.user.subscribedChannels.map((channel) => html`
+                    <paper-tab .name=${channel}>Channel: ${channel}</paper-tab>
                     `) }
                 </paper-tabs>
                 <chat-message-list></chat-message-list>
             </div>
             <div class="right-column">
                 <chat-status-selector></chat-status-selector>
-                <chat-user-list selectedChannel=${selectedChannel}></chat-user-list>
+                <chat-user-list .selectedChannel=${this.selectedChannel}></chat-user-list>
             </div>
 
         </div>
-        <iron-form id="message-form" on-iron-form-presubmit=${(e) => this.formPresubmit(e)}>
+        <iron-form id="message-form" @iron-form-presubmit=${(e) => this.formPresubmit(e)}>
             <form method="post">
-                <iron-a11y-keys id="a11y" keys="enter" on-keys-pressed=${(e) => this.messageSend(e)}></iron-a11y-keys>
+                <iron-a11y-keys id="a11y" keys="enter" @keys-pressed=${(e) => this.messageSend(e)}></iron-a11y-keys>
                 <paper-input id="message-input" name="message" label="Your message"></paper-input>
-                <paper-icon-button icon="icons:send" on-tap=${(e) => this.messageSend(e)}></paper-icon-button>
+                <paper-icon-button icon="icons:send" @tap=${(e) => this.messageSend(e)}></paper-icon-button>
                 <br/>
                 ${dialogButton}
-                <chat-channel-picker subscribedChannels=${user.subscribedChannels}
-                                     possibleChannels=${possibleChannels}></chat-channel-picker>
+                <chat-channel-picker .subscribedChannels=${this.user.subscribedChannels}
+                                     .possibleChannels=${this.possibleChannels}></chat-channel-picker>
             </form>        
         </iron-form>
         `

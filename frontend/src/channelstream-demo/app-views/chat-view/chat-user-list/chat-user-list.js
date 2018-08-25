@@ -8,11 +8,11 @@ import '../../../chat-avatar/chat-avatar.js';
 
 class ChatUserList extends connect(store)(LitElement) {
 
-    _render({users, channelsUsers, selectedChannel}) {
+    render() {
 
         let visibleUsers = [];
-        if (channelsUsers.hasOwnProperty(selectedChannel)) {
-            visibleUsers = channelsUsers[selectedChannel];
+        if (this.channelsUsers.hasOwnProperty(this.selectedChannel)) {
+            visibleUsers = this.channelsUsers[this.selectedChannel];
         }
         return html`
         <style>
@@ -35,8 +35,8 @@ class ChatUserList extends connect(store)(LitElement) {
 
         ${visibleUsers.map((username) => html`
         <div class="user"> 
-            <chat-avatar username=${username} email=${users.states[username].email}></chat-avatar>
-            <span style$="color:${users.states[username].color || 'black'}">${username}</span>
+            <chat-avatar .username=${username} .email=${this.users.states[username].email}></chat-avatar>
+            <span style="color:${this.users.states[username].color || 'black'}">${username}</span>
         </div>
         `)}
         `
