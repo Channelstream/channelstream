@@ -675,7 +675,6 @@ def info(request):
         info_config["include_connections"] = info_config.get(
             "include_connections", True
         )
-    print(info_config, request.json_body)
     channels_info = utils.get_common_info(req_channels, info_config)
     return channels_info
 
