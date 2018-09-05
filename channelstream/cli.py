@@ -148,6 +148,10 @@ def cli_start():
     server.start()
     log.info("Serving on {}".format(url))
     log.info("Admin interface available on {}/admin".format(url))
+    if config["secret"] == "secret":
+        log.warning("Using default secret! Remember to set that for production.")
+    if config["admin_secret"] == "admin_secret":
+        log.warning("Using default admin secret! Remember to set that for production.")
 
     server = WSGIServer((config["host"], config["port"]), RoutingApplication(config))
     server.serve_forever()
