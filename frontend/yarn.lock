@@ -856,11 +856,11 @@
     "@polymer/polymer" "^3.0.2"
     lit-html "^0.10.0"
 
-"@polymer/lit-element@^0.6.0-dev.5":
-  version "0.6.0-dev.5"
-  resolved "https://registry.yarnpkg.com/@polymer/lit-element/-/lit-element-0.6.0-dev.5.tgz#2b0d1f91af04e198dd0a806edf0ba9a7b824fd23"
+"@polymer/lit-element@^0.6.0-dev.6":
+  version "0.6.0-dev.6"
+  resolved "https://registry.yarnpkg.com/@polymer/lit-element/-/lit-element-0.6.0-dev.6.tgz#d60d01061300c8059d9dde3a9c14e03777b6a35d"
   dependencies:
-    lit-html ">=0.11.0-dev.3 <2.0.0"
+    lit-html "^0.11.0"
 
 "@polymer/marked-element@^3.0.0-pre.21", "@polymer/marked-element@^3.0.0-pre.22":
   version "3.0.0-pre.23"
@@ -6880,13 +6880,13 @@ listr@^0.14.1:
     rxjs "^6.1.0"
     strip-ansi "^3.0.1"
 
-"lit-html@>=0.11.0-dev.3 <2.0.0":
-  version "0.11.0-dev.3"
-  resolved "https://registry.yarnpkg.com/lit-html/-/lit-html-0.11.0-dev.3.tgz#6d193ad2da52f4ce2b1b3a9ab68f357d021a430c"
-
 lit-html@^0.10.0:
   version "0.10.2"
   resolved "https://registry.yarnpkg.com/lit-html/-/lit-html-0.10.2.tgz#53c846afcf91bb1e6623179ef22e327ab8ac0e0e"
+
+lit-html@^0.11.0:
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/lit-html/-/lit-html-0.11.1.tgz#ad3dcfea1dbaf65fadf335fa1e2bd9ac19255394"
 
 load-json-file@^1.0.0:
   version "1.1.0"

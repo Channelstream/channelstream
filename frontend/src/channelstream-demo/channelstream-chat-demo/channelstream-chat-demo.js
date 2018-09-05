@@ -151,7 +151,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
     }
 
     /** kicks off the connection */
-    firstRendered() {
+    firstUpdated() {
         var channelstreamConnection = this.shadowRoot.querySelector('channelstream-connection');
         channelstreamConnection.connectUrl = this.appConfig.connectUrl;
         channelstreamConnection.disconnectUrl = this.appConfig.disconnectUrl;

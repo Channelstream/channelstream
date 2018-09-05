@@ -48,7 +48,7 @@
         "@polymer/iron-image": "^3.0.0-pre.23",
         "@polymer/iron-list": "^3.0.0-pre.23",
         "@polymer/iron-pages": "^3.0.0-pre.23",
-        "@polymer/lit-element": "^0.6.0-dev.5",
+        "@polymer/lit-element": "^0.6.0-dev.6",
         "@polymer/neon-animation": "^3.0.0-pre.23",
         "@polymer/paper-badge": "^3.0.0-pre.23",
         "@polymer/paper-button": "^3.0.0-pre.23",
