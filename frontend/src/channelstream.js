@@ -173,8 +173,8 @@ export class ChannelStreamConnection {
      *
      * Add custom function that will manipulate request before its being executed
      *
-     * @param type
-     * @param func
+     * @param type {string} type of mutator function to register
+     * @param func {function} a callable to register
      */
     addMutator(type, func) {
         this.mutators[type].push(func);
@@ -182,7 +182,7 @@ export class ChannelStreamConnection {
 
     /**
      * Sends AJAX request to update user state.
-     * @param stateObj
+     * @param stateObj {object}
      */
     updateUserState(stateObj) {
         let request = new ChannelStreamRequest();
@@ -202,7 +202,7 @@ export class ChannelStreamConnection {
 
     /**
      * Subscribes user to channels.
-     * @param channels {string[]} List of channels to subscribe
+     * @param channels {string[]} List of channels sent via POST to `subscribeUrl`.
      */
     subscribe(channels) {
         let request = new ChannelStreamRequest();
@@ -217,19 +217,19 @@ export class ChannelStreamConnection {
         request.handleError = this._handleSubscribeError.bind(this);
         request.handleResponse = this._handleSubscribe.bind(this);
         if (request.body.channels && request.body.channels.length) {
-            request.execute();
+            request.execute('POST');
         }
     }
 
     /**
      * Unsubscribes user from channels.
-     *
+     * @param channels {string[]} List of channels sent via POST to `unsubscribeUrl`.
      */
-    unsubscribe(unsubscribe) {
+    unsubscribe(channels) {
         let request = new ChannelStreamRequest();
         request.url = this.unsubscribeUrl;
         request.body = {
-            channels: unsubscribe,
+            channels: channels,
             conn_id: this.connectionId
         };
         for (let callable of this.mutators.unsubscribe) {
@@ -237,12 +237,13 @@ export class ChannelStreamConnection {
         }
         request.handleError = this._handleUnsubscribeError.bind(this);
         request.handleResponse = this._handleUnsubscribe.bind(this);
-        request.execute();
+        request.execute('POST');
     }
 
     /**
      * calculates list of channels we should add user to based on difference
      * between channels property and passed channel list
+     * @param channels {string[]} List of channels to subscribe
      */
     calculateSubscribe(channels) {
         let toSubscribe = [];
@@ -257,12 +258,12 @@ export class ChannelStreamConnection {
     /**
      * calculates list of channels we should remove user from based difference
      * between channels property and passed channel list
+     * @param channels {string[]} List of channels to un-subscribe
      */
     calculateUnsubscribe(channels) {
         if (!channels) {
             channels = []
         }
-        ;
         let toUnsubscribe = [];
 
         for (let channel of channels) {
@@ -274,7 +275,7 @@ export class ChannelStreamConnection {
     }
 
     /**
-     * Marks the connection as expired.
+     * Marks the connection as expired via /disconnect API.
      *
      */
     disconnect() {
@@ -292,8 +293,8 @@ export class ChannelStreamConnection {
     }
 
     /**
-     * Sends a message to the web application backend.
-     *
+     * Sends a POST to the web application backend.
+     * @param message {object} Message object sent via POST to `messageUrl`.
      */
     message(message) {
         let request = new ChannelStreamRequest();
@@ -304,12 +305,12 @@ export class ChannelStreamConnection {
         }
         request.handleError = this._handleMessageError.bind(this);
         request.handleResponse = this._handleMessage.bind(this);
-        request.execute();
+        request.execute('POST');
     }
 
     /**
-     * Sends a delete request to the web application backend.
-     *
+     * Sends a DELETE request to the web application backend.
+     * @param message {object} Message object sent to DELETE to `messageUrl`.
      */
     delete(message) {
         let request = new ChannelStreamRequest();
@@ -324,8 +325,8 @@ export class ChannelStreamConnection {
     }
 
     /**
-     * Sends a edit request to the web application backend.
-     *
+     * Sends a PATCH request to the web application backend.
+     * @param message {object} Message object sent via PATCH to `messageUrl`.
      */
     edit(message) {
         let request = new ChannelStreamRequest();
@@ -341,7 +342,8 @@ export class ChannelStreamConnection {
 
     /**
      * Opens "long lived" (websocket/longpoll) connection to the channelstream server.
-     *
+     * @param request
+     * @param data
      */
     startListening(request, data) {
         this.beforeListeningCallback(request, data);
@@ -358,6 +360,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired before connection start listening for messages
+     * @param request
+     * @param data
      */
     beforeListeningCallback(request, data) {
         if (!this.debug) {
@@ -453,6 +457,12 @@ export class ChannelStreamConnection {
         console.log('channelsChangedCallback', data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleListenOpen(request, data) {
         this.connected = true;
         this.listenOpenedCallback(request, data);
@@ -461,6 +471,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired when client starts listening for messages
+     * @param request
+     * @param data
      */
     listenOpenedCallback(request, data) {
         if (!this.debug) {
@@ -484,11 +496,23 @@ export class ChannelStreamConnection {
         }
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleListenError(request, data) {
         this.connected = false;
         this.retryConnection(request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleConnectError(request, data) {
         this.connected = false;
         this.retryConnection(request, data);
@@ -497,6 +521,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired when client fails connect() call
+     * @param request
+     * @param data
      */
     connectErrorCallback(request, data) {
         if (!this.debug) {
@@ -507,6 +533,8 @@ export class ChannelStreamConnection {
 
     /**
      * Handles long-polling payloads
+     * @param data
+     * @private
      */
     _handleListenMessageEvent(data) {
         setTimeout(this.openLongPoll.bind(this), 0);
@@ -515,6 +543,8 @@ export class ChannelStreamConnection {
 
     /**
      * Handles ws payloads
+     * @param data
+     * @private
      */
     _handleListenWSMessageEvent(data) {
         let parsedData = JSON.parse(data.data);
@@ -523,6 +553,7 @@ export class ChannelStreamConnection {
 
     /**
      * Fired when messages are received
+     * @param data
      */
     listenMessageCallback(data) {
         if (!this.debug) {
@@ -531,6 +562,12 @@ export class ChannelStreamConnection {
         console.log('listenMessageCallback', data)
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleWebsocketCloseEvent(request, data) {
         this.connected = false;
         this.listenCloseCallback(request, data);
@@ -539,6 +576,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired on websocket connection close event
+     * @param request
+     * @param data
      */
     listenCloseCallback(request, data) {
         if (!this.debug) {
@@ -547,6 +586,12 @@ export class ChannelStreamConnection {
         console.log('listenCloseCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleListenErrorEvent(request, data) {
         this.connected = false;
         this.listenErrorCallback(request, data);
@@ -554,6 +599,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired on long-pool/websocket connection error event
+     * @param request
+     * @param data
      */
     listenErrorCallback(request, data) {
         if (!this.debug) {
@@ -562,6 +609,12 @@ export class ChannelStreamConnection {
         console.log('listenErrorCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleConnect(request, data) {
         this.currentBounceIv = 0;
         this.connectionId = data.conn_id;
@@ -573,6 +626,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired on successful connect() call
+     * @param request
+     * @param data
      */
     connectCallback(request, data) {
         if (!this.debug) {
@@ -581,6 +636,12 @@ export class ChannelStreamConnection {
         console.log('connectCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleDisconnect(request, data) {
         this.connected = false;
         this.disconnectCallback(request, data);
@@ -588,6 +649,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired after successful disconnect() call
+     * @param request
+     * @param data
      */
     disconnectCallback(request, data) {
         if (!this.debug) {
@@ -596,12 +659,20 @@ export class ChannelStreamConnection {
         console.log('disconnectCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleMessage(request, data) {
         this.messageCallback(request, data);
     }
 
     /**
      * Fired on successful message() call
+     * @param request
+     * @param data
      */
     messageCallback(request, data) {
         if (!this.debug) {
@@ -610,12 +681,20 @@ export class ChannelStreamConnection {
         console.log('messageCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleMessageError(request, data) {
         this.messageErrorCallback(request, data);
     }
 
     /**
      * Fired on message() call error
+     * @param request
+     * @param data
      */
     messageErrorCallback(request, data) {
         if (!this.debug) {
@@ -624,12 +703,20 @@ export class ChannelStreamConnection {
         console.log('messageErrorCallback', request, data)
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleMessageEdit(request, data) {
         this.messageEditCallback(request, data);
     }
 
     /**
-     * Fired on successful message() call
+     * Fired on successful edit() call
+     * @param request
+     * @param data
      */
     messageEditCallback(request, data) {
         if (!this.debug) {
@@ -638,12 +725,20 @@ export class ChannelStreamConnection {
         console.log('messageCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleMessageEditError(request, data) {
         this.messageEditErrorCallback(request, data);
     }
 
     /**
      * Fired on edit() call error
+     * @param request
+     * @param data
      */
     messageEditErrorCallback(request, data) {
         if (!this.debug) {
@@ -652,12 +747,20 @@ export class ChannelStreamConnection {
         console.log('messageEditErrorCallback', request, data)
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleMessageDelete(request, data) {
         this.messageDeleteCallback(request, data);
     }
 
     /**
-     * Fired on successful message() call
+     * Fired on successful delete() call
+     * @param request
+     * @param data
      */
     messageDeleteCallback(request, data) {
         if (!this.debug) {
@@ -666,12 +769,20 @@ export class ChannelStreamConnection {
         console.log('messageCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleMessageDeleteError(request, data) {
         this.messageDeleteErrorCallback(request, data);
     }
 
     /**
      * Fired on delete() call error
+     * @param request
+     * @param data
      */
     messageDeleteErrorCallback(request, data) {
         if (!this.debug) {
@@ -680,6 +791,12 @@ export class ChannelStreamConnection {
         console.log('messageDeleteErrorCallback', request, data)
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleSubscribe(request, data) {
         this.channels = data.channels;
         this.channelsChangedCallback(this.channels);
@@ -688,6 +805,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired on successful subscribe() call
+     * @param request
+     * @param data
      */
     subscribeCallback(request, data) {
         if (!this.debug) {
@@ -696,12 +815,20 @@ export class ChannelStreamConnection {
         console.log('subscribeCallback', request, data)
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleSubscribeError(request, data) {
         this.subscribeErrorCallback(request, data);
     }
 
     /**
      * Fired on subscribe() call error
+     * @param request
+     * @param data
      */
     subscribeErrorCallback(request, data) {
         if (!this.debug) {
@@ -710,6 +837,12 @@ export class ChannelStreamConnection {
         console.log('subscribeErrorCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleUnsubscribe(request, data) {
         this.channels = data.channels;
         this.channelsChangedCallback(this.channels);
@@ -718,6 +851,8 @@ export class ChannelStreamConnection {
 
     /**
      * Fired on successful unsubscribe() call
+     * @param request
+     * @param data
      */
     unsubscribeCallback(request, data) {
         if (!this.debug) {
@@ -726,12 +861,20 @@ export class ChannelStreamConnection {
         console.log('unsubscribeCallback', request, data);
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleUnsubscribeError(request, data) {
         this.unsubscribeErrorCallback(request, data);
     }
 
     /**
      * Fired on unsubscribe() call error
+     * @param request
+     * @param data
      */
     unsubscribeErrorCallback(request, data) {
         if (!this.debug) {
@@ -740,12 +883,20 @@ export class ChannelStreamConnection {
         console.log('unsubscribeErrorCallback', request, data)
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleSetUserState(request, data) {
         this.setUserStateCallback(request, data);
     }
 
     /**
      * Fired on successful updateUserState() call
+     * @param request
+     * @param data
      */
     setUserStateCallback(request, data) {
         if (!this.debug) {
@@ -754,12 +905,20 @@ export class ChannelStreamConnection {
         console.log('setUserStateCallback', request, data)
     }
 
+    /**
+     *
+     * @param request
+     * @param data
+     * @private
+     */
     _handleSetUserStateError(request, data) {
         this.setUserStateErrorCallback(request, data);
     }
 
     /**
      * Fired on updateUserState() error
+     * @param request
+     * @param data
      */
     setUserStateErrorCallback(request, data) {
         if (!this.debug) {
