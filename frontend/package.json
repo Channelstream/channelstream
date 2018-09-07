@@ -9,6 +9,7 @@
     "scripts": {
         "build": "webpack --progress --mode=production",
         "dev": "webpack --watch --progress --mode=development",
+        "doc": "jsdoc -c ./jsdoc.json",
         "bower": "bower install"
     },
     "license": "https://github.com/AppEnlight/channelstream/blob/master/LICENSE",
@@ -27,8 +28,10 @@
         "babel-plugin-transform-object-rest-spread": "^6.26.0",
         "babel-preset-env": "^1.6.0",
         "copy-webpack-plugin": "^4.4.2",
+        "docdash": "^1.0.0",
         "exports-loader": "^0.6.4",
         "html-webpack-plugin": "^2.30.1",
+        "jsdoc": "^3.5.5",
         "polymer-cli": "",
         "polymer-webpack-loader": "^2.0.1",
         "wct-browser-legacy": "^0.0.1-pre.11",
