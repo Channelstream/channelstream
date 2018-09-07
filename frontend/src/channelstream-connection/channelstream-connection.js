@@ -181,7 +181,7 @@ class ChannelStreamConnectionElement extends HTMLElement {
         this.increaseBounceIv = 2000;
         this.noWebsocket = false;
         this.connected = false;
-        this.connection = ChannelStreamConnection;
+        this.connection = new ChannelStreamConnection();
     }
 
 
