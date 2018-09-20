@@ -141,11 +141,19 @@
   }
 
   if (polyfills.length) {
-    var script = document.querySelector('script[src*="' + name +'"]');
-    var newScript = document.createElement('script');
+    var url;
+    var polyfillFile = 'bundles/webcomponents-' + polyfills.join('-') + '.js';
+
     // Load it from the right place.
-    var replacement = 'bundles/webcomponents-' + polyfills.join('-') + '.js';
-    var url = script.src.replace(name, replacement);
+    if (window.WebComponents.root) {
+      url = window.WebComponents.root + polyfillFile;
+    } else {
+      var script = document.querySelector('script[src*="' + name +'"]');
+      // Load it from the right place.
+      url = script.src.replace(name, polyfillFile);
+    }
+
+    var newScript = document.createElement('script');
     newScript.src = url;
     // if readyState is 'loading', this script is synchronous
     if (document.readyState === 'loading') {
