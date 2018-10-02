@@ -7,6 +7,7 @@ from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
 from pyramid_apispec.helpers import add_pyramid_paths
+from apispec.ext.marshmallow import MarshmallowPlugin
 
 from channelstream import operations, server_state, utils, patched_json as json
 from channelstream.validation import schemas
@@ -802,9 +803,7 @@ class ServerViews(object):
               description: "Success"
         """
         spec = APISpec(
-            title="Channelstream API",
-            version="0.7.0",
-            plugins=("apispec.ext.marshmallow",),
+            title="Channelstream API", version="0.7.0", plugins=(MarshmallowPlugin(),)
         )
         spec.definition("ConnectBody", schema=schemas.ConnectBodySchema)
         spec.definition("SubscribeBody", schema=schemas.SubscribeBodySchema)
