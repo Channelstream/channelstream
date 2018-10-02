@@ -46,7 +46,7 @@ SHARED_DEFAULTS = {
     "port": 8000,
     "host": "0.0.0.0",
     "debug": False,
-    "log_level": 'INFO',
+    "log_level": "INFO",
     "demo": False,
     "allow_cors": "",
 }
@@ -83,7 +83,9 @@ def cli_start():
         help="Port on which the server listens to",
     )
     parser.add_argument("-d", "--debug", dest="debug", help="Does nothing for now")
-    parser.add_argument("-l", "--log-level", dest="log_level", help="Does nothing for now")
+    parser.add_argument(
+        "-l", "--log-level", dest="log_level", help="Does nothing for now"
+    )
     parser.add_argument("-e", "--demo", dest="demo", help="Does nothing, BW.compat")
     parser.add_argument(
         "-x",
@@ -139,7 +141,7 @@ def cli_start():
         except ValueError:
             pass
 
-    log_level = getattr(logging, config.get("log_level", 'INFO').upper())
+    log_level = getattr(logging, config.get("log_level", "INFO").upper())
     logging.basicConfig(level=log_level)
 
     url = "http://{}:{}".format(config["host"], config["port"])
@@ -156,6 +158,9 @@ def cli_start():
     if config["admin_secret"] == "admin_secret":
         log.warning("Using default admin secret! Remember to set that for production.")
 
-    server = WSGIServer((config["host"], config["port"]), RoutingApplication(config),
-                        log=logging.getLogger('channelstream.WSGIServer'))
+    server = WSGIServer(
+        (config["host"], config["port"]),
+        RoutingApplication(config),
+        log=logging.getLogger("channelstream.WSGIServer"),
+    )
     server.serve_forever()

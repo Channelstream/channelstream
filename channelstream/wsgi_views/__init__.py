@@ -13,8 +13,12 @@ def add_v1_routes(config):
 def includeme(config):
     config.add_static_view("static", path="channelstream:static/")
     config.add_route("CORS_route", "/*foo", request_method="OPTIONS")
-    config.add_view(handle_CORS, route_name="CORS_route", renderer="string",
-                    permission=NO_PERMISSION_REQUIRED)
+    config.add_view(
+        handle_CORS,
+        route_name="CORS_route",
+        renderer="string",
+        permission=NO_PERMISSION_REQUIRED,
+    )
     config.add_route("index", "/")
     config.add_route("openapi_spec", "/openapi.json")
     config.add_route(

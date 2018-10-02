@@ -217,6 +217,4 @@ class MessagesDeleteBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
 
 
 class DisconnectBodySchema(ChannelstreamSchema):
-    conn_id = fields.UUID(
-        required=True
-    )
+    conn_id = fields.UUID(required=True)

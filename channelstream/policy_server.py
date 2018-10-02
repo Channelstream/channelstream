@@ -3,7 +3,10 @@ import logging
 
 log = logging.getLogger(__name__)
 
-POLICY = '<cross-domain-policy><allow-access-from domain="*" ' 'to-ports="*" /></cross-domain-policy>\0'
+POLICY = (
+    '<cross-domain-policy><allow-access-from domain="*" '
+    'to-ports="*" /></cross-domain-policy>\0'
+)
 POLICYREQUEST = "<policy-file-request/>"
 
 
