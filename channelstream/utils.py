@@ -36,7 +36,7 @@ def swagger_ui_script_template(request, spec_route_name, **kwargs):
     Generates the <script> code that bootstraps Swagger UI, it will be injected
     into index template
     :param request:
-    :param swagger_json_route:
+    :param spec_route_name:
     :return:
     """
     return render("templates/explorer.jinja2", value=(), request=request)
