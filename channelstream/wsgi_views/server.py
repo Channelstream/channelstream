@@ -137,7 +137,7 @@ def connect(request):
           schema:
             $ref: '#/definitions/ConnectBody'
     """
-    utils = SharedUtils(request)
+    shared_utils = SharedUtils(request)
     schema = schemas.ConnectBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
     channels = sorted(json_body["channels"])
@@ -152,7 +152,7 @@ def connect(request):
     )
 
     # get info config for channel information
-    channels_info = utils.get_common_info(channels, json_body["info"])
+    channels_info = shared_utils.get_common_info(channels, json_body["info"])
 
     return {
         "conn_id": connection.id,
@@ -165,7 +165,7 @@ def connect(request):
 
 
 @view_config(route_name="legacy_subscribe", request_method="POST", renderer="json")
-def subscribe(request, *args):
+def subscribe(request):
     """
     Subscribe view
     ---
@@ -194,7 +194,7 @@ def subscribe(request, *args):
         200:
           description: "Success"
     """
-    utils = SharedUtils(request)
+    shared_utils = SharedUtils(request)
     schema = schemas.SubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
     connection = server_state.CONNECTIONS.get(json_body["conn_id"])
@@ -206,7 +206,7 @@ def subscribe(request, *args):
 
     # get info config for channel information
     current_channels = connection.channels
-    channels_info = utils.get_common_info(current_channels, json_body["info"])
+    channels_info = shared_utils.get_common_info(current_channels, json_body["info"])
     return {
         "channels": current_channels,
         "channels_info": channels_info,
@@ -215,7 +215,7 @@ def subscribe(request, *args):
 
 
 @view_config(route_name="legacy_unsubscribe", request_method="POST", renderer="json")
-def unsubscribe(request, *args):
+def unsubscribe(request):
     """
     Unsubscribe view
     ---
@@ -244,7 +244,7 @@ def unsubscribe(request, *args):
         200:
           description: "Success"
     """
-    utils = SharedUtils(request)
+    shared_utils = SharedUtils(request)
     schema = schemas.UnsubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
     connection = server_state.CONNECTIONS.get(json_body["conn_id"])
@@ -254,7 +254,7 @@ def unsubscribe(request, *args):
 
     # get info config for channel information
     current_channels = connection.channels
-    channels_info = utils.get_common_info(current_channels, json_body["info"])
+    channels_info = shared_utils.get_common_info(current_channels, json_body["info"])
     return {
         "channels": current_channels,
         "channels_info": channels_info,
@@ -615,7 +615,7 @@ def channel_config(request):
           description: "Success"
     """
 
-    utils = SharedUtils(request)
+    shared_utils = SharedUtils(request)
 
     deserialized = {}
     schema = schemas.ChannelConfigSchema(context={"request": request})
@@ -623,7 +623,7 @@ def channel_config(request):
     for k in json_body.keys():
         deserialized[k] = schema.load(json_body[k]).data
     operations.set_channel_config(channel_configs=deserialized)
-    channels_info = utils.get_channel_info(
+    channels_info = shared_utils.get_channel_info(
         deserialized.keys(), include_history=False, include_users=False
     )
     return channels_info
@@ -658,7 +658,7 @@ def info(request):
         200:
           description: "Success"
     """
-    utils = SharedUtils(request)
+    shared_utils = SharedUtils(request)
     if not request.body:
         req_channels = server_state.CHANNELS.keys()
         info_config = {
@@ -676,7 +676,7 @@ def info(request):
         info_config["include_connections"] = info_config.get(
             "include_connections", True
         )
-    channels_info = utils.get_common_info(req_channels, info_config)
+    channels_info = shared_utils.get_common_info(req_channels, info_config)
     return channels_info
 
 

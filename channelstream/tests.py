@@ -718,24 +718,24 @@ class TestInfoView(object):
         result = info(dummy_request)
         assert sorted(("a", "aB", "c")) == sorted(result["channels"].keys())
         assert result["users"]
-        compA = sorted(result["channels"]["a"]["users"])
-        compB = sorted(["test1", "test2"])
-        assert compA == compB
+        comp_a = sorted(result["channels"]["a"]["users"])
+        comp_b = sorted(["test1", "test2"])
+        assert comp_a == comp_b
         assert result["channels"]["a"]["total_users"] == 2
         assert result["channels"]["a"]["total_connections"] == 2
         assert result["channels"]["c"]["users"] == ["test2"]
         assert result["channels"]["c"]["total_users"] == 1
         assert result["channels"]["c"]["total_connections"] == 1
         assert result["channels"]["aB"]["users"] == ["test1"]
-        compA = sorted(result["users"], key=lambda x: x["user"])
-        compB = sorted(
+        comp_a = sorted(result["users"], key=lambda x: x["user"])
+        comp_b = sorted(
             [
                 {"state": {"bar": "baz", "key": "foo"}, "user": "test1"},
                 {"state": {"bar": "baz1", "key": "foo1"}, "user": "test2"},
             ],
             key=lambda x: x["user"],
         )
-        assert compA == compB
+        assert comp_a == comp_b
         dummy_request.body = "NOTEMPTY"
         dummy_request.json_body = {"info": {"channels": ["a"]}}
         result = info(dummy_request)

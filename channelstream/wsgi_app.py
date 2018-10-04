@@ -31,7 +31,7 @@ def make_app(server_config):
             password == server_config["admin_secret"]
             and username == server_config["admin_user"]
         ):
-            return ("admin", username)
+            return "admin", username
         return None
 
     authn_policy = BasicAuthAuthenticationPolicy(check_function, realm="ChannelStream")

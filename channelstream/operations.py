@@ -1,6 +1,5 @@
 import logging
 
-import six
 
 from channelstream import server_state
 from channelstream.user import User

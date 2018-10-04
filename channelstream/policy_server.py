@@ -14,8 +14,8 @@ def client_handle(sock, address):
     log.info("%s:%s: Connection accepted." % address)
     sock.settimeout(3)
     try:
-        input = sock.recv(128)
-        if input.startswith(POLICYREQUEST):
+        input_data = sock.recv(128)
+        if input_data.startswith(POLICYREQUEST):
             sock.sendall(POLICY)
             log.info("%s:%s: Policy sent. Closing connection." % address)
         else:
