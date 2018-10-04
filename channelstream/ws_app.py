@@ -6,6 +6,11 @@ from channelstream import server_state, utils
 
 
 class ChatApplicationSocket(WebSocket):
+    def __init__(self, *args, **kwargs):
+        super(ChatApplicationSocket, self).__init__(*args, **kwargs)
+        self.qs = None
+        self.conn_id = None
+
     def opened(self):
         self.qs = parse_qs(self.environ["QUERY_STRING"])
         self.conn_id = utils.uuid_from_string(self.qs.get("conn_id")[0])
