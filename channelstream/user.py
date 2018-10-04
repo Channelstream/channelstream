@@ -113,11 +113,7 @@ class User(object):
 
         deleted = copy.deepcopy(to_delete)
         deleted["type"] = "message:delete"
-        self.add_message(
-            deleted,
-            pm_users=deleted["pm_users"],
-            exclude_users=deleted["exclude_users"],
-        )
+        self.add_message(deleted)
 
     def __json__(self, request=None):
         return self.get_info()
