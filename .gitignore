@@ -95,3 +95,4 @@ frontend/build
 /frontend/public/
 /.idea/
 /.pytest_cache/
+/frontend/out/
