@@ -185,7 +185,6 @@ def edit_message(msg):
     """
 
     :param msg:
-    :param stats:
     :return:
     """
 
@@ -205,7 +204,6 @@ def delete_message(msg):
     """
 
     :param msg:
-    :param stats:
     :return:
     """
 
