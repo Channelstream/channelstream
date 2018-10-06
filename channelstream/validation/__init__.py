@@ -1,11 +1,12 @@
+import collections
 import uuid
 
 import marshmallow
+from apispec.ext.marshmallow.openapi import OpenAPIConverter
 from marshmallow import fields, ValidationError
 from marshmallow.base import FieldABC
-import collections
-from apispec.ext.marshmallow.openapi import OpenAPIConverter
-from channelstream import server_state
+
+from channelstream.server_state import get_state
 
 converter = OpenAPIConverter("2.0.0")
 
@@ -24,12 +25,14 @@ def gen_uuid():
 
 
 def validate_connection_id(conn_id):
-    if conn_id not in server_state.CONNECTIONS:
+    server_state = get_state()
+    if conn_id not in server_state.connections:
         raise marshmallow.ValidationError("Unknown connection")
 
 
 def validate_username(username):
-    if username not in server_state.USERS:
+    server_state = get_state()
+    if username not in server_state.users:
         raise marshmallow.ValidationError("Unknown user")
 
 

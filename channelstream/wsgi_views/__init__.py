@@ -1,6 +1,7 @@
 """View handlers package.
 """
 import logging
+
 from pyramid.security import NO_PERMISSION_REQUIRED
 
 log = logging.getLogger(__name__)

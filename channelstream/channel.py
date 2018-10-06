@@ -1,14 +1,13 @@
 import copy
 import logging
-import six
 import uuid
-
 from datetime import datetime
 
-from channelstream import server_state
+import six
+
+from channelstream.server_state import get_state
 from channelstream.utils import process_catchup
 from channelstream.validation import MSG_EDITABLE_KEYS
-
 
 log = logging.getLogger(__name__)
 
@@ -120,10 +119,11 @@ class Channel(object):
         :param action:
         :return:
         """
+        server_state = get_state()
         connected_users = []
         if self.broadcast_presence_with_user_lists:
             for _username in self.connections.keys():
-                user_inst = server_state.USERS.get(_username)
+                user_inst = server_state.users.get(_username)
                 user_data = {
                     "user": user_inst.username,
                     "state": user_inst.public_state,
@@ -146,7 +146,7 @@ class Channel(object):
             "catchup": False,
         }
         if action == "joined":
-            payload["state"] = server_state.USERS[username].public_state
+            payload["state"] = server_state.users[username].public_state
         self.add_message(payload, exclude_users=payload["exclude_users"])
         return payload
 
@@ -209,6 +209,7 @@ class Channel(object):
         return "<Channel: %s, connections:%s>" % (self.name, len(self.connections))
 
     def get_info(self, include_history=True, include_users=False):
+        server_state = get_state()
         settings = {k: getattr(self, k) for k in self.config_keys}
 
         chan_info = {
@@ -226,7 +227,7 @@ class Channel(object):
         }
 
         for username in self.connections.keys():
-            user_inst = server_state.USERS.get(username)
+            user_inst = server_state.users.get(username)
             if include_users and user_inst.username not in chan_info["users"]:
                 chan_info["users"].append(user_inst.username)
         chan_info["users"] = sorted(chan_info["users"])

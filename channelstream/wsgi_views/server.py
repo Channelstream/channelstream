@@ -1,17 +1,19 @@
 import logging
 from datetime import datetime
+
 import gevent
 import six
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
 from gevent.queue import Queue, Empty
-from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPUnauthorized
 from pyramid.security import forget, NO_PERMISSION_REQUIRED
+from pyramid.view import view_config, view_defaults
 from pyramid_apispec.helpers import add_pyramid_paths
-from apispec.ext.marshmallow import MarshmallowPlugin
 
-from channelstream import operations, server_state, utils, patched_json as json
+from channelstream import operations, utils, patched_json as json
+from channelstream.server_state import get_state, STATS
 from channelstream.validation import schemas
-from apispec import APISpec
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ class SharedUtils(object):
         :param: exclude_channels (bool) will exclude specific channels
                 from info list (handy to exclude global broadcast)
         """
-
+        server_state = get_state()
         if not exclude_channels:
             exclude_channels = []
         start_time = datetime.utcnow()
@@ -51,12 +53,12 @@ class SharedUtils(object):
 
         # select everything for empty list
         if req_channels is None:
-            channel_instances = six.itervalues(server_state.CHANNELS)
+            channel_instances = six.itervalues(server_state.channels)
         else:
             channel_instances = [
-                server_state.CHANNELS[c]
+                server_state.channels[c]
                 for c in req_channels
-                if c in server_state.CHANNELS
+                if c in server_state.channels
             ]
 
         for channel_inst in channel_instances:
@@ -70,7 +72,7 @@ class SharedUtils(object):
             users_to_list.update(channel_info["users"])
 
         for username in users_to_list:
-            user = server_state.USERS[username]
+            user = server_state.users[username]
             json_data["users"].append(
                 {
                     "user": username,
@@ -194,10 +196,11 @@ def subscribe(request):
         200:
           description: "Success"
     """
+    server_state = get_state()
     shared_utils = SharedUtils(request)
     schema = schemas.SubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
-    connection = server_state.CONNECTIONS.get(json_body["conn_id"])
+    connection = server_state.connections.get(json_body["conn_id"])
     channels = json_body["channels"]
     channel_configs = json_body.get("channel_configs", {})
     subscribed_to = operations.subscribe(
@@ -244,10 +247,11 @@ def unsubscribe(request):
         200:
           description: "Success"
     """
+    server_state = get_state()
     shared_utils = SharedUtils(request)
     schema = schemas.UnsubscribeBodySchema(context={"request": request})
     json_body = schema.load(request.json_body).data
-    connection = server_state.CONNECTIONS.get(json_body["conn_id"])
+    connection = server_state.connections.get(json_body["conn_id"])
     unsubscribed_from = operations.unsubscribe(
         connection=connection, unsubscribe_channels=json_body["channels"]
     )
@@ -284,9 +288,10 @@ def listen(request):
         200:
           description: "Success"
     """
+    server_state = get_state()
     config = request.registry.settings
     conn_id = utils.uuid_from_string(request.params.get("conn_id"))
-    connection = server_state.CONNECTIONS.get(conn_id)
+    connection = server_state.connections.get(conn_id)
     if not connection:
         raise HTTPUnauthorized()
     # attach a queue to connection
@@ -356,10 +361,10 @@ def user_state(request):
         200:
           description: "Success"
     """
-
+    server_state = get_state()
     schema = schemas.UserStateBodySchema(context={"request": request})
     data = schema.load(request.json_body).data
-    user_inst = server_state.USERS[data["user"]]
+    user_inst = server_state.users[data["user"]]
     # can be empty list!
     if data["state_public_keys"] is not None:
         user_inst.state_public_keys = data["state_public_keys"]
@@ -374,11 +379,12 @@ def user_state(request):
 
 
 def shared_messages(request):
+    server_state = get_state()
     schema = schemas.MessageBodySchema(context={"request": request}, many=True)
     data = schema.load(request.json_body).data
     data = [m for m in data if m.get("channel") or m.get("pm_users")]
     for msg in data:
-        gevent.spawn(operations.pass_message, msg, server_state.STATS)
+        gevent.spawn(operations.pass_message, msg, server_state.stats)
     return list(data)
 
 
@@ -658,9 +664,10 @@ def info(request):
         200:
           description: "Success"
     """
+    server_state = get_state()
     shared_utils = SharedUtils(request)
     if not request.body:
-        req_channels = server_state.CHANNELS.keys()
+        req_channels = server_state.channels.keys()
         info_config = {
             "include_history": True,
             "include_users": True,
@@ -747,14 +754,14 @@ class ServerViews(object):
             200:
               description: "Success"
         """
-
-        uptime = datetime.utcnow() - server_state.STATS["started_on"]
+        server_state = get_state()
+        uptime = datetime.utcnow() - STATS["started_on"]
         uptime = str(uptime).split(".")[0]
         remembered_user_count = len(
-            [user for user in six.iteritems(server_state.USERS)]
+            [user for user in six.iteritems(server_state.users)]
         )
         active_users = [
-            user for user in six.itervalues(server_state.USERS) if user.connections
+            user for user in six.itervalues(server_state.users) if user.connections
         ]
         unique_user_count = len(active_users)
         total_connections = sum([len(user.connections) for user in active_users])
@@ -771,9 +778,9 @@ class ServerViews(object):
             "remembered_user_count": remembered_user_count,
             "unique_user_count": unique_user_count,
             "total_connections": total_connections,
-            "total_channels": len(server_state.CHANNELS.keys()),
-            "total_messages": server_state.STATS["total_messages"],
-            "total_unique_messages": server_state.STATS["total_unique_messages"],
+            "total_channels": len(server_state.channels.keys()),
+            "total_messages": server_state.stats["total_messages"],
+            "total_unique_messages": server_state.stats["total_unique_messages"],
             "channels": channels_info["channels"],
             "users": [user.get_info(include_connections=True) for user in active_users],
             "uptime": uptime,

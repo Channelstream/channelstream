@@ -1,11 +1,11 @@
+import copy
 import logging
 import uuid
-import copy
-
 from datetime import datetime
 
 import six
-from channelstream import server_state
+
+from channelstream.server_state import get_state
 from channelstream.utils import process_catchup
 from channelstream.validation import MSG_EDITABLE_KEYS
 
@@ -85,8 +85,9 @@ class User(object):
         return info
 
     def get_channels(self):
+        server_state = get_state()
         channels = []
-        for channel in six.itervalues(server_state.CHANNELS):
+        for channel in six.itervalues(server_state.channels):
             if channel.connections.get(self.username):
                 channels.append(channel)
         return channels

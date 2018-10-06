@@ -1,7 +1,7 @@
 import copy
 import uuid
-import marshmallow
 
+import marshmallow
 from pyramid.renderers import render
 
 

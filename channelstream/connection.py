@@ -1,11 +1,11 @@
 import logging
-
 from datetime import datetime, timedelta
 
-import six
 import gevent
+import six
 
-from channelstream import server_state, patched_json as json
+from channelstream import patched_json as json
+from channelstream.server_state import get_state
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ class Connection(object):
         self.last_active = datetime.utcnow()
 
     def add_message(self, message=None):
+        server_state = get_state()
         """ Sends the message to the client connection """
         # handle websockets
         if self.socket and self.socket.terminated:
@@ -39,7 +40,7 @@ class Connection(object):
                 # piped to client
                 self.socket.send(json.dumps([message] if message else []))
                 self.mark_activity()
-                server_state.USERS[self.username].mark_activity()
+                server_state.users[self.username].mark_activity()
             except Exception as exc:
                 log.info(exc)
                 self.mark_for_gc()
@@ -63,16 +64,17 @@ class Connection(object):
                     self.socket.close()
 
     def get_catchup_messages(self):
+        server_state = get_state()
         messages = []
         # return catchup messages for channels
         for channel in self.channels:
-            channel_inst = server_state.CHANNELS[channel]
+            channel_inst = server_state.channels[channel]
             messages.extend(
                 channel_inst.get_catchup_frames(self.last_active, self.username)
             )
         # and users
         messages.extend(
-            server_state.USERS[self.username].get_catchup_frames(self.last_active)
+            server_state.users[self.username].get_catchup_frames(self.last_active)
         )
         return messages
 
@@ -85,8 +87,9 @@ class Connection(object):
         Return list of channels names connection belongs to
         :return:
         """
+        server_state = get_state()
         found_channels = []
-        for channel in six.itervalues(server_state.CHANNELS):
+        for channel in six.itervalues(server_state.channels):
             user_conns = channel.connections.get(self.username) or []
             if self in user_conns:
                 found_channels.append(channel.name)
