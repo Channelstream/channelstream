@@ -8,9 +8,9 @@ Basic usage::
     YOUR_PYTHON_ENV/bin/channelstream -i filename.ini
 
 
-You can also see simple pyramid demo included in the repository
+You can also see simple chat application demo included in the repository
 
-    YOUR_PYTHON_ENV/bin/python demo/app.py
+    YOUR_PYTHON_ENV/bin/python demo/chat/app.py
 
 Open your browser and point it to following url::
 
