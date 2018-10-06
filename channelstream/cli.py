@@ -12,6 +12,7 @@ from gevent.server import StreamServer
 from pyramid.settings import asbool
 
 import channelstream.wsgi_app as pyramid_app
+import channelstream
 from channelstream.gc import gc_conns_forever, gc_users_forever
 from channelstream.policy_server import client_handle
 from channelstream.ws_app import ChatApplicationSocket
@@ -144,7 +145,7 @@ def cli_start():
 
     log_level = getattr(logging, config.get("log_level", "INFO").upper())
     logging.basicConfig(level=log_level)
-
+    log.info("Starting channelstream {}".format(channelstream.__version__))
     url = "http://{}:{}".format(config["host"], config["port"])
 
     log.info("Starting flash policy server on port 10843")

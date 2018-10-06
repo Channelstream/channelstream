@@ -1,1 +1,3 @@
-__version__ = {"major": 0, "minor": 7, "patch": 0}
+import pkg_resources
+
+__version__ = pkg_resources.get_distribution("channelstream").parsed_version

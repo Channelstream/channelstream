@@ -3,8 +3,6 @@ from os import path
 from io import open
 import re
 
-from channelstream import __version__
-
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
@@ -25,13 +23,10 @@ requires = [
     "six",
 ]
 
-version = "{}.{}.{}".format(
-    __version__["major"], __version__["minor"], __version__["patch"]
-)
 
 setup(
     name="channelstream",
-    version=version,
+    version='0.7.0b1',
     description="Websocket server supporting channels/users communication",
     classifiers=["Intended Audience :: Developers"],
     author="Marcin Lulek",
