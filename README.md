@@ -1,29 +1,32 @@
-channelstream
-=============
-
-This is a websocket-based communication server for python.
-
-Basic usage::
-
-    YOUR_PYTHON_ENV/bin/channelstream -i filename.ini
+# Channelstream
 
 
-You can also see simple chat application demo included in the repository
+This is a websocket-based communication server for python applications, 
+your applications communicate with it via simple JSON REST API.
+
+## Installation and Setup
+
+Obtain source from github and do:
+
+    python setup.py develop
+
+Basic usage:
+
+    YOUR_PYTHON_ENV/bin/channelstream
+
+
+YOu can also see chat application demo included in the repository:
 
     YOUR_PYTHON_ENV/bin/python demo/chat/app.py
 
-Open your browser and point it to following url::
+Open your browser and point it to following url:
 
     http://127.0.0.1:6543
 
-**To run the demo you will need to have the `requests` package installed in your environment**
-
-Possible config options for the server::
-
-    YOUR_PYTHON_ENV/bin/channelstream -h
+To run the demo you will need to have the `requests` package installed in your environment.
 
 
-The server can (and should be) also be configured via ini files (channelstream -i filename), example::
+The server can (and should be) also be configured via ini files (channelstream -i filename), example:
 
     [channelstream]
     debug = 0
@@ -34,13 +37,22 @@ The server can (and should be) also be configured via ini files (channelstream -
                          x.x.x.x,
                          y.y.y.y,
 
+To build frontend files:
+    
+    cd frontend
+    yarn
+    yarn build # build minified bundles
+    yarn dev   # run watcher process and rebuild on the fly
 
 
-** USAGE **
+## USAGE
 
-Refer to `demo/demo.py` and API explorer for example usage.
+Channelstream provides API explorer that you can use to interact with various 
+endpoints, it is available by default under http://127.0.0.1:8000/api-explorer.
 
-** Security model **
+Refer to `demo/chat/wsgi.py` for examples on how to connect your application with server.
+
+### Security and communication model
 
 To send information client interacts only with your normal www application.
 Your app handled authentication and processing messages from client, then passed
@@ -62,13 +74,9 @@ All messages need to be signed with a HMAC of destination endpoint ::
     response = requests.post(url, data=json.dumps(payload),
                              headers=secret_headers).json()
 
+## Data format and endpoints
 
-
-Data format and endpoints
-=========================
-
-/connect
---------------------------
+### /connect
 
 expects a json request in form of::
 
@@ -105,8 +113,7 @@ Keys used in `channel_configs` to describe channel behavior (and their defaults)
 * history_size = 10
 
 
-/info
---------------------------
+### /info
 
 expects a json request in form of::
 
@@ -125,8 +132,7 @@ If channel list is empty server will return full list of all channels and their
 information.
 
 
-/disconnect
---------------------------
+### /disconnect
 
 expects a json request in form of::
 
@@ -135,8 +141,7 @@ expects a json request in form of::
 marks specific connection to be garbage collected
 
 
-/message
---------------------------
+### /message
 
 expects a json request in form of list of messages::
 
@@ -155,8 +160,7 @@ If only pm_users is present a private message is sent to all connections that ar
 owned by pm_users.  
 
 
-/subscribe
-----------------------------
+### /subscribe
 
 expects a json request in form of::
 
@@ -166,8 +170,7 @@ expects a json request in form of::
     "conn_id": "CONNECTION_ID"
     }
 
-/unsubscribe
-----------------------------
+### /unsubscribe
 
 expects a json request in form of::
 
@@ -177,8 +180,7 @@ expects a json request in form of::
     }
 
 
-/user_state
-----------------------------
+### /user_state
 
 expects a json request in form of::
 
@@ -188,8 +190,7 @@ expects a json request in form of::
     "state_public_keys": ["avatar", "bar"]
     }
 
-Listening endpoints
--------------------
+### Listening endpoints
 
 for websockets:
 
@@ -200,8 +201,7 @@ for long polling:
     /listen?conn_id=CONNID
 
 
-Responses to js client
-----------------------
+### Responses to js client
 
 Responses to client are in form of **list** containing **objects**:
 
@@ -228,10 +228,3 @@ examples:
     }
 
 Currently following message types are emited: `message`, `presence`, `user_state_change`
-
-Installation and Setup
-======================
-
-Obtain source from github and do::
-
-    python setup.py develop
