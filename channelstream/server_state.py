@@ -2,9 +2,7 @@ from datetime import datetime
 
 from gevent.lock import RLock
 
-STATS = {
-    "started_on": datetime.utcnow(),
-}
+STATS = {"started_on": datetime.utcnow()}
 lock = RLock()
 
 
@@ -13,10 +11,7 @@ class State(object):
         self.channels = {}
         self.connections = {}
         self.users = {}
-        self.stats = {
-            "total_messages": 0,
-            "total_unique_messages": 0
-        }
+        self.stats = {"total_messages": 0, "total_unique_messages": 0}
         self.lock = RLock()
 
 
