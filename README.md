@@ -1,5 +1,6 @@
 # Channelstream
 
+[![Build Status]](https://travis-ci.org/Channelstream/channelstream)
 
 This is a websocket-based communication server for python applications, 
 your applications communicate with it via simple JSON REST API.
