@@ -16,12 +16,9 @@ matrix:
   - python: 3.6
     env: TOXENV=py36
   - python: 3.6
-    name: linter
     env: TOXENV=lint
   - python: nightly
     env: TOXENV=py37
-  allow_failures:
-  - env: TOXENV=py37
 
 install:
 - travis_retry pip install -U setuptools pip tox
