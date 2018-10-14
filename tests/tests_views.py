@@ -2,474 +2,16 @@ from gevent import monkey
 
 monkey.patch_all()
 
-import uuid
 import pytest
-import mock
 import gevent
-from datetime import datetime, timedelta
-from gevent.queue import Queue
 import marshmallow
-from pyramid import testing
 from channelstream.server_state import get_state
-import channelstream.gc
 from channelstream.channel import Channel
-from channelstream.connection import Connection
-from channelstream.user import User
-
-test_uuids = [
-    uuid.UUID("12345678-1234-5678-1234-567812345678"),
-    uuid.UUID("22345678-1234-5678-1234-567812345678"),
-    uuid.UUID("32345678-1234-5678-1234-567812345678"),
-    uuid.UUID("42345678-1234-5678-1234-567812345678"),
-    uuid.UUID("52345678-1234-5678-1234-567812345678"),
-    uuid.UUID("62345678-1234-5678-1234-567812345678"),
-    uuid.UUID("72345678-1234-5678-1234-567812345678"),
-    uuid.UUID("82345678-1234-5678-1234-567812345678"),
-    uuid.UUID("92345678-1234-5678-1234-567812345678"),
-]
-
-
-@pytest.fixture
-def cleanup_globals():
-    server_state = get_state()
-    server_state.channels = {}
-    server_state.connections = {}
-    server_state.users = {}
-    server_state.stats = {
-        "total_messages": 0,
-        "total_unique_messages": 0,
-        "started_on": datetime.utcnow(),
-    }
-
-
-@pytest.mark.usefixtures("cleanup_globals")
-class TestChannel(object):
-    def test_create_defaults(self):
-        channel = Channel("test", long_name="long name")
-        assert channel.name == "test"
-        assert channel.long_name == "long name"
-        assert channel.connections == {}
-        assert channel.notify_presence is False
-        assert channel.broadcast_presence_with_user_lists is False
-        assert channel.salvageable is False
-        assert channel.store_history is False
-        assert channel.history_size == 10
-        assert channel.history == []
-
-    def test_repr(self):
-        channel = Channel("test", long_name="long name")
-        assert repr(channel) == "<Channel: test, connections:0>"
-
-    @pytest.mark.parametrize(
-        "prop, value",
-        [
-            ("notify_presence", True),
-            ("store_history", 6),
-            ("history_size", 42),
-            ("broadcast_presence_with_user_lists", True),
-        ],
-    )
-    def test_create_set_config(self, prop, value):
-        channel_config = {prop: value}
-        channel = Channel("test", channel_config=channel_config)
-
-        assert getattr(channel, prop) == value
-
-    def test_add_connection(self):
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        channel = Channel("test")
-        channel.add_connection(connection)
-        assert len(channel.connections["test_user"]) == 1
-        assert "test_user" in channel.connections
-        assert connection in channel.connections["test_user"]
-        assert repr(channel) == "<Channel: test, connections:1>"
-
-    def test_remove_connection(self):
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        connection2 = Connection("test_user2", conn_id=test_uuids[2])
-        connection3 = Connection("test_user", conn_id=test_uuids[3])
-        channel = Channel("test")
-        channel.add_connection(connection)
-        channel.add_connection(connection2)
-        channel.remove_connection(connection)
-        assert "test_user" not in channel.connections
-        assert len(channel.connections["test_user2"]) == 1
-        channel.add_connection(connection)
-        channel.add_connection(connection3)
-        channel.remove_connection(connection)
-        assert len(channel.connections["test_user"]) == 1
-
-    def test_remove_non_existant_connection(self):
-        channel = Channel("test")
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        channel.remove_connection(connection)
-        assert "test_user" not in channel.connections
-
-    def test_remove_connection_w_presence(self):
-        server_state = get_state()
-        user = User("test_user")
-        server_state.users[user.username] = user
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        user.add_connection(connection)
-        config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
-        channel = Channel("test", channel_config=config)
-        channel.add_connection(connection)
-        channel.remove_connection(connection)
-
-    def test_add_connection_w_presence(self):
-        server_state = get_state()
-        user = User("test_user")
-        server_state.users[user.username] = user
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        user.add_connection(connection)
-        config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
-        channel = Channel("test", channel_config=config)
-        channel.add_connection(connection)
-        assert len(channel.connections["test_user"]) == 1
-        assert "test_user" in channel.connections
-        assert connection in channel.connections["test_user"]
-
-    def test_presence_message(self):
-        user = User("test_user")
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        user.add_connection(connection)
-        channel = Channel("test")
-        channel.add_connection(connection)
-        payload = channel.send_notify_presence_info("test_user", "join")
-        assert payload["user"] == "test_user"
-        assert payload["message"]["action"] == "join"
-        assert payload["type"] == "presence"
-        assert payload["channel"] == "test"
-        assert len(payload["users"]) == 0
-
-    def test_presence_message_w_users(self):
-        server_state = get_state()
-        user = User("test_user")
-        user.state_from_dict({"key": "1", "key2": "2"})
-        user.state_public_keys = ["key2"]
-        server_state.users[user.username] = user
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        user.add_connection(connection)
-        user2 = User("test_user2")
-        user2.state_from_dict({"key": "1", "key2": "2"})
-        server_state.users[user2.username] = user2
-        connection2 = Connection("test_user2", conn_id=test_uuids[2])
-        user2.add_connection(connection2)
-        config = {"notify_presence": True, "broadcast_presence_with_user_lists": True}
-        channel = Channel("test", channel_config=config)
-        channel.add_connection(connection)
-        channel.add_connection(connection2)
-        payload = channel.send_notify_presence_info("test_user", "join")
-        assert len(payload["users"]) == 2
-        sorted_users = sorted(payload["users"], key=lambda x: x["user"])
-        assert sorted_users == [
-            {"state": {"key2": "2"}, "user": "test_user"},
-            {"state": {}, "user": "test_user2"},
-        ]
-
-    def test_history(self):
-        config = {"store_history": True, "history_size": 3}
-        channel = Channel("test", long_name="long name", channel_config=config)
-        channel.add_message(
-            {
-                "channel": "test",
-                "message": "test1",
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            }
-        )
-        channel.add_message(
-            {
-                "channel": "test",
-                "message": "test2",
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            }
-        )
-        channel.add_message(
-            {
-                "channel": "test",
-                "message": "test3",
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            }
-        )
-        channel.add_message(
-            {
-                "channel": "test",
-                "message": "test4",
-                "type": "message",
-                "no_history": True,
-                "pm_users": [],
-                "exclude_users": [],
-            }
-        )
-        channel.add_message(
-            {
-                "channel": "test",
-                "message": "test5",
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            }
-        )
-
-        assert len(channel.history) == 3
-        assert channel.history == [
-            {
-                "channel": "test",
-                "message": "test2",
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            },
-            {
-                "channel": "test",
-                "message": "test3",
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            },
-            {
-                "channel": "test",
-                "message": "test5",
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            },
-        ]
-
-    def test_user_state(self):
-        user = User("test_user")
-        changed = user.state_from_dict({"key": "1", "key2": "2"})
-        user.state_public_keys = ["key2"]
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        user.add_connection(connection)
-        channel = Channel("test")
-        channel.add_connection(connection)
-        payload = channel.send_user_state(user, changed)
-        assert payload["user"] == "test_user"
-        assert payload["message"]["state"] == {"key2": "2"}
-        assert payload["message"]["changed"] == [{"key": "key2", "value": "2"}]
-        assert payload["type"] == "user_state_change"
-        assert payload["channel"] == "test"
-
-    def test_user_single_assignment(self):
-        server_state = get_state()
-        user = User("test_user")
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        user.add_connection(connection)
-        channel = Channel("test")
-        server_state.channels[channel.name] = channel
-        channel.add_connection(connection)
-        assert [channel] == user.get_channels()
-
-    def test_user_multi_assignment(self):
-        server_state = get_state()
-        user = User("test_user")
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        connection2 = Connection("test_user", conn_id=test_uuids[2])
-        connection3 = Connection("test_user", conn_id=test_uuids[3])
-        user.add_connection(connection)
-        user.add_connection(connection2)
-        user.add_connection(connection3)
-        channel = Channel("test")
-        channel2 = Channel("test2")
-        server_state.channels[channel.name] = channel
-        server_state.channels[channel2.name] = channel2
-        channel.add_connection(connection)
-        channel.add_connection(connection2)
-        channel2.add_connection(connection3)
-        assert ["test", "test2"] == sorted([c.name for c in user.get_channels()])
-
-
-@pytest.mark.usefixtures("cleanup_globals")
-class TestConnection(object):
-    def test_create_defaults(self):
-        now = datetime.utcnow()
-        connection = Connection("test", test_uuids[1])
-        assert connection.username == "test"
-        assert now <= connection.last_active
-        assert connection.socket is None
-        assert connection.queue is None
-        assert connection.id == test_uuids[1]
-
-    def test_mark_for_gc(self):
-        long_time_ago = datetime.utcnow() - timedelta(days=50)
-        connection = Connection("test", test_uuids[1])
-        connection.mark_for_gc()
-        assert connection.last_active < long_time_ago
-
-    def test_message(self):
-        connection = Connection("test", test_uuids[1])
-        connection.queue = Queue()
-        connection.add_message({"message": "test"})
-        assert connection.queue.get() == [{"message": "test"}]
-
-    def test_heartbeat(self):
-        connection = Connection("test", test_uuids[1])
-        connection.queue = Queue()
-        connection.heartbeat()
-        assert connection.queue.get() == []
-
-
-class TestUser(object):
-    def test_create_defaults(self):
-        user = User("test_user")
-        user.state_from_dict({"key": "1", "key2": "2"})
-        user.state_public_keys = ["key2"]
-        assert repr(user) == "<User:test_user, connections:0>"
-        assert sorted(user.state.items()) == sorted({"key": "1", "key2": "2"}.items())
-        assert user.public_state == {"key2": "2"}
-
-    def test_messages(self):
-        user = User("test_user")
-        connection = Connection("test_user", conn_id=test_uuids[1])
-        connection.queue = Queue()
-        connection2 = Connection("test_user", conn_id=test_uuids[2])
-        connection2.queue = Queue()
-        user.add_connection(connection)
-        user.add_connection(connection2)
-        user.add_message(
-            {
-                "type": "message",
-                "no_history": False,
-                "pm_users": [],
-                "exclude_users": [],
-            }
-        )
-        assert len(user.connections) == 2
-        assert len(user.connections[0].queue.get()) == 1
-        assert len(user.connections[1].queue.get()) == 1
-
-
-@pytest.mark.usefixtures("cleanup_globals")
-class TestGC(object):
-    def test_gc_connections_active(self):
-        server_state = get_state()
-        channel = Channel("test")
-        server_state.channels[channel.name] = channel
-        channel2 = Channel("test2")
-        server_state.channels[channel2.name] = channel2
-        user = User("test_user")
-        server_state.users[user.username] = user
-        user2 = User("test_user2")
-        server_state.users[user2.username] = user2
-        connection = Connection("test_user", test_uuids[1])
-        server_state.connections[connection.id] = connection
-        connection2 = Connection("test_user", test_uuids[2])
-        server_state.connections[connection2.id] = connection2
-        connection3 = Connection("test_user2", test_uuids[3])
-        server_state.connections[connection3.id] = connection3
-        connection4 = Connection("test_user2", test_uuids[4])
-        server_state.connections[connection4.id] = connection4
-        user.add_connection(connection)
-        user.add_connection(connection2)
-        channel.add_connection(connection)
-        channel.add_connection(connection2)
-        user2.add_connection(connection3)
-        user2.add_connection(connection4)
-        channel2.add_connection(connection3)
-        channel2.add_connection(connection4)
-        channelstream.gc.gc_conns()
-        conns = server_state.channels["test"].connections["test_user"]
-        assert len(conns) == 2
-        assert len(server_state.connections.items()) == 4
-        conns = server_state.channels["test2"].connections["test_user2"]
-        assert len(conns) == 2
-        assert len(user.connections) == 2
-        assert len(user2.connections) == 2
-        assert sorted(channel.connections.keys()) == ["test_user"]
-        assert sorted(channel2.connections.keys()) == ["test_user2"]
-
-    def test_gc_connections_collecting(self):
-        server_state = get_state()
-        channel = Channel("test")
-        server_state.channels[channel.name] = channel
-        channel2 = Channel("test2")
-        server_state.channels[channel2.name] = channel2
-        user = User("test_user")
-        server_state.users[user.username] = user
-        user2 = User("test_user2")
-        server_state.users[user2.username] = user2
-        connection = Connection("test_user", test_uuids[1])
-        server_state.connections[connection.id] = connection
-        connection2 = Connection("test_user", test_uuids[2])
-        connection2.mark_for_gc()
-        server_state.connections[connection2.id] = connection2
-        connection3 = Connection("test_user2", test_uuids[3])
-        connection3.mark_for_gc()
-        server_state.connections[connection3.id] = connection3
-        connection4 = Connection("test_user2", test_uuids[4])
-        server_state.connections[connection4.id] = connection4
-        user.add_connection(connection)
-        user.add_connection(connection2)
-        channel.add_connection(connection)
-        channel.add_connection(connection2)
-        user2.add_connection(connection3)
-        user2.add_connection(connection4)
-        channel2.add_connection(connection3)
-        channel2.add_connection(connection4)
-        channelstream.gc.gc_conns()
-        assert len(server_state.connections.items()) == 2
-        conns = server_state.channels["test"].connections["test_user"]
-        assert len(conns) == 1
-        assert conns == [connection]
-        conns = server_state.channels["test2"].connections["test_user2"]
-        assert len(conns) == 1
-        assert conns == [connection4]
-        assert len(user.connections) == 1
-        assert len(user2.connections) == 1
-        connection.mark_for_gc()
-        connection4.mark_for_gc()
-        channelstream.gc.gc_conns()
-        assert "test_user" not in server_state.channels["test"].connections
-        assert "test_user2" not in server_state.channels["test2"].connections
-        assert len(server_state.channels["test"].connections.items()) == 0
-        assert len(server_state.channels["test2"].connections.items()) == 0
-
-    def test_users_active(self):
-        server_state = get_state()
-        user = User("test_user")
-        server_state.users[user.username] = user
-        user2 = User("test_user2")
-        server_state.users[user2.username] = user2
-        channelstream.gc.gc_users()
-        assert len(server_state.users.items()) == 2
-        user.last_active -= timedelta(days=2)
-        channelstream.gc.gc_users()
-        assert len(server_state.users.items()) == 1
-
-
-@pytest.fixture
-def pyramid_config():
-    # from pyramid.request import Request
-    # request = Request.blank('/', base_url='http://foo.com')
-    config = testing.setUp(settings={})
-    settings = config.get_settings()
-    return config, settings
-
-
-@pytest.fixture
-def dummy_request():
-    app_request = testing.DummyRequest()
-    app_request.handle_cors = mock.Mock()
-    return app_request
 
 
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
 class TestConnectViews(object):
-    def test_bad_json(self, dummy_request):
+    def test_bad_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect
 
         dummy_request.json_body = {}
@@ -478,7 +20,7 @@ class TestConnectViews(object):
         except marshmallow.exceptions.ValidationError as exc:
             assert exc.messages == {"username": ["Missing data for required field."]}
 
-    def test_good_json(self, dummy_request):
+    def test_good_json(self, dummy_request, test_uuids):
         server_state = get_state()
         from channelstream.wsgi_views.server import connect
 
@@ -512,7 +54,7 @@ class TestConnectViews(object):
 
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
 class TestUserStateViews(object):
-    def test_bad_json(self, dummy_request):
+    def test_bad_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import user_state
 
         dummy_request.json_body = {}
@@ -520,7 +62,7 @@ class TestUserStateViews(object):
             user_state(dummy_request)
         assert excinfo.value.messages == {"user": ["Missing data for required field."]}
 
-    def _connect_user(self):
+    def _connect_user(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect
 
         dummy_request.json_body = {
@@ -534,7 +76,7 @@ class TestUserStateViews(object):
         }
         connect(dummy_request)
 
-    def test_not_found_json(self, dummy_request):
+    def test_not_found_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import user_state
 
         dummy_request.json_body = {"user": "blabla"}
@@ -542,10 +84,10 @@ class TestUserStateViews(object):
             user_state(dummy_request)
         assert excinfo.value.messages == {"user": ["Unknown user"]}
 
-    def test_good_json(self, dummy_request):
+    def test_good_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import user_state
 
-        self._connect_user()
+        self._connect_user(dummy_request, test_uuids)
         dummy_request.json_body = {
             "user": "test",
             "user_state": {"bar": 2, "private": "im_private"},
@@ -559,10 +101,10 @@ class TestUserStateViews(object):
         assert result["public_keys"] == ["avatar", "bar"]
         assert sorted_changed == sorted(["bar", "private"])
 
-    def test_good_json_no_public_keys(self, dummy_request):
+    def test_good_json_no_public_keys(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import user_state
 
-        self._connect_user()
+        self._connect_user(dummy_request, test_uuids)
         dummy_request.json_body = {
             "user": "test",
             "user_state": {"bar": 2, "private": "im_private"},
@@ -587,7 +129,7 @@ class TestSubscribeViews(object):
         except marshmallow.exceptions.ValidationError as exc:
             assert list(sorted(exc.messages.keys())) == ["channels", "conn_id"]
 
-    def test_good_json(self, dummy_request):
+    def test_good_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect, subscribe
 
         dummy_request.json_body = {
@@ -623,7 +165,7 @@ class TestSubscribeViews(object):
 
 @pytest.mark.usefixtures("cleanup_globals", "pyramid_config")
 class TestUnsubscribeViews(object):
-    def test_bad_json(self, dummy_request):
+    def test_bad_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import unsubscribe
 
         dummy_request.json_body = {}
@@ -632,7 +174,7 @@ class TestUnsubscribeViews(object):
         except marshmallow.exceptions.ValidationError as exc:
             assert list(sorted(exc.messages.keys())) == ["channels", "conn_id"]
 
-    def test_good_json(self, dummy_request):
+    def test_good_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect, unsubscribe
 
         dummy_request.json_body = {
@@ -652,7 +194,7 @@ class TestUnsubscribeViews(object):
         result = unsubscribe(dummy_request)
         assert sorted(result["channels"]) == sorted(["aB"])
 
-    def test_non_existing_channel(self, dummy_request):
+    def test_non_existing_channel(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect, unsubscribe
 
         dummy_request.json_body = {
@@ -670,7 +212,7 @@ class TestUnsubscribeViews(object):
         result = unsubscribe(dummy_request)
         assert sorted(result["channels"]) == sorted(["a", "aB", "aC"])
 
-    def test_no_channels(self, dummy_request):
+    def test_no_channels(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect, unsubscribe
 
         dummy_request.json_body = {
@@ -700,7 +242,7 @@ class TestInfoView(object):
         assert result["channels"] == {}
         assert result["users"] == []
 
-    def test_subscribed_json(self, dummy_request):
+    def test_subscribed_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect, info
 
         dummy_request.json_body = {
@@ -751,7 +293,7 @@ class TestInfoView(object):
         assert "a" in result["channels"]
         assert "aB" not in result["channels"]
 
-    def test_detailed_json(self, dummy_request):
+    def test_detailed_json(self, dummy_request, test_uuids):
         from channelstream.wsgi_views.server import connect, info, message
 
         dummy_request.json_body = {
@@ -798,8 +340,10 @@ class TestMessageViews(object):
         server_state = get_state()
         dummy_request.json_body = {}
         assert server_state.stats["total_unique_messages"] == 0
-        result = message(dummy_request)
-        assert server_state.stats["total_unique_messages"] == 0
+
+        with pytest.raises(marshmallow.exceptions.ValidationError) as excinfo:
+            message(dummy_request)
+        assert excinfo.value.messages == {"_schema": ["Invalid input type."]}
 
     def test_good_json_no_channel(self, dummy_request):
         from channelstream.wsgi_views.server import message
@@ -883,8 +427,9 @@ class TestMessageEditViews(object):
         from channelstream.wsgi_views.server import message
 
         dummy_request.json_body = {}
-        result = message(dummy_request)
-        assert result == []
+        with pytest.raises(marshmallow.exceptions.ValidationError) as excinfo:
+            message(dummy_request)
+        assert excinfo.value.messages == {"_schema": ["Invalid input type."]}
 
     def test_good_json_no_channel(self, dummy_request):
         from channelstream.wsgi_views.server import message, messages_patch
