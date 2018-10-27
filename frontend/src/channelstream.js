@@ -1,88 +1,3 @@
-'use strict';
-
-/**
- * Base class for making ajax requests
- */
-class ChannelStreamRequest {
-
-    constructor() {
-        this.headers = [];
-        this.body = null;
-        this.url = '';
-        this.request = null;
-    }
-
-    /**
-     * Placeholder for error handling function
-     * @param request
-     * @param respText
-     */
-    handleError(request, respText) {
-        console.error('request', request);
-        console.error('respText', respText);
-    };
-
-    /**
-     * Placeholder for sucessful response handler
-     * @param request
-     * @param respText
-     */
-    handleResponse(request, respText) {
-        console.info('request', request);
-        console.info('respText', respText);
-    };
-
-    /**
-     * Placeholder for in-progress requests
-     * @param request
-     */
-    handleRequest(request) {
-    };
-
-    handleStateChange() {
-        let result = this.request.responseText;
-        try {
-            result = JSON.parse(result);
-        } catch (exc) {
-
-        }
-        if (this.request.readyState === XMLHttpRequest.DONE) {
-            if (this.request.status && this.request.status <= 400) {
-                this.handleResponse(this.request, result);
-            } else {
-                this.handleError(this.request, result);
-            }
-        }
-        else {
-            this.handleRequest(this.request);
-        }
-    };
-
-    /**
-     * Execute AJAX request using specific verb, can send JSON payloads
-     * @param verb {string} HTTP verb
-     */
-    execute(verb) {
-        this.request = new XMLHttpRequest();
-        this.request.onreadystatechange = this.handleStateChange.bind(this);
-        if (this.headers) {
-            for (let i = 0; i < this.headers.length; i++) {
-                this.request.setRequestHeader(
-                    this.headers[i].name, this.headers[i].value);
-            }
-        }
-        if (this.body) {
-            this.request.open(verb || 'POST', this.url);
-            this.request.setRequestHeader('Content-Type', 'application/json');
-            this.request.send(JSON.stringify(this.body));
-        }
-        else {
-            this.request.open(verb || 'GET', this.url);
-            this.request.send();
-        }
-    };
-}
-
 /**
  * Main Channelstream connection class
  */
@@ -927,3 +842,86 @@ export class ChannelStreamConnection {
         console.log('setUserStateErrorCallback', request, data);
     }
 };
+
+/**
+ * Base class for making ajax requests
+ */
+class ChannelStreamRequest {
+
+    constructor() {
+        this.headers = [];
+        this.body = null;
+        this.url = '';
+        this.request = null;
+    }
+
+    /**
+     * Placeholder for error handling function
+     * @param request
+     * @param respText
+     */
+    handleError(request, respText) {
+        console.error('request', request);
+        console.error('respText', respText);
+    };
+
+    /**
+     * Placeholder for sucessful response handler
+     * @param request
+     * @param respText
+     */
+    handleResponse(request, respText) {
+        console.info('request', request);
+        console.info('respText', respText);
+    };
+
+    /**
+     * Placeholder for in-progress requests
+     * @param request
+     */
+    handleRequest(request) {
+    };
+
+    handleStateChange() {
+        let result = this.request.responseText;
+        try {
+            result = JSON.parse(result);
+        } catch (exc) {
+
+        }
+        if (this.request.readyState === XMLHttpRequest.DONE) {
+            if (this.request.status && this.request.status <= 400) {
+                this.handleResponse(this.request, result);
+            } else {
+                this.handleError(this.request, result);
+            }
+        }
+        else {
+            this.handleRequest(this.request);
+        }
+    };
+
+    /**
+     * Execute AJAX request using specific verb, can send JSON payloads
+     * @param verb {string} HTTP verb
+     */
+    execute(verb) {
+        this.request = new XMLHttpRequest();
+        this.request.onreadystatechange = this.handleStateChange.bind(this);
+        if (this.headers) {
+            for (let i = 0; i < this.headers.length; i++) {
+                this.request.setRequestHeader(
+                    this.headers[i].name, this.headers[i].value);
+            }
+        }
+        if (this.body) {
+            this.request.open(verb || 'POST', this.url);
+            this.request.setRequestHeader('Content-Type', 'application/json');
+            this.request.send(JSON.stringify(this.body));
+        }
+        else {
+            this.request.open(verb || 'GET', this.url);
+            this.request.send();
+        }
+    };
+}
