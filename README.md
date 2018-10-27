@@ -7,9 +7,24 @@ your applications communicate with it via simple JSON REST API.
 
 ## Installation and Setup
 
-Obtain source from github and do:
+Obtain source from github.
+
+Before installation you need to install virtualenv for creating Python virtual environment:
+
+	pip install --user virtualenv
+
+Then create Virtual environment:
+	
+	virtualenv YOUR_PYTHON_ENV
+	
+And switch to local envirnoment:
+	
+	source YOUR_PYTHON_ENV/bin/activate
+
+Then install develop packages:
 
     python setup.py develop
+    pip install -e.[dev]
 
 Basic usage:
 
