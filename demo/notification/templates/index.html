@@ -22,6 +22,9 @@
 
 
     function gotMessage(message){
+        if (typeof message[0] === 'undefined') {
+            return
+        }
         let div = document.createElement('div');
         div.innerHTML = message[0].message.value;
         div.className = 'alert alert-primary';
