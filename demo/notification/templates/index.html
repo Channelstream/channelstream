@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Notification demo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+</head>
+<body>
+
+<script type="module">
+    import { ChannelStreamConnection } from '../static/channelstream.js';
+    // initialize client
+
+    var connection = new ChannelStreamConnection();
+    connection.connectUrl = '/connect';
+    connection.messageUrl = '/message';
+    connection.websocketUrl = 'ws://127.0.0.1:8000/ws';
+    connection.longPollUrl = 'http://127.0.0.1:8000/listen';
+    connection.listenMessageCallback = gotMessage;
+    connection.connect();
+
+
+    function gotMessage(message){
+        if (typeof message[0] === 'undefined') {
+            return
+        }
+        let div = document.createElement('div');
+        div.innerHTML = message[0].message.value;
+        div.className = 'alert alert-primary';
+        document.querySelector('#notifications').appendChild(div)
+    }
+
+    function sendNotification(e) {
+        let msg = document.querySelector('#text').value || 'No message';
+        connection.message({message:msg})
+    }
+    document.querySelector('button').addEventListener('click', sendNotification);
+</script>
+
+<div class="container">
+    <h1>Notification demo</h1>
+    <p>
+        <input type="text" class="form-control" id="text" placeholder="Your notification">
+    </p>
+    <p>
+        <button type="button" class="btn btn-primary">Send notifications</button>
+
+    </p>
+
+</div>
+
+
+<div id="notifications"></div>
+
+<style>
+    #text {
+        width: 50%;
+    }
+</style>
+
+</body>
+</html>
