@@ -9,16 +9,16 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 
 requires = [
-    "gevent==1.3.7",
-    "ws4py==0.5.1",
-    "marshmallow==2.16.0",
-    "python-dateutil",
-    "pyramid==1.9.2",
-    "pyramid_jinja2",
-    "pyramid_apispec==0.2.1",
-    "itsdangerous==0.24",
-    "requests==2.20.0",
-    "six",
+    "gevent>=1.3.7",
+    "ws4py>=0.5.1",
+    "marshmallow>=2.16.1",
+    "python-dateutil>=2.7.5 ",
+    "pyramid>=1.9.2",
+    "pyramid_jinja2>=2.7",
+    "pyramid_apispec>=0.2.1",
+    "itsdangerous>=0.24",
+    "requests>=2.20.0",
+    "six>=1.11.0",
 ]
 
 
