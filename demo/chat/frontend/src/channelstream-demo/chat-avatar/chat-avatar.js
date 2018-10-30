@@ -10,11 +10,9 @@ class ChatAvatar extends LitElement {
             iron-image {
                 border-radius: 25px;
                 border: 3px solid #eeeeee;
-
-                width: 50px;
-                height: 50px;
                 background-color: #ffffff;
-                @apply(--chat-avatar-mixin);
+                width: var(--chat-avatar-width, 50px);
+                height: var(--chat-avatar-height, 50px);
             }
         </style>
         <iron-image sizing="cover" .src=${this._getAvatar(this.username, this.email)} preload fade></iron-image>

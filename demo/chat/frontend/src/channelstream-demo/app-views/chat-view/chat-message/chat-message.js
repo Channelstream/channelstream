@@ -64,10 +64,8 @@ class ChatMessage extends LitElement {
                 overflow: hidden;
                 width: 40px;
                 height: 40px;
-                --chat-avatar-mixin: {
-                    width: 40px;
-                    height: 40px;
-                }
+                --chat-avatar-width: 40px;
+                --chat-avatar-height: 40px;
             }
 
             .message.presence, .timestamp {

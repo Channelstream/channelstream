@@ -17,13 +17,12 @@ class ChatUserList extends connect(store)(LitElement) {
         return html`
         <style>
             chat-avatar {
-                float: left;
+                display: inline-block;
                 margin-right: 10px;
                 width: 20px;
                 height: 20px;
-                --chat-avatar-mixin: {
-                    width: 20px;
-                    height: 20px;
+                --chat-avatar-width: 20px;
+                --chat-avatar-height: 20px;
                 }
             }
 
