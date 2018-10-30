@@ -111,7 +111,7 @@ class ServerInfo extends LitElement {
             .history-holder {
                 padding-top: 20px
             }
-            
+
             .badge{
                 font-weight: bold;
                 border: 1px solid #eeeeee;
@@ -127,7 +127,7 @@ class ServerInfo extends LitElement {
             }
             .column-right{
                 flex-grow: 1;
-            }            
+            }
         </style>
 
         <div class="server-stat">

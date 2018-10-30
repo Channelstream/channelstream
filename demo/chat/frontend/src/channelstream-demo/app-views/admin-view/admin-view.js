@@ -24,7 +24,7 @@ class AdminView extends connect(store)(LitElement) {
         <server-info .channels=${this.channels} .serverStats=${this.serverStats}></server-info>
         `;
     }
-    
+
     static get is() {
         return 'admin-view';
     }

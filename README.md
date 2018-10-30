@@ -2,7 +2,7 @@
 
 [![Build Status]](https://travis-ci.org/Channelstream/channelstream)
 
-This is a websocket-based communication server for python applications, 
+This is a websocket-based communication server for python applications,
 your applications communicate with it via simple JSON REST API.
 
 ## Installation and Setup
@@ -39,7 +39,7 @@ The server can (and should be) also be configured via ini files (channelstream -
                          y.y.y.y,
 
 To build frontend files:
-    
+
     cd frontend
     yarn
     yarn build # build minified bundles
@@ -48,7 +48,7 @@ To build frontend files:
 
 ## USAGE
 
-Channelstream provides API explorer that you can use to interact with various 
+Channelstream provides API explorer that you can use to interact with various
 endpoints, it is available by default under http://127.0.0.1:8000/api-explorer.
 
 Refer to `demo/chat/wsgi.py` for examples on how to connect your application with server.
@@ -87,7 +87,7 @@ expects a json request in form of::
     "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
     "channel_configs": {
         "CHAN_NAME1": {
-            "notify_presence": true, 
+            "notify_presence": true,
             "history_size": 50,
             "store_history": true,
             "broadcast_presence_with_user_lists": true,
@@ -102,7 +102,7 @@ expects a json request in form of::
         "include_connections": false
     } # information config for the server response (optional)
     }
-   
+
 where `channels` is a list of channels this connection/user should be subscribed to.
 `channel_configs` is optional dictionary of defaults used for channel creation.
 
@@ -118,7 +118,7 @@ Keys used in `channel_configs` to describe channel behavior (and their defaults)
 
 expects a json request in form of::
 
-    { 
+    {
     "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
     "info": {
         "exclude_channels": ["broadcast"],
@@ -127,7 +127,7 @@ expects a json request in form of::
         "include_connections": false
     } # information config for the server response
     }
-   
+
 where channels is a list of channels you want information about.
 If channel list is empty server will return full list of all channels and their
 information.
@@ -154,11 +154,11 @@ expects a json request in form of list of messages::
     "message": MSG_PAYLOAD
     }]
 
-When just channel is present message is public to all connections subscribed 
-to the channel. When channel & pm_users is a private message is sent 
-to connections subscribed to this specific channel. 
+When just channel is present message is public to all connections subscribed
+to the channel. When channel & pm_users is a private message is sent
+to connections subscribed to this specific channel.
 If only pm_users is present a private message is sent to all connections that are
-owned by pm_users.  
+owned by pm_users.
 
 
 ### /subscribe

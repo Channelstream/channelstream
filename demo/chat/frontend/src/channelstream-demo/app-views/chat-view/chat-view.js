@@ -39,7 +39,7 @@ class ChatView extends connect(store)(LitElement) {
             #column-holder{
             display: flex;
             }
-            
+
             :host > *{
                 --paper-tabs-selection-bar-color: #4285f4;
                 --paper-tab-ink: #4285f4;
@@ -105,7 +105,7 @@ class ChatView extends connect(store)(LitElement) {
                 ${dialogButton}
                 <chat-channel-picker .subscribedChannels=${this.user.subscribedChannels}
                                      .possibleChannels=${this.possibleChannels}></chat-channel-picker>
-            </form>        
+            </form>
         </iron-form>
         `
     }

@@ -176,23 +176,29 @@ class DemoViews(object):
         self.request.response.status = result.status_code
         return result.json()
 
-    @view_config(match_param=["section=demo", "action=message"], request_method="DELETE")
+    @view_config(
+        match_param=["section=demo", "action=message"], request_method="DELETE"
+    )
     def message_delete(self):
         payload = {
-            "uuid": self.request.json_body['uuid'],
-            "channel": self.request.json_body['channel'],
+            "uuid": self.request.json_body["uuid"],
+            "channel": self.request.json_body["channel"],
         }
-        result = make_server_request(self.request, [payload], "/message", method='delete')
+        result = make_server_request(
+            self.request, [payload], "/message", method="delete"
+        )
         self.request.response.status = result.status_code
         return result.json()
 
     @view_config(match_param=["section=demo", "action=message"], request_method="PATCH")
     def message_patch(self):
         payload = {
-            "uuid": self.request.json_body['uuid'],
-            "channel": self.request.json_body['channel'],
-            "message": self.request.json_body['message']
+            "uuid": self.request.json_body["uuid"],
+            "channel": self.request.json_body["channel"],
+            "message": self.request.json_body["message"],
         }
-        result = make_server_request(self.request, [payload], "/message", method='patch')
+        result = make_server_request(
+            self.request, [payload], "/message", method="patch"
+        )
         self.request.response.status = result.status_code
         return result.json()

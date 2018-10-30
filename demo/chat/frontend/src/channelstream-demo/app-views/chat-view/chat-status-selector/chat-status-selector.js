@@ -14,7 +14,7 @@ class ChatStatusSelector extends LitElement {
             }
         </style>
         <paper-dropdown-menu label="Status Color">
-            <paper-listbox slot="dropdown-content" class="dropdown-content" 
+            <paper-listbox slot="dropdown-content" class="dropdown-content"
             @selected-changed=${(e) => this._changeColor(e)} attr-for-selected="value">
                 <paper-item value="black">Black</paper-item>
                 <paper-item value="red">Red</paper-item>

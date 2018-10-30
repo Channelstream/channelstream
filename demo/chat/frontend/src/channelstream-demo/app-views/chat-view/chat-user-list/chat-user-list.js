@@ -33,7 +33,7 @@ class ChatUserList extends connect(store)(LitElement) {
         </style>
 
         ${visibleUsers.map((username) => html`
-        <div class="user"> 
+        <div class="user">
             <chat-avatar .username=${username} .email=${this.users.states[username].email}></chat-avatar>
             <span style="color:${this.users.states[username].color || 'black'}">${username}</span>
         </div>

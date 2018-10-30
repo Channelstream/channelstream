@@ -32,7 +32,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
             }
 
         </style>
-       
+
         <channelstream-connection
                 id="channelstream-connection"
                 .username=${this.user.username}
@@ -144,7 +144,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
     messageDelete(event) {
         this.getConnection().delete(event.detail);
     }
-    
+
     changeStatus(event) {
         var stateUpdates = event.detail;
         this.getConnection().updateUserState({user_state: stateUpdates});

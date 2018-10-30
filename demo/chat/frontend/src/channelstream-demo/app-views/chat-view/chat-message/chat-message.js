@@ -51,12 +51,12 @@ class ChatMessage extends LitElement {
             :host {
                 display: block;
             }
-        
+
             paper-input{
                 width: 80%;
                 display: inline-block;
             }
-        
+
             chat-avatar {
                 float: left;
                 margin-right: 15px;
@@ -136,4 +136,3 @@ class ChatMessage extends LitElement {
 }
 
 customElements.define(ChatMessage.is, ChatMessage);
-

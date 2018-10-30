@@ -17,7 +17,7 @@ falls back to the native implementation when one is available.
 Quick start
 -----------
 
-Here's a simple example of an animation that fades and scales a `<div>`.  
+Here's a simple example of an animation that fades and scales a `<div>`.
 [Try it as a live demo.](http://jsbin.com/yageyezabo/edit?html,js,output)
 
 ```html

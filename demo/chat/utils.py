@@ -5,7 +5,7 @@ import six
 from itsdangerous import TimestampSigner
 
 
-def make_server_request(request, payload, endpoint, auth=None, method='post'):
+def make_server_request(request, payload, endpoint, auth=None, method="post"):
     """
     makes a json request to channelstream server endpoint signing the request and sending the payload
     :param request:
@@ -41,11 +41,11 @@ def send_welcome_message(request, username):
     :return:
     """
     WELCOME_MESSAGE_TEXT = """
-    This is a welcome message that you see upon creating connection/reconnection. 
+    This is a welcome message that you see upon creating connection/reconnection.
     Only you see it (it's not stored to history), and is only sent to your user.
-    
+
     There are 3 channels with different configurations:
-    
+
     - pub_chan: notifies about joins/parts, stores history, history size: 10
     - notify: notifies about joins/parts, stores history, doesn't send user state change messages, history size: 50
     - second_channel: doesn't notify about user presence, doesn't store history, doesn't send user state change messages

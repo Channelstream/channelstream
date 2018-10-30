@@ -27,4 +27,3 @@ class AppDebug extends LitElement {
 }
 
 customElements.define(AppDebug.is, AppDebug);
-

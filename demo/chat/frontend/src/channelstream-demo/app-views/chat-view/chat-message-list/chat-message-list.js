@@ -18,7 +18,7 @@ class ChatMessageList extends connect(store)(LitElement) {
                 overflow-y: auto;
             }
         </style>
-        
+
         <div class="message-list">
         ${(this.messages.channelMessages[this.selectedChannel] || []).map((message, index) => html`
         <chat-message .message=${this.messages.messages[message]} .user=${this.user}></chat-message>

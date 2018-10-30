@@ -1,4 +1,5 @@
 from gevent import monkey
+
 monkey.patch_all()
 
 import os
@@ -12,13 +13,13 @@ def main():
     with Configurator() as config:
         config.include("pyramid_jinja2")
         # small hack to get non-registered app working
-        config.add_static_view(name='static', path='__main__:static')
+        config.add_static_view(name="static", path="__main__:static")
         # set up channelstream config
         # hardcoded for now
         host = "127.0.0.1"
         port = 8000
-        secret = 'secret'
-        admin_secret = 'admin_secret'
+        secret = "secret"
+        admin_secret = "admin_secret"
         config.registry.settings["host"] = host
         config.registry.settings["port"] = port
         config.registry.settings["secret"] = secret

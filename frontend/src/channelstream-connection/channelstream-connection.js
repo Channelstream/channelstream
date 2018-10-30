@@ -331,7 +331,7 @@ class ChannelStreamConnectionElement extends HTMLElement {
     delete(message) {
         return this.connection.delete(message);
     }
-    
+
     _channelsChangedCallback(channels) {
         // do not fire the event if set() didn't mutate anything
         // is this a reliable way to do it?
@@ -454,7 +454,7 @@ class ChannelStreamConnectionElement extends HTMLElement {
             composed: true
         }));
     }
-    
+
     _subscribeCallback(request, data) {
         this.dispatchEvent(new CustomEvent('channelstream-subscribed', {
             detail: {request:request, data:data},

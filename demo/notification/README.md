@@ -7,7 +7,7 @@ This demo requires flask being installed:
 To run the demo you first need to run channelstream server with default settings:
 
     channelstream
-    
+
 Then you need to run flask app:
 
     flask run

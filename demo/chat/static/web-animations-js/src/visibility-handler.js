@@ -26,4 +26,3 @@
   scope.addPropertiesHandler(String, merge, ['visibility']);
 
 })(webAnimations1);
-

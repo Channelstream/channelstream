@@ -24,7 +24,7 @@ requires = [
 
 setup(
     name="channelstream",
-    version='0.7.0b1',
+    version="0.7.0b1",
     description="Websocket server supporting channels/users communication",
     classifiers=["Intended Audience :: Developers"],
     author="Marcin Lulek",

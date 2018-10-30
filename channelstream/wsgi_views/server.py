@@ -810,8 +810,10 @@ class ServerViews(object):
               description: "Success"
         """
         spec = APISpec(
-            title="Channelstream API", version="0.7.0",
-            openapi_version="2.0.0", plugins=(MarshmallowPlugin(),)
+            title="Channelstream API",
+            version="0.7.0",
+            openapi_version="2.0.0",
+            plugins=(MarshmallowPlugin(),),
         )
         spec.definition("ConnectBody", schema=schemas.ConnectBodySchema)
         spec.definition("SubscribeBody", schema=schemas.SubscribeBodySchema)
