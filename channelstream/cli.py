@@ -5,6 +5,7 @@ monkey.patch_all()
 import copy
 import logging
 import argparse
+import sys
 
 from six.moves import configparser
 
@@ -55,6 +56,11 @@ SHARED_DEFAULTS = {
 
 
 def cli_start():
+    if sys.version_info.major < 3:
+        log.warning(
+            "\n---\n Version 0.6.9 is the last version to support Python 2.7\n---\n"
+        )
+
     config = copy.deepcopy(SHARED_DEFAULTS)
 
     parser = argparse.ArgumentParser(add_help=False)

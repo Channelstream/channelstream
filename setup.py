@@ -24,9 +24,20 @@ requires = [
 
 setup(
     name="channelstream",
-    version="0.7.0b1",
+    version="0.6.9",
     description="Websocket server supporting channels/users communication",
-    classifiers=["Intended Audience :: Developers"],
+    classifiers=[
+        "Intended Audience :: Developers",
+        "Topic :: Internet :: WWW/HTTP",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+    ],
     author="Marcin Lulek",
     author_email="info@webreactor.eu",
     long_description=long_description,
