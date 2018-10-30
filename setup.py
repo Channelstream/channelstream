@@ -47,6 +47,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=requires,
+    python_requires=">=2.7",
     setup_requires=["pytest-runner"],
     extras_require={
         "dev": ["coverage", "pytest", "pyramid", "tox", "mock"],

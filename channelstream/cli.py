@@ -56,9 +56,11 @@ SHARED_DEFAULTS = {
 
 
 def cli_start():
-    if sys.version_info.major < 3:
+    if sys.version_info.major < 3 or (
+        sys.version_info.major < 3 and sys.version_info.minor < 6
+    ):
         log.warning(
-            "\n---\n Version 0.6.9 is the last version to support Python 2.7\n---\n"
+            "\n---\n Version 0.6.9 is the last version to support Python older than 3.6\n---\n"
         )
 
     config = copy.deepcopy(SHARED_DEFAULTS)
