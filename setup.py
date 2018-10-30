@@ -12,12 +12,12 @@ requires = [
     "gevent==1.3.7",
     "ws4py==0.5.1",
     "marshmallow==2.16.0",
-    "dateutils",
+    "python-dateutil",
     "pyramid==1.9.2",
     "pyramid_jinja2",
     "pyramid_apispec==0.2.1",
     "itsdangerous==0.24",
-    "requests==2.19.1",
+    "requests==2.20.0",
     "six",
 ]
 
