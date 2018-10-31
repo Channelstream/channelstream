@@ -5,6 +5,8 @@
 This is a websocket-based communication server for python applications,
 your applications communicate with it via simple JSON REST API.
 
+Visit http://channelstream.org for more information.
+
 ## Installation and Setup
 
 Obtain source from github and do:
@@ -77,130 +79,33 @@ All messages need to be signed with a HMAC of destination endpoint ::
 
 ## Data format and endpoints
 
-### /connect
+Please consult API Explorer (http://127.0.0.1:8000/api-explorer) for in depth information
+about endpoints.
 
-expects a json request in form of::
+Some examples:
 
-    {
-    "username": YOUR_username,
-    "conn_id": CUSTOM_UNIQUE_UID_OF_CONNECTION, # for example uuid.uuid4()
-    "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
-    "channel_configs": {
-        "CHAN_NAME1": {
-            "notify_presence": true,
-            "history_size": 50,
-            "store_history": true,
-            "broadcast_presence_with_user_lists": true,
-            }}, # channel_configs key is optional
-    "fresh_user_state": {"avatar":"foo", "bar":1}}, # if user object is not found set this state on newly created user object (optional)
-    "user_state": {"bar":2}} # update user object state with keys from this dictionary (optional),
-    "state_public_keys": ["avatar", "bar"], # whitelist state keys to be sent back to clients inside presence payloads (optional)
-    "info": {
-        "exclude_channels": ["broadcast"],
-        "include_history": true,
-        "include_users": true,
-        "include_connections": false
-    } # information config for the server response (optional)
-    }
+* /connect **POST** connects users to the server
+* /subscribe **POST** Subscribes connection to new channels
+* /unsubscribe **POST** Removes connection from channels
+* /user_state **POST** set the state of specific user
+* /message **POST** Send message to channels and/or users
+* /message **DELETE** Delete message from history and emit changes
+* /message **PATCH** Edit existing message in history and emit changes
+* /channel_config **POST** Set channel configuration
+* /info **POST** Returns channel information
 
-where `channels` is a list of channels this connection/user should be subscribed to.
-`channel_configs` is optional dictionary of defaults used for channel creation.
+Client API
 
-Keys used in `channel_configs` to describe channel behavior (and their defaults):
-
-* notify_presence = False
-* broadcast_presence_with_user_lists = False
-* store_history = False
-* history_size = 10
+* /ws **GET** Handles websocket connections
+* /listen **GET** Handles long polling connections
+* /disconnect **GET** Permanently remove connection from server
+* /disconnect **POST** Permanently remove connection from server
 
 
-### /info
+Admin API
 
-expects a json request in form of::
-
-    {
-    "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
-    "info": {
-        "exclude_channels": ["broadcast"],
-        "include_history": true,
-        "include_users": true,
-        "include_connections": false
-    } # information config for the server response
-    }
-
-where channels is a list of channels you want information about.
-If channel list is empty server will return full list of all channels and their
-information.
-
-
-### /disconnect
-
-expects a json request in form of::
-
-    { "conn_id": CONN_ID}
-
-marks specific connection to be garbage collected
-
-
-### /message
-
-expects a json request in form of list of messages::
-
-    [{
-    "channel": "CHAN_NAME", #optional if pm_users present
-    "pm_users": [username1,username2], #optional if channel present
-    "exclude_users": [username1,username2], #optional do not send to following users on channel
-    "user": "NAME_OF_POSTER",
-    "message": MSG_PAYLOAD
-    }]
-
-When just channel is present message is public to all connections subscribed
-to the channel. When channel & pm_users is a private message is sent
-to connections subscribed to this specific channel.
-If only pm_users is present a private message is sent to all connections that are
-owned by pm_users.
-
-
-### /subscribe
-
-expects a json request in form of::
-
-    {
-    "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
-    "channel_configs": {"CHAN_NAME1": {"notify_presence": true, "history_size": 50}}, # channel_configs key is optional
-    "conn_id": "CONNECTION_ID"
-    }
-
-### /unsubscribe
-
-expects a json request in form of::
-
-    {
-    "channels": [ "CHAN_NAME1", "CHAN_NAMEX" ],
-    "conn_id": "CONNECTION_ID"
-    }
-
-
-### /user_state
-
-expects a json request in form of::
-
-    {
-    "user": username,
-    "user_state":{"bar":2},
-    "state_public_keys": ["avatar", "bar"]
-    }
-
-### Listening endpoints
-
-for websockets:
-
-    /ws?conn_id=CONNID
-
-for long polling:
-
-    /listen?conn_id=CONNID
-
+* /admin/admin.json **GET** Return server information in json format for admin panel purposes
+* /admin/admin.json **POST** Return server information in json format for admin panel purposes
 
 ### Responses to js client
 
@@ -228,4 +133,5 @@ examples:
     "channel": "CHAN_NAME"
     }
 
-Currently following message types are emited: `message`, `presence`, `user_state_change`
+Currently following message types are emited: `message`, `message:edit`,
+`message:delete`, `presence`, `user_state_change`.
