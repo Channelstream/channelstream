@@ -1,8 +1,11 @@
 import json
+import logging
 
 import requests
 import six
 from itsdangerous import TimestampSigner
+
+log = logging.getLogger(__name__)
 
 
 def make_server_request(request, payload, endpoint, auth=None, method="post"):
