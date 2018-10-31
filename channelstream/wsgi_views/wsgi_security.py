@@ -30,7 +30,7 @@ class APIFactory(object):
 
         if req_secret:
             signer = TimestampSigner(config["secret"])
-            signer.unsign(req_secret, max_age=60)
+            signer.unsign(req_secret)
         else:
             return
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]
