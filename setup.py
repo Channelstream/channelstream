@@ -16,7 +16,7 @@ requires = [
     "pyramid>=1.9.2",
     "pyramid_jinja2>=2.7",
     "pyramid_apispec>=0.2.1",
-    "itsdangerous>=0.24",
+    "itsdangerous>=1.1.0",
     "requests>=2.20.0",
     "six>=1.11.0",
 ]
