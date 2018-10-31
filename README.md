@@ -48,7 +48,8 @@ You have a simple notification demo built on flask:
 
 Now you can open multiple browser windows to http://127.0.0.1:5000/ and test notifications.
 
-There is also more complex chat application demo included in the repository:
+There is also more complex chat application demo included in the repository, it showcases
+multiple channel subscriptions, message edits and user state changing.
 
     YOUR_PYTHON_ENV/bin/python demo/chat/app.py
 
