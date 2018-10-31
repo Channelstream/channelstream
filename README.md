@@ -135,3 +135,5 @@ examples:
 
 Currently following message types are emited: `message`, `message:edit`,
 `message:delete`, `presence`, `user_state_change`.
+
+[Build Status]: https://travis-ci.org/Channelstream/channelstream.svg?branch=master
