@@ -17,18 +17,6 @@ Basic usage:
 
     YOUR_PYTHON_ENV/bin/channelstream
 
-
-YOu can also see chat application demo included in the repository:
-
-    YOUR_PYTHON_ENV/bin/python demo/chat/app.py
-
-Open your browser and point it to following url:
-
-    http://127.0.0.1:6543
-
-To run the demo you will need to have the `requests` package installed in your environment.
-
-
 The server can (and should be) also be configured via ini files (channelstream -i filename), example:
 
     [channelstream]
@@ -47,15 +35,33 @@ To build frontend files:
     yarn build # build minified bundles
     yarn dev   # run watcher process and rebuild on the fly
 
+## Demos
 
-## USAGE
+This repository provides demonstrative applications on how to connect with the server
+and send information to clients.
+
+You have a simple notification demo built on flask:
+
+    cd demo/notification/
+    YOUR_PYTHON_ENV/bin/pip install flask
+    YOUR_PYTHON_ENV/bin/flask run
+
+Now you can open multiple browser windows to http://127.0.0.1:5000/ and test notifications.
+
+There is also more complex chat application demo included in the repository:
+
+    YOUR_PYTHON_ENV/bin/python demo/chat/app.py
+
+Open your browser and point it to following url:
+
+    http://127.0.0.1:6543
+
+To run the demo you will need to have the `requests` package installed in your environment.
+
+### Security and communication model
 
 Channelstream provides API explorer that you can use to interact with various
 endpoints, it is available by default under http://127.0.0.1:8000/api-explorer.
-
-Refer to `demo/chat/wsgi.py` for examples on how to connect your application with server.
-
-### Security and communication model
 
 To send information client interacts only with your normal www application.
 Your app handled authentication and processing messages from client, then passed
