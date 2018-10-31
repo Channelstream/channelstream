@@ -48,7 +48,7 @@ You have a simple notification demo built on flask:
 
 Now you can open multiple browser windows to http://127.0.0.1:5000/ and test notifications.
 
-There is also more complex chat application demo included in the repository, it showcases
+There is also more complex chat application demo included, it showcases
 multiple channel subscriptions, message edits and user state changing.
 
     YOUR_PYTHON_ENV/bin/python demo/chat/app.py
@@ -77,7 +77,7 @@ All messages need to be signed with a HMAC of destination endpoint ::
 
     import requests
     from itsdangerous import TimestampSigner
-    signer = TimestampSigner(request.registry.settings['secret'])
+    signer = TimestampSigner(SERVER_SECRET)
     sig_for_server = signer.sign('/connect')
     secret_headers = {'x-channelstream-secret': sig_for_server,
                       'Content-Type': 'application/json'}
