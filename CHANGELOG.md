@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.9 release (2018-10-30)
+## 0.6.9 release (2018-11-02)
 
 THIS IS THE LAST RELEASE THAT SUPPORTS
 PYTHON OLDER THAN 3.6
