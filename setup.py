@@ -2,11 +2,9 @@ from setuptools import setup, find_packages
 from os import path
 from io import open
 
-
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
-
 
 requires = [
     "gevent>=1.3.7",
@@ -21,12 +19,12 @@ requires = [
     "six>=1.11.0",
 ]
 
-
 setup(
     name="channelstream",
     version="0.6.9",
     description="Websocket server supporting channels/users communication",
     keywords="websockets async communication chat notification django flask pyramid",
+    url="https://github.com/Channelstream/channelstream",
     classifiers=[
         "Framework :: Django",
         "Framework :: Flask",
