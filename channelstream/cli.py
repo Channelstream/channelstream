@@ -52,6 +52,7 @@ SHARED_DEFAULTS = {
     "log_level": "INFO",
     "demo": False,
     "allow_cors": "",
+    "validate_requests": True,
 }
 
 
@@ -65,8 +66,7 @@ def cli_start():
 
     config = copy.deepcopy(SHARED_DEFAULTS)
 
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-?", "--help", action="help")
+    parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument(
         "-i", "--ini", dest="ini", help="Config file path", default=None
     )
@@ -109,6 +109,11 @@ def cli_start():
         dest="allow_cors",
         help="comma separated list of domains's " "that can connect to server",
     )
+    parser.add_argument(
+        "--validate-requests",
+        dest="validate_requests",
+        help="Enable timestamp check on signed requests",
+    )
     args = parser.parse_args()
 
     parameters = (
@@ -121,6 +126,7 @@ def cli_start():
         "admin_secret",
         "allow_posting_from",
         "allow_cors",
+        "validate_requests",
     )
 
     if args.ini:
@@ -141,6 +147,7 @@ def cli_start():
     # convert types
     config["debug"] = asbool(config["debug"])
     config["port"] = int(config["port"])
+    config["validate_requests"] = asbool(config["validate_requests"])
 
     for key in ["allow_posting_from", "allow_cors"]:
         if not config[key]:

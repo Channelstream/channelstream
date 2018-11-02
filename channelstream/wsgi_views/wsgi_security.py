@@ -29,8 +29,9 @@ class APIFactory(object):
             return
 
         if req_secret:
+            max_age = 60 if config["validate_requests"] else None
             signer = TimestampSigner(config["secret"])
-            signer.unsign(req_secret)
+            signer.unsign(req_secret, max_age=max_age)
         else:
             return
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]

@@ -5,8 +5,11 @@
 THIS IS THE LAST RELEASE THAT SUPPORTS
 PYTHON OLDER THAN 3.6
 
-* Demo is now standalone application
-* Added Marshmallow validation
+* Demos are now standalone applications
+* Added request validation with Marshmallow schemas
 * Added API Explorer under /api-explorer
-* Added edit and delete API's
+* Added edit and delete message API's
+* Uses itsdangerous 1.1.0 for signing, to support 0.24 version additional
+  config option `validate_requests` to allow disabling timestamp checks
+*
 * Bugfixes
