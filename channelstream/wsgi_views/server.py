@@ -815,21 +815,23 @@ class ServerViews(object):
             openapi_version="2.0.0",
             plugins=(MarshmallowPlugin(),),
         )
-        spec.definition("ConnectBody", schema=schemas.ConnectBodySchema)
-        spec.definition("SubscribeBody", schema=schemas.SubscribeBodySchema)
-        spec.definition("UnsubscribeBody", schema=schemas.UnsubscribeBodySchema)
-        spec.definition("UserStateBody", schema=schemas.UserStateBodySchema)
-        spec.definition("MessagesBody", schema=schemas.MessageBodySchema(many=True))
-        spec.definition("MessageBody", schema=schemas.MessageBodySchema())
-        spec.definition(
+        spec.components.schema("ConnectBody", schema=schemas.ConnectBodySchema)
+        spec.components.schema("SubscribeBody", schema=schemas.SubscribeBodySchema)
+        spec.components.schema("UnsubscribeBody", schema=schemas.UnsubscribeBodySchema)
+        spec.components.schema("UserStateBody", schema=schemas.UserStateBodySchema)
+        spec.components.schema(
+            "MessagesBody", schema=schemas.MessageBodySchema(many=True)
+        )
+        spec.components.schema("MessageBody", schema=schemas.MessageBodySchema())
+        spec.components.schema(
             "MessageEditBody", schema=schemas.MessageEditBodySchema(many=True)
         )
-        spec.definition(
+        spec.components.schema(
             "MessagesDeleteBody", schema=schemas.MessagesDeleteBodySchema(many=True)
         )
-        spec.definition("DisconnectBody", schema=schemas.DisconnectBodySchema)
-        spec.definition("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
-        spec.definition("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)
+        spec.components.schema("DisconnectBody", schema=schemas.DisconnectBodySchema)
+        spec.components.schema("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
+        spec.components.schema("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)
 
         # legacy api
         add_pyramid_paths(spec, "legacy_connect", request=self.request)
