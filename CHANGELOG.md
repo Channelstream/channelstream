@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.6.10 release (2018-11-08)
+
+* Depends on pyramid_apispec==0.3.0
+
 ## 0.6.9 release (2018-11-02)
 
-THIS IS THE LAST RELEASE THAT SUPPORTS
+0.6 BRANCH IS THE LAST RELEASE THAT SUPPORTS
 PYTHON OLDER THAN 3.6
 
 * Demos are now standalone applications
