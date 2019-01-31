@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Removed -->
 <!-- ### Fixed -->
 
+## Unreleased
+### Removed
+* JS Client code was moved to npm and separate repository
+### Changed
+* Moved to lit-element 2.0.0rc5
+
 ## [0.6.11] - 2019-01-31
 ### Changed
 *  Depends on pyramid_apispec==0.3.1
