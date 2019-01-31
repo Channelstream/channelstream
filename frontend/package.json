@@ -9,8 +9,7 @@
     "scripts": {
         "build": "webpack --progress --mode=production",
         "dev": "webpack --watch --progress --mode=development",
-        "doc": "jsdoc -c ./jsdoc.json",
-        "bower": "bower install"
+        "doc": "jsdoc -c ./jsdoc.json"
     },
     "license": "https://github.com/AppEnlight/channelstream/blob/master/LICENSE",
     "bugs": {
