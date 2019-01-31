@@ -8,7 +8,7 @@ from marshmallow.base import FieldABC
 
 from channelstream.server_state import get_state
 
-converter = OpenAPIConverter("2.0.0")
+converter = OpenAPIConverter("2.0.0", schema_name_resolver=lambda: None, spec=None)
 
 
 MSG_EDITABLE_KEYS = ("uuid", "timestamp", "user", "message", "edited")
