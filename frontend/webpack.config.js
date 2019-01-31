@@ -55,10 +55,6 @@ module.exports = {
                 to: path.join(CHANNELSTREAM_STATIC, 'webcomponentsjs')
             },
             {
-                from: path.resolve(__dirname, 'src/channelstream.js'),
-                to: path.join(CHANNELSTREAM_STATIC, '[name].[ext]')
-            },
-            {
                 from: path.resolve(__dirname, 'dist/channelstream-admin.js'),
                 to: path.join(CHANNELSTREAM_STATIC, '[name].[ext]')
             }

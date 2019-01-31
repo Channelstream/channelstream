@@ -41,10 +41,11 @@
         "webpack-uglify-js-plugin": "^1.1.9"
     },
     "dependencies": {
+        "@channelstream/channelstream": "^0.0.2",
         "@polymer/iron-collapse": "^3.0.0",
         "@polymer/iron-icon": "^3.0.0",
         "@polymer/iron-icons": "^3.0.0",
-        "@polymer/lit-element": "^0.6.2",
+        "lit-element": "2.0.0-rc.5",
         "@polymer/neon-animation": "^3.0.0",
         "@polymer/paper-badge": "^3.0.0",
         "@polymer/paper-button": "^3.0.0",

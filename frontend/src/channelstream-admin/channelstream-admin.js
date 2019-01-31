@@ -1,4 +1,4 @@
-import {LitElement, html} from '@polymer/lit-element';
+import {LitElement, html} from 'lit-element';
 import '@polymer/paper-progress/paper-progress.js';
 import './server-info.js';
 import '../debug.js';
