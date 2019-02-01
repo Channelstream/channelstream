@@ -8,11 +8,11 @@
     rev: v2.0.0
     hooks:
     - id: trailing-whitespace
-      exclude: ^channelstream/static/
+      exclude: ^channelstream/static/|^demo/chat/static/
     - id: check-case-conflict
     - id: check-merge-conflict
     - id: check-symlinks
     - id: end-of-file-fixer
-      exclude: ^channelstream/static/
+      exclude: ^channelstream/static/|^demo/chat/static/
     - id: debug-statements
     - id: requirements-txt-fixer
