@@ -1,4 +1,4 @@
-import {LitElement, html} from '@polymer/lit-element';
+import {LitElement, html} from 'lit-element';
 import '@polymer/iron-image/iron-image.js';
 import gravatar from './gravatarjs.js';
 
