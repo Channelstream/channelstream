@@ -54,7 +54,7 @@ setup(
     python_requires=">=2.7",
     setup_requires=["pytest-runner"],
     extras_require={
-        "dev": ["coverage", "pytest", "pyramid", "tox", "mock"],
+        "dev": ["coverage", "pytest", "pyramid", "tox", "mock", "webtest"],
         "lint": ["black"],
     },
     entry_points={"console_scripts": ["channelstream = channelstream.cli:cli_start"]},
