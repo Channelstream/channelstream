@@ -55,10 +55,6 @@ module.exports = {
                 to: path.join(DEMO_STATIC, 'webcomponentsjs')
             },
             {
-                from: path.resolve(__dirname, '../../../frontend/src/channelstream.js'),
-                to: path.join(DEMO_STATIC, '[name].[ext]')
-            },
-            {
                 from: path.resolve(__dirname, 'dist/channelstream-demo.js'),
                 to: path.join(DEMO_STATIC, '[name].[ext]')
             }

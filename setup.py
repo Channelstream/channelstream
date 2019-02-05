@@ -21,7 +21,7 @@ requires = [
 
 setup(
     name="channelstream",
-    version="0.6.11",
+    version="0.6.12",
     description="Websocket server supporting channels/users communication",
     keywords="websockets async communication chat notification django flask pyramid",
     url="https://github.com/Channelstream/channelstream",
@@ -54,7 +54,7 @@ setup(
     python_requires=">=2.7",
     setup_requires=["pytest-runner"],
     extras_require={
-        "dev": ["coverage", "pytest", "pyramid", "tox", "mock"],
+        "dev": ["coverage", "pytest", "pyramid", "tox", "mock", "webtest"],
         "lint": ["black"],
     },
     entry_points={"console_scripts": ["channelstream = channelstream.cli:cli_start"]},

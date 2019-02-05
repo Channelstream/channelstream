@@ -9,8 +9,7 @@
     "scripts": {
         "build": "webpack --progress --mode=production",
         "dev": "webpack --watch --progress --mode=development",
-        "doc": "jsdoc -c ./jsdoc.json",
-        "bower": "bower install"
+        "doc": "jsdoc -c ./jsdoc.json"
     },
     "license": "https://github.com/AppEnlight/channelstream/blob/master/LICENSE",
     "bugs": {
@@ -41,6 +40,7 @@
         "webpack-uglify-js-plugin": "^1.1.9"
     },
     "dependencies": {
+        "@channelstream/channelstream": "^0.0.2",
         "@material/mwc-button": "^0.1.2",
         "@polymer/iron-a11y-keys": "^3.0.0",
         "@polymer/iron-ajax": "^3.0.0",
@@ -51,7 +51,7 @@
         "@polymer/iron-image": "^3.0.0",
         "@polymer/iron-list": "^3.0.0",
         "@polymer/iron-pages": "^3.0.0",
-        "@polymer/lit-element": "^0.6.2",
+        "lit-element": "^2.0.0-rc.5",
         "@polymer/neon-animation": "^3.0.0",
         "@polymer/paper-badge": "^3.0.0",
         "@polymer/paper-button": "^3.0.0",
@@ -68,7 +68,6 @@
         "@polymer/polymer": "^3.0.2",
         "@webcomponents/webcomponentsjs": "^2.0.2",
         "babel-plugin-transform-regenerator": "^6.26.0",
-        "bower": "^1.8.2",
         "imports-loader": "^0.7.1",
         "npm-check-updates": "^2.14.0",
         "pwa-helpers": "^0.8.3",

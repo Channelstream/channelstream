@@ -1,9 +1,9 @@
-import {LitElement, html} from '@polymer/lit-element';
+import {LitElement, html} from 'lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import '@polymer/paper-tabs/paper-tabs.js';
 import '@polymer/app-layout/app-toolbar/app-toolbar.js';
 import '../../../../../../frontend/src/debug.js';
-import '../../../../../../frontend/src/channelstream-connection/channelstream-connection.js';
+import '@channelstream/channelstream';
 import '../app-views/admin-view/admin-view.js';
 import '../app-views/chat-view/chat-view.js';
 import {store} from '../redux/store.js';

@@ -13,6 +13,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Removed -->
 <!-- ### Fixed -->
 
+## [0.6.12] - 2019-02-05
+### Added
+* `enforce_https` config option forces the servers to reject non-ssl requests
+* `http_scheme` config option can be used to enforce HTTPS urls if proper proxy headers are missing
+### Removed
+* JS Client code was moved to npm and separate repository
+### Changed
+* Moved to lit-element 2.0.0rc5
+
 ## [0.6.11] - 2019-01-31
 ### Changed
 *  Depends on pyramid_apispec==0.3.1
