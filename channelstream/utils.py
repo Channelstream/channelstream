@@ -3,6 +3,7 @@ import uuid
 
 import marshmallow
 from pyramid.renderers import render
+from pyramid.settings import asbool
 
 
 def handle_cors(request):
@@ -56,3 +57,28 @@ def process_catchup(m):
     copied.pop("exclude_users", None)
     copied.pop("no_history", None)
     return copied
+
+
+def set_config_types(config):
+    """
+    convert raw config values to proper types
+    :param config:
+    :return:
+    """
+    config = copy.deepcopy(config)
+    config["debug"] = asbool(config["debug"])
+    config["port"] = int(config["port"])
+    config["validate_requests"] = asbool(config["validate_requests"])
+    config["enforce_https"] = asbool(config["enforce_https"])
+    if config["http_scheme"] not in ["http", "https"]:
+        config["http_scheme"] = ""
+
+    for key in ["allow_posting_from", "allow_cors"]:
+        if not config[key]:
+            continue
+        try:
+            listed = [ip.strip() for ip in config[key].split(",")]
+            config[key] = listed
+        except ValueError:
+            pass
+    return config

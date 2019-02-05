@@ -2,21 +2,22 @@ from gevent import monkey
 
 monkey.patch_all()
 
+import argparse
 import copy
 import logging
-import argparse
+import pprint
 import sys
 
 from six.moves import configparser
 
 from gevent.server import StreamServer
-from pyramid.settings import asbool
 
 import channelstream.wsgi_app as pyramid_app
 import channelstream
 from channelstream.gc import gc_conns_forever, gc_users_forever
 from channelstream.policy_server import client_handle
 from channelstream.ws_app import ChatApplicationSocket
+from channelstream.utils import set_config_types
 
 from ws4py.server.geventserver import WSGIServer
 from ws4py.server.wsgiutils import WebSocketWSGIApplication
@@ -53,6 +54,8 @@ SHARED_DEFAULTS = {
     "demo": False,
     "allow_cors": "",
     "validate_requests": True,
+    "enforce_https": False,
+    "http_scheme": "",
 }
 
 
@@ -114,6 +117,15 @@ def cli_start():
         dest="validate_requests",
         help="Enable timestamp check on signed requests",
     )
+    parser.add_argument(
+        "--enforce-https", dest="enforce_https", help="Enforce HTTPS connections"
+    )
+    parser.add_argument(
+        "--http-scheme",
+        dest="http_scheme",
+        help="Sets protocol schema between http/https",
+        choices=["http", "https"],
+    )
     args = parser.parse_args()
 
     parameters = (
@@ -127,8 +139,11 @@ def cli_start():
         "allow_posting_from",
         "allow_cors",
         "validate_requests",
+        "enforce_https",
+        "http_scheme",
     )
 
+    # set values from ini/cli
     if args.ini:
         parser = configparser.ConfigParser()
         parser.read(args.ini)
@@ -144,22 +159,11 @@ def cli_start():
             if conf_value:
                 config[key] = conf_value
 
-    # convert types
-    config["debug"] = asbool(config["debug"])
-    config["port"] = int(config["port"])
-    config["validate_requests"] = asbool(config["validate_requests"])
-
-    for key in ["allow_posting_from", "allow_cors"]:
-        if not config[key]:
-            continue
-        try:
-            listed = [ip.strip() for ip in config[key].split(",")]
-            config[key] = listed
-        except ValueError:
-            pass
-
-    log_level = getattr(logging, config.get("log_level", "INFO").upper())
+    config = set_config_types(config)
+    log_level = getattr(logging, (config.get("log_level") or "INFO").upper())
     logging.basicConfig(level=log_level)
+    log.setLevel(log_level)
+    log.debug(pprint.pformat(config))
     log.info("Starting channelstream {}".format(channelstream.__version__))
     url = "http://{}:{}".format(config["host"], config["port"])
 
