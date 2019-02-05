@@ -12,7 +12,7 @@ from pyramid.security import forget, NO_PERMISSION_REQUIRED
 from pyramid.view import view_config, view_defaults
 from pyramid_apispec.helpers import add_pyramid_paths
 
-from channelstream import operations, utils, patched_json as json
+from channelstream import operations, utils, patched_json as json, __version__
 from channelstream.server_state import get_state, STATS
 from channelstream.validation import schemas
 
@@ -794,6 +794,7 @@ class ServerViews(object):
             "channels": channels_info["channels"],
             "users": [user.get_info(include_connections=True) for user in active_users],
             "uptime": uptime,
+            "version": str(__version__),
         }
 
     @view_config(
