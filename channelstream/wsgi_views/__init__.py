@@ -32,6 +32,11 @@ def includeme(config):
         "/admin/admin.json",
         factory="channelstream.wsgi_views." "wsgi_security:BasicAuthFactory",
     )
+    config.add_route(
+        "admin_action",
+        "/admin/{action}",
+        factory="channelstream.wsgi_views." "wsgi_security:BasicAuthFactory",
+    )
     # legacy API
     config.add_route("legacy_connect", "/connect")
     config.add_route("legacy_subscribe", "/subscribe")

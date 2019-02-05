@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 import gevent
+import gevent.util
 import six
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
@@ -702,6 +703,15 @@ class ServerViews(object):
         :return:
         """
         return {}
+
+    @view_config(
+        route_name="admin_action",
+        match_param=("action=debug",),
+        renderer="string",
+        permission="access",
+    )
+    def admin_debug(self):
+        return "\n".join(gevent.util.format_run_info())
 
     @view_config(
         route_name="admin_json",
