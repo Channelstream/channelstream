@@ -51,7 +51,7 @@
         "@polymer/iron-image": "^3.0.0",
         "@polymer/iron-list": "^3.0.0",
         "@polymer/iron-pages": "^3.0.0",
-        "lit-element": "^2.0.0-rc.5",
+        "lit-element": "^2.0.0",
         "@polymer/neon-animation": "^3.0.0",
         "@polymer/paper-badge": "^3.0.0",
         "@polymer/paper-button": "^3.0.0",
