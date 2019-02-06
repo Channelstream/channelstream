@@ -33,6 +33,7 @@ def gc_conns():
                 del server_state.connections[conn.id]
             # make sure connection is closed after we garbage
             # collected it from our list
+            conn.queue = None
             if conn.socket:
                 try:
                     conn.socket.close()
