@@ -54,14 +54,17 @@ class Connection(object):
         self.last_active -= timedelta(days=60)
 
     def heartbeat(self):
-        if self.socket or self.queue:
-            try:
-                self.add_message()
-                gevent.spawn_later(5, self.heartbeat)
-            except Exception:
-                self.mark_for_gc()
-                if self.socket:
-                    self.socket.close()
+        while True:
+            if (self.socket and not self.socket.terminated) or self.queue:
+                try:
+                    self.add_message()
+                    gevent.sleep(5)
+                except Exception as exc:
+                    self.mark_for_gc()
+                    if self.socket:
+                        self.socket.close()
+            else:
+                break
 
     def get_catchup_messages(self):
         server_state = get_state()
