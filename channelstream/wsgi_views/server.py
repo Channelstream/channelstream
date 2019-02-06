@@ -7,8 +7,8 @@ import six
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from gevent.queue import Queue, Empty
-from pyramid.httpexceptions import HTTPUnauthorized
-from pyramid.security import forget, NO_PERMISSION_REQUIRED
+from pyramid.httpexceptions import HTTPUnauthorized, HTTPFound
+from pyramid.security import remember, forget, NO_PERMISSION_REQUIRED
 from pyramid.view import view_config, view_defaults
 from pyramid_apispec.helpers import add_pyramid_paths
 
@@ -714,6 +714,34 @@ class ServerViews(object):
         return "\n".join(gevent.util.format_run_info())
 
     @view_config(
+        route_name="admin_action",
+        match_param=("action=sign_in",),
+        renderer="templates/sign_in.jinja2",
+        permission=NO_PERMISSION_REQUIRED,
+    )
+    def admin_sign_in(self):
+        admin_user = self.request.registry.settings["admin_user"]
+        admin_secret = self.request.registry.settings["admin_secret"]
+        username = self.request.POST.get("username", "").strip()
+        password = self.request.POST.get("password", "").strip()
+        if username == admin_user and password == admin_secret:
+            headers = remember(self.request, admin_user)
+            url = self.request.route_url("admin")
+            return HTTPFound(url, headers=headers)
+        return {}
+
+    @view_config(
+        route_name="admin_action",
+        match_param=("action=sign_out",),
+        renderer="string",
+        permission=NO_PERMISSION_REQUIRED,
+    )
+    def admin_sign_out(self):
+        headers = forget(self.request)
+        url = self.request.route_url("admin_action", action="sign_in")
+        return HTTPFound(url, headers=headers)
+
+    @view_config(
         route_name="admin_json",
         renderer="json",
         request_method=("POST", "GET"),
@@ -871,10 +899,3 @@ class ServerViews(object):
             }
         }
         return spec_dict
-
-
-@view_config(context="channelstream.wsgi_views.wsgi_security:RequestBasicChallenge")
-def admin_challenge(request):
-    response = HTTPUnauthorized()
-    response.headers.update(forget(request))
-    return response

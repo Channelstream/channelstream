@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Fixed -->
 
 ## Unreleased
+### Changed
+* AuthTkt instead of basic auth, introduces optional `cookie_secret`
+
+
+## [0.6.12] - 2019-02-05
 ### Added
 * `enforce_https` config option forces the servers to reject non-ssl requests
 * `http_scheme` config option can be used to enforce HTTPS urls if proper proxy headers are missing

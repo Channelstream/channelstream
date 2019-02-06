@@ -43,6 +43,7 @@ SHARED_DEFAULTS = {
     "secret": "secret",
     "admin_user": "admin",
     "admin_secret": "admin_secret",
+    "cookie_secret": "",
     "gc_conns_after": 30,
     "gc_channels_after": 3600 * 72,
     "wake_connections_after": 5,
@@ -126,6 +127,11 @@ def cli_start():
         help="Sets protocol schema between http/https",
         choices=["http", "https"],
     )
+    parser.add_argument(
+        "--cookie-secret",
+        dest="cookie_secret",
+        help="secret for auth_tkt cookie signing. ",
+    )
     args = parser.parse_args()
 
     parameters = (
@@ -136,6 +142,7 @@ def cli_start():
         "secret",
         "admin_user",
         "admin_secret",
+        "cookie_secret",
         "allow_posting_from",
         "allow_cors",
         "validate_requests",
