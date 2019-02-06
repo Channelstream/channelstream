@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from pyramid.authentication import BasicAuthAuthenticationPolicy
+from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.config import Configurator
 from pyramid.renderers import JSON
@@ -25,15 +25,7 @@ def make_app(server_config):
     )
     config.include("pyramid_jinja2")
 
-    def check_function(username, password, request):
-        if (
-            password == server_config["admin_secret"]
-            and username == server_config["admin_user"]
-        ):
-            return "admin", username
-        return None
-
-    authn_policy = BasicAuthAuthenticationPolicy(check_function, realm="ChannelStream")
+    authn_policy = AuthTktAuthenticationPolicy(server_config["cookie_secret"])
     authz_policy = ACLAuthorizationPolicy()
 
     config.set_authentication_policy(authn_policy)

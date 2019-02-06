@@ -70,6 +70,9 @@ def set_config_types(config):
     config["port"] = int(config["port"])
     config["validate_requests"] = asbool(config["validate_requests"])
     config["enforce_https"] = asbool(config["enforce_https"])
+    if not config["cookie_secret"]:
+        config["cookie_secret"] = str(uuid.uuid4())
+
     if config["http_scheme"] not in ["http", "https"]:
         config["http_scheme"] = ""
 

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Channelstream</title>
+    <base href="{{ request.route_url('index')[:-1] }}"/>
+
+    <script>
+        var AppConf = {
+            urls: {
+                baseUrl: '{{ request.route_url('index')[:-1] }}',
+                jsonUrl: '{{ request.route_url('admin_json') }}'
+            }
+        }
+
+        window.process = {
+            env: {
+                NODE_ENV: 'production'
+            }
+        };
+
+    </script>
+
+    <script src="{{ request.static_url('channelstream:static/webcomponentsjs/custom-elements-es5-adapter.js') }}"></script>
+    <script src="{{ request.static_url('channelstream:static/webcomponentsjs/webcomponents-loader.js') }}"></script>
+    <script src="{{ request.static_url('channelstream:static/channelstream-admin.js') }}"></script>
+
+</head>
+<body>
+
+<style>
+    html {
+        height: 100%;
+    }
+
+    body {
+        padding: 0;
+        margin: 0;
+        font-family: sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100%;
+    }
+
+    #login-form {
+        padding: 25px;
+        margin: auto;
+        background-color: #fafafa;
+        box-shadow: 10px 10px 10px rgba(0,0,0, 0.1);
+        border: 1px solid #eaeaea;
+    }
+
+</style>
+
+<div id="login-form">
+
+    <h1>Channelstream</h1>
+
+    <form action="{{ request.route_url('admin_action', action="sign_in") }}" method="post">
+        <input type="text" name="username" placeholder="Username">
+        <input type="password" name="password" placeholder="Password">
+        <input type="submit" value="Sign In">
+    </form>
+
+</div>
+
+</body>
+</html>

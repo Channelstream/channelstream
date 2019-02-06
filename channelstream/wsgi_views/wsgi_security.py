@@ -1,7 +1,7 @@
 import logging
 
 from itsdangerous import TimestampSigner
-from pyramid.security import Allow, Everyone, ALL_PERMISSIONS, authenticated_userid
+from pyramid.security import Allow, Everyone, ALL_PERMISSIONS
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +40,6 @@ class APIFactory(object):
 class BasicAuthFactory(object):
     def __init__(self, request):
         self.__acl__ = []
-        user = authenticated_userid(request)
-        if not user:
-            raise RequestBasicChallenge()
-        self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]
+        user = request.authenticated_userid
+        if user:
+            self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]

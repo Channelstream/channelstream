@@ -1,5 +1,6 @@
 import logging
-from pyramid.view import exception_view_config
+from pyramid.view import exception_view_config, forbidden_view_config
+from pyramid.httpexceptions import HTTPForbidden, HTTPFound
 
 log = logging.getLogger(__name__)
 
@@ -17,3 +18,11 @@ def itsdangerous_signer_error(context, request):
     request.response.status = 401
     log.error("Request had incorrect signature")
     return {"request": "Bad Signature"}
+
+
+@forbidden_view_config()
+def unauthorized_handler(context, request, renderer="json"):
+    if request.matched_route and request.matched_route.pattern.startswith("/admin"):
+        url = request.route_url("admin_action", action="sign_in")
+        return HTTPFound(url)
+    return HTTPForbidden()

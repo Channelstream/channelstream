@@ -33,34 +33,46 @@ def gc_conns():
                 del server_state.connections[conn.id]
             # make sure connection is closed after we garbage
             # collected it from our list
+            conn.queue = None
             if conn.socket:
                 try:
                     conn.socket.close()
                 except Exception:
                     raise
-        log.debug("gc_conns() time %s" % (datetime.utcnow() - start_time))
+        log.debug(
+            "gc_conns() removed:%s time %s"
+            % (len(collected_conns), datetime.utcnow() - start_time)
+        )
 
 
 def gc_users():
     server_state = get_state()
     with server_state.lock:
+        counter = 0
         start_time = datetime.utcnow()
         threshold = datetime.utcnow() - timedelta(days=1)
         for user in list(six.itervalues(server_state.users)):
             if user.last_active < threshold:
+                counter += 1
                 server_state.users.pop(user.username)
-        log.debug("gc_users() time %s" % (datetime.utcnow() - start_time))
+        log.debug(
+            "gc_users() removed:%s time %s" % (counter, datetime.utcnow() - start_time)
+        )
 
 
 def gc_users_forever():
-    try:
-        gc_users()
-    finally:
-        gevent.spawn_later(60, gc_users_forever)
+    while True:
+        try:
+            gc_users()
+        except Exception as exc:
+            log.error(exc)
+        gevent.sleep(60)
 
 
 def gc_conns_forever():
-    try:
-        gc_conns()
-    finally:
-        gevent.spawn_later(1, gc_conns_forever)
+    while True:
+        try:
+            gc_conns()
+        except Exception as exc:
+            log.error(exc)
+        gevent.sleep(1)

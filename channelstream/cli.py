@@ -10,6 +10,7 @@ import sys
 
 from six.moves import configparser
 
+import gevent
 from gevent.server import StreamServer
 
 import channelstream.wsgi_app as pyramid_app
@@ -43,6 +44,7 @@ SHARED_DEFAULTS = {
     "secret": "secret",
     "admin_user": "admin",
     "admin_secret": "admin_secret",
+    "cookie_secret": "",
     "gc_conns_after": 30,
     "gc_channels_after": 3600 * 72,
     "wake_connections_after": 5,
@@ -126,6 +128,11 @@ def cli_start():
         help="Sets protocol schema between http/https",
         choices=["http", "https"],
     )
+    parser.add_argument(
+        "--cookie-secret",
+        dest="cookie_secret",
+        help="secret for auth_tkt cookie signing. ",
+    )
     args = parser.parse_args()
 
     parameters = (
@@ -136,6 +143,7 @@ def cli_start():
         "secret",
         "admin_user",
         "admin_secret",
+        "cookie_secret",
         "allow_posting_from",
         "allow_cors",
         "validate_requests",
@@ -168,8 +176,8 @@ def cli_start():
     url = "http://{}:{}".format(config["host"], config["port"])
 
     log.info("Starting flash policy server on port 10843")
-    gc_conns_forever()
-    gc_users_forever()
+    gevent.spawn(gc_conns_forever)
+    gevent.spawn(gc_users_forever)
     server = StreamServer(("0.0.0.0", 10843), client_handle)
     server.start()
     log.info("Serving on {}".format(url))
