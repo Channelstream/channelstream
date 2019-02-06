@@ -9,6 +9,11 @@ log = logging.getLogger(__name__)
 def marshmallow_invalid_data(context, request):
     request.response.status = 422
     log.error("Request had incorrect payload")
+    try:
+        log.debug(context.messages)
+        log.debug(request.text)
+    except Exception as exc:
+        log.warning(u"Can't convert debug messages: %s" % exc)
     return context.messages
 
 
