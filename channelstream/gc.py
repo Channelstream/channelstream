@@ -53,14 +53,18 @@ def gc_users():
 
 
 def gc_users_forever():
-    try:
-        gc_users()
-    finally:
-        gevent.spawn_later(60, gc_users_forever)
+    while True:
+        try:
+            gc_users()
+        except Exception as exc:
+            log.error(exc)
+        gevent.sleep(60)
 
 
 def gc_conns_forever():
-    try:
-        gc_conns()
-    finally:
-        gevent.spawn_later(1, gc_conns_forever)
+    while True:
+        try:
+            gc_conns()
+        except Exception as exc:
+            log.error(exc)
+        gevent.sleep(1)

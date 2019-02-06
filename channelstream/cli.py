@@ -10,6 +10,7 @@ import sys
 
 from six.moves import configparser
 
+import gevent
 from gevent.server import StreamServer
 
 import channelstream.wsgi_app as pyramid_app
@@ -175,8 +176,8 @@ def cli_start():
     url = "http://{}:{}".format(config["host"], config["port"])
 
     log.info("Starting flash policy server on port 10843")
-    gc_conns_forever()
-    gc_users_forever()
+    gevent.spawn(gc_conns_forever)
+    gevent.spawn(gc_users_forever)
     server = StreamServer(("0.0.0.0", 10843), client_handle)
     server.start()
     log.info("Serving on {}".format(url))
