@@ -38,18 +38,25 @@ def gc_conns():
                     conn.socket.close()
                 except Exception:
                     raise
-        log.debug("gc_conns() time %s" % (datetime.utcnow() - start_time))
+        log.debug(
+            "gc_conns() removed:%s time %s"
+            % (len(collected_conns), datetime.utcnow() - start_time)
+        )
 
 
 def gc_users():
     server_state = get_state()
     with server_state.lock:
+        counter = 0
         start_time = datetime.utcnow()
         threshold = datetime.utcnow() - timedelta(days=1)
         for user in list(six.itervalues(server_state.users)):
             if user.last_active < threshold:
+                counter += 1
                 server_state.users.pop(user.username)
-        log.debug("gc_users() time %s" % (datetime.utcnow() - start_time))
+        log.debug(
+            "gc_users() removed:%s time %s" % (counter, datetime.utcnow() - start_time)
+        )
 
 
 def gc_users_forever():
