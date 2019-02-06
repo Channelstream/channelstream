@@ -20,7 +20,7 @@ class Connection(object):
         self.queue = None
         self.id = conn_id
         self.mark_activity()
-        gevent.spawn_later(5, self.heartbeat)
+        gevent.spawn_later(5, self.heartbeat_forever)
 
     def __repr__(self):
         return "<Connection: id:%s, owner:%s>" % (self.id, self.username)
@@ -54,15 +54,19 @@ class Connection(object):
         self.last_active -= timedelta(days=60)
 
     def heartbeat(self):
+        if (self.socket and not self.socket.terminated) or self.queue:
+            try:
+                self.add_message()
+                return True
+            except Exception as exc:
+                self.mark_for_gc()
+                if self.socket:
+                    self.socket.close()
+
+    def heartbeat_forever(self):
         while True:
-            if (self.socket and not self.socket.terminated) or self.queue:
-                try:
-                    self.add_message()
-                    gevent.sleep(5)
-                except Exception as exc:
-                    self.mark_for_gc()
-                    if self.socket:
-                        self.socket.close()
+            if self.heartbeat():
+                gevent.sleep(5)
             else:
                 break
 
