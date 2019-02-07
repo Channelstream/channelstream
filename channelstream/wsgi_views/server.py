@@ -720,14 +720,18 @@ class ServerViews(object):
         permission=NO_PERMISSION_REQUIRED,
     )
     def admin_sign_in(self):
-        admin_user = self.request.registry.settings["admin_user"]
-        admin_secret = self.request.registry.settings["admin_secret"]
-        username = self.request.POST.get("username", "").strip()
-        password = self.request.POST.get("password", "").strip()
-        if username == admin_user and password == admin_secret:
-            headers = remember(self.request, admin_user)
-            url = self.request.route_url("admin")
-            return HTTPFound(url, headers=headers)
+        if self.request.method == "POST":
+            admin_user = self.request.registry.settings["admin_user"]
+            admin_secret = self.request.registry.settings["admin_secret"]
+            username = self.request.POST.get("username", "").strip()
+            password = self.request.POST.get("password", "").strip()
+            if username == admin_user and password == admin_secret:
+                headers = remember(self.request, admin_user)
+                url = self.request.route_url("admin")
+                return HTTPFound(url, headers=headers)
+            else:
+                # make potential brute forcing non-feasible
+                gevent.sleep(0.5)
         return {}
 
     @view_config(
