@@ -16,7 +16,6 @@ requires = [
     "pyramid_apispec==0.3.2",
     "itsdangerous==1.1.0",
     "requests>=2.20.0",
-    "six>=1.11.0",
 ]
 
 setup(

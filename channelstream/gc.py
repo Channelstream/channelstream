@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 
 import gevent
-import six
 
 from channelstream.server_state import get_state
 
@@ -17,7 +16,7 @@ def gc_conns():
         collected_conns = []
         # collect every ref in chanels
         # remove connections from channels
-        for channel in six.itervalues(server_state.channels):
+        for channel in server_state.channels.values():
             for username, conns in list(channel.connections.items()):
                 for conn in conns:
                     if conn.last_active < threshold:
@@ -51,7 +50,7 @@ def gc_users():
         counter = 0
         start_time = datetime.utcnow()
         threshold = datetime.utcnow() - timedelta(days=1)
-        for user in list(six.itervalues(server_state.users)):
+        for user in list(server_state.users.values()):
             if user.last_active < threshold:
                 counter += 1
                 server_state.users.pop(user.username)

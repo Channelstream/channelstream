@@ -3,8 +3,6 @@ import logging
 import uuid
 from datetime import datetime
 
-import six
-
 from channelstream.server_state import get_state
 from channelstream.utils import process_catchup
 from channelstream.validation import MSG_EDITABLE_KEYS
@@ -68,7 +66,7 @@ class User(object):
     def state_from_dict(self, state_dict):
         changed = []
         if isinstance(state_dict, dict):
-            for k, v in six.iteritems(state_dict):
+            for k, v in state_dict.items():
                 if self.state.get(k) != v:
                     self.state[k] = v
                     changed.append({"key": k, "value": v})
@@ -87,7 +85,7 @@ class User(object):
     def get_channels(self):
         server_state = get_state()
         channels = []
-        for channel in six.itervalues(server_state.channels):
+        for channel in server_state.channels.values():
             if channel.connections.get(self.username):
                 channels.append(channel)
         return channels
@@ -96,9 +94,7 @@ class User(object):
         # normally tried to get channel and user from history
         for f, msg in self.frames:
             if msg["uuid"] == to_edit["uuid"] and msg["type"] == "message":
-                msg.update(
-                    {k: v for k, v in six.iteritems(to_edit) if k in MSG_EDITABLE_KEYS}
-                )
+                msg.update({k: v for k, v in to_edit.items() if k in MSG_EDITABLE_KEYS})
                 break
         altered = copy.deepcopy(to_edit)
         altered["type"] = "message:edit"

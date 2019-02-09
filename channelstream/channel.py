@@ -3,8 +3,6 @@ import logging
 import uuid
 from datetime import datetime
 
-import six
-
 from channelstream.server_state import get_state
 from channelstream.utils import process_catchup
 from channelstream.validation import MSG_EDITABLE_KEYS
@@ -197,7 +195,7 @@ class Channel(object):
         del message["exclude_users"]
         total_sent = 0
         # message everyone subscribed except excluded
-        for user, conns in six.iteritems(self.connections):
+        for user, conns in self.connections.items():
             if not exclude_users or user not in exclude_users:
                 for connection in conns:
                     if not pm_users or connection.username in pm_users:
@@ -239,9 +237,7 @@ class Channel(object):
         for msg in self.history:
             if msg["uuid"] == to_edit["uuid"]:
                 found = True
-                msg.update(
-                    {k: v for k, v in six.iteritems(to_edit) if k in MSG_EDITABLE_KEYS}
-                )
+                msg.update({k: v for k, v in to_edit.items() if k in MSG_EDITABLE_KEYS})
                 break
         # if found history then reference in frames will be also updated,
         # otherwise search frames for channels that do not store history
@@ -249,11 +245,7 @@ class Channel(object):
             for f, msg in self.frames:
                 if msg["uuid"] == to_edit["uuid"] and msg["type"] == "message":
                     msg.update(
-                        {
-                            k: v
-                            for k, v in six.iteritems(to_edit)
-                            if k in MSG_EDITABLE_KEYS
-                        }
+                        {k: v for k, v in to_edit.items() if k in MSG_EDITABLE_KEYS}
                     )
                     break
         altered = copy.deepcopy(to_edit)

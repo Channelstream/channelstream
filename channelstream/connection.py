@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 
 import gevent
-import six
 
 from channelstream import patched_json as json
 from channelstream.server_state import get_state
@@ -96,7 +95,7 @@ class Connection(object):
         """
         server_state = get_state()
         found_channels = []
-        for channel in six.itervalues(server_state.channels):
+        for channel in server_state.channels.values():
             user_conns = channel.connections.get(self.username) or []
             if self in user_conns:
                 found_channels.append(channel.name)

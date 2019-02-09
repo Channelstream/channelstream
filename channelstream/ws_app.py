@@ -1,4 +1,4 @@
-from six.moves.urllib.parse import parse_qs
+from urllib.parse import parse_qs
 from ws4py.websocket import WebSocket
 
 from channelstream import utils

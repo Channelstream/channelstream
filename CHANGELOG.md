@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Removed -->
 <!-- ### Fixed -->
 
+## Unreleased
+### Changed
+* [breaking] dropped six compat layer
+
+
 ## [0.6.14] - 2019-02-09
 ### Changed
 * Pinned Marshmallow version to <3.0.0

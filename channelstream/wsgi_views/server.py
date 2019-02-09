@@ -3,7 +3,6 @@ from datetime import datetime
 
 import gevent
 import gevent.util
-import six
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from gevent.queue import Queue, Empty
@@ -54,7 +53,7 @@ class SharedUtils(object):
 
         # select everything for empty list
         if req_channels is None:
-            channel_instances = six.itervalues(server_state.channels)
+            channel_instances = server_state.channels.values()
         else:
             channel_instances = [
                 server_state.channels[c]
@@ -310,10 +309,7 @@ def yield_response(request, connection, config):
         resp = cb + "(" + json.dumps(messages) + ")"
     else:
         resp = json.dumps(messages)
-    if six.PY2:
-        yield resp
-    else:
-        yield resp.encode("utf8")
+    yield resp.encode("utf8")
 
 
 def await_data(connection, config):
@@ -799,11 +795,9 @@ class ServerViews(object):
         server_state = get_state()
         uptime = datetime.utcnow() - STATS["started_on"]
         uptime = str(uptime).split(".")[0]
-        remembered_user_count = len(
-            [user for user in six.iteritems(server_state.users)]
-        )
+        remembered_user_count = len([user for user in server_state.users.items()])
         active_users = [
-            user for user in six.itervalues(server_state.users) if user.connections
+            user for user in server_state.users.values() if user.connections
         ]
         unique_user_count = len(active_users)
         total_connections = sum([len(user.connections) for user in active_users])

@@ -7,8 +7,7 @@ import copy
 import logging
 import pprint
 import sys
-
-from six.moves import configparser
+import configparser
 
 import gevent
 from gevent.server import StreamServer
