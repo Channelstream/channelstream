@@ -66,7 +66,7 @@ def cli_start():
         sys.version_info.major <= 3 and sys.version_info.minor < 6
     ):
         logging.warning(
-            "\n---\n Version 0.6.9 is the last version to support Python older than 3.6\n---\n"
+            "\n---\n Branch 0.6.x is the last to support Python older than 3.6\n---\n"
         )
 
     config = copy.deepcopy(SHARED_DEFAULTS)
