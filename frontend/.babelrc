@@ -4,6 +4,7 @@
       "targets": {
         "esmodules": true
       },
+      "modules": false,
       "debug": true
     }]
   ],
