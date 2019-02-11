@@ -1,39 +1,5 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.3.1/sha.js"> </script>
-
-<script>
-
-    // itsdangerous like signing for javascript
-
-    function intToBytes(x){
-        var bytes = [];
-        while ( x > 0 ){
-            bytes.push(String.fromCharCode(x & 255));
-            x = x>>8;
-        }
-        return window.btoa(bytes.reverse().join(''));
-    }
-
-    function hashStrip(input){
-        return input.replace('=', '').replace('+', '-').replace('/', '_');
-    }
-
-
-    function signRequest(secret){
-        var salt = 'itsdangerous.Signer';
-        var derived_key = salt + 'signer' + secret;
-        var sep = '.';
-        var shaObj = new jsSHA("SHA-1", "TEXT");
-        shaObj.update(derived_key)
-        derived_key = shaObj.getHash("BYTES");
-        var timestamp = Math.floor(Date.now()/1000);
-        var value = 'channelstream' + sep + hashStrip(intToBytes(timestamp));
-        var shaObj = new jsSHA("SHA-1", "TEXT");
-        shaObj.setHMACKey(derived_key, "BYTES");
-        shaObj.update(value);
-        var hmac = shaObj.getHMAC("B64");
-        return value + sep + hashStrip(hmac);
-    }
-
+<script type="module">
+    import {ChannelStreamSigner} from '{{ request.static_url('channelstream:static/channelstream/index.js') }}';
 
     window.onload = function() {
 
@@ -53,9 +19,10 @@
                 // when we input the password in swagger UI
                 // X-Channelstream-Secret header is set with its value
                 // we can then use that to sign the requests
-                var secret = req.headers['X-Channelstream-Secret'];
+                let secret = req.headers['X-Channelstream-Secret'];
                 if (secret){
-                    req.headers['X-Channelstream-Secret'] = signRequest(secret);
+                    let signer = new ChannelStreamSigner(secret);
+                    req.headers['X-Channelstream-Secret'] = signer.signRequest();
                 }
                 return req;
             },

@@ -1,6 +1,2 @@
-import {ChannelStreamConnection, ChannelStreamConnectionElement} from "@channelstream/channelstream"
-console.info('start')
-console.dir(ChannelStreamConnection)
-console.info(ChannelStreamConnectionElement)
-console.info(ChannelStreamConnection.version)
-console.info('end3')
+import {ChannelStreamConnection, ChannelStreamConnectionElement, ChannelStreamSigner} from "@channelstream/channelstream"
+console.info(ChannelStreamConnection, ChannelStreamConnectionElement, ChannelStreamConnection.version);

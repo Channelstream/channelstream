@@ -20,12 +20,13 @@
     },
     "private": true,
     "devDependencies": {
+        "@babel/cli": "^7.2.3",
+        "@babel/core": "^7.2.2",
+        "@babel/preset-env": "^7.3.1",
         "@polymer/iron-component-page": "^3.0.0-pre.21",
         "@polymer/iron-demo-helpers": "^3.0.0",
-        "babel-core": "^6.26.3",
-        "babel-loader": "^7.1.2",
+        "babel-loader": "^8.0.5",
         "babel-plugin-transform-object-rest-spread": "^6.26.0",
-        "babel-preset-env": "^1.6.0",
         "copy-webpack-plugin": "^4.4.2",
         "docdash": "^1.0.0",
         "exports-loader": "^0.6.4",
@@ -40,7 +41,7 @@
         "webpack-uglify-js-plugin": "^1.1.9"
     },
     "dependencies": {
-        "@channelstream/channelstream": "^0.0.2",
+        "@channelstream/channelstream": "^0.0.5",
         "@polymer/iron-collapse": "^3.0.0",
         "@polymer/iron-icon": "^3.0.0",
         "@polymer/iron-icons": "^3.0.0",

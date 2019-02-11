@@ -34,9 +34,9 @@ module.exports = {
             {
                 // If you see a file that ends in .js, just send it to the babel-loader.
                 test: /\.js$/,
-                use: 'babel-loader'
-                // Optionally exclude node_modules from transpilation except for polymer-webpack-loader:
-                // exclude: /node_modules\/(?!polymer-webpack-loader\/).*/
+                use: {
+                    loader: 'babel-loader'
+                }
             }
         ]
     },
@@ -48,6 +48,10 @@ module.exports = {
             {
                 from: path.resolve(__dirname, 'node_modules/web-animations-js'),
                 to: path.join(CHANNELSTREAM_STATIC, 'web-animations-js')
+            },
+            {
+                from: path.resolve(__dirname, 'node_modules/@channelstream/channelstream/src'),
+                to: path.join(CHANNELSTREAM_STATIC, 'channelstream')
             },
             {
                 from: '**/*.js',
