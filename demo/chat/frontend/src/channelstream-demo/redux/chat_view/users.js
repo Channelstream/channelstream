@@ -11,7 +11,7 @@ export const actions = {
     })
 };
 
-const INITIAL_STATE = {states: {}, allIds: {}};
+const INITIAL_STATE = {states: {}, allIds: []};
 
 
 export const reducer = (state = INITIAL_STATE, action) => {

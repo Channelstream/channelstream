@@ -62,7 +62,7 @@ let cloneChannelUsers = (state) => {
 };
 
 
-const INITIAL_STATE = {states: {}, allIds: {}, users: {}};
+const INITIAL_STATE = {states: {}, allIds: [], users: {}};
 
 export const reducer = (state = INITIAL_STATE, action) => {
     if (typeof state === 'undefined') {
