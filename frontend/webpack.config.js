@@ -7,20 +7,6 @@ let CHANNELSTREAM_STATIC = path.resolve(__dirname, '../channelstream/static/');
 
 console.error(CHANNELSTREAM_STATIC);
 
-let babelConfigFactory = () => {
-    return {
-        presets: [
-            ["@babel/preset-env", {
-                targets: {
-                    esmodules: true
-                },
-                modules: false,
-                debug: true
-            }]
-        ],
-        plugins: ["@babel/plugin-proposal-object-rest-spread", "transform-regenerator"]
-    }
-};
 
 let configFactory = (name, suffix = null, babelConfig) => {
     let subext = suffix ? `.${suffix}` : '';
@@ -78,8 +64,8 @@ let configFactory = (name, suffix = null, babelConfig) => {
                     to: path.join(CHANNELSTREAM_STATIC, 'webcomponentsjs')
                 },
                 {
-                    from: path.resolve(__dirname, 'dist/channelstream-admin.js'),
-                    to: path.join(CHANNELSTREAM_STATIC, '[name].[ext]')
+                    from: path.resolve(__dirname, 'dist/'),
+                    to: path.join(CHANNELSTREAM_STATIC, '')
                 }
             ])
             // new webpackUglifyJsPlugin({
@@ -97,7 +83,33 @@ let configFactory = (name, suffix = null, babelConfig) => {
         ]
     }
 };
+let modernBabelConfig = {
+    presets: [
+        ["@babel/preset-env", {
+            targets: {
+                esmodules: true
+            },
+            modules: false,
+            debug: true
+        }]
+    ],
+    plugins: ["@babel/plugin-proposal-object-rest-spread", "transform-regenerator"]
+};
 
-let modernConfig = configFactory('modern', suffix = '', babelConfig = babelConfigFactory());
+let legacyBabelConfig = {
+    presets: [
+        ["@babel/preset-env", {
+            targets: {
+                browsers: ['IE 11']
+            },
+            modules: false,
+            debug: true
+        }]
+    ],
+    plugins: ["@babel/plugin-proposal-object-rest-spread", "transform-regenerator"]
+};
 
-module.exports = [modernConfig];
+let modernConfig = configFactory('modern', suffix = '', babelConfig = modernBabelConfig);
+let legacyConfig = configFactory('legacy', suffix = 'es5', babelConfig = legacyBabelConfig);
+
+module.exports = [modernConfig, legacyConfig];
