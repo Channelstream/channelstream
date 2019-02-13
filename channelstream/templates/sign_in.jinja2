@@ -1,33 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Channelstream</title>
-    <base href="{{ request.route_url('index')[:-1] }}"/>
-
-    <script>
-        var AppConf = {
-            urls: {
-                baseUrl: '{{ request.route_url('index')[:-1] }}',
-                jsonUrl: '{{ request.route_url('admin_json') }}'
-            }
-        }
-
-        window.process = {
-            env: {
-                NODE_ENV: 'production'
-            }
-        };
-
-    </script>
-
-    <script src="{{ request.static_url('channelstream:static/webcomponentsjs/custom-elements-es5-adapter.js') }}"></script>
-    <script src="{{ request.static_url('channelstream:static/webcomponentsjs/webcomponents-loader.js') }}"></script>
-    <script src="{{ request.static_url('channelstream:static/channelstream-admin.js') }}"></script>
-
-</head>
-<body>
-
+{% extends "admin_layout.jinja2" %}
+{% block body %}
 <style>
     html {
         height: 100%;
@@ -47,7 +19,7 @@
         padding: 25px;
         margin: auto;
         background-color: #fafafa;
-        box-shadow: 10px 10px 10px rgba(0,0,0, 0.1);
+        box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #eaeaea;
     }
 
@@ -64,6 +36,4 @@
     </form>
 
 </div>
-
-</body>
-</html>
+{% endblock %}
