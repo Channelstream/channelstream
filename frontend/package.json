@@ -9,6 +9,7 @@
     "scripts": {
         "build": "webpack --progress --mode=production",
         "dev": "webpack --watch --progress --mode=development",
+        "devBuild": "webpack --progress --mode=development",
         "doc": "jsdoc -c ./jsdoc.json"
     },
     "license": "https://github.com/AppEnlight/channelstream/blob/master/LICENSE",
@@ -22,11 +23,11 @@
     "devDependencies": {
         "@babel/cli": "^7.2.3",
         "@babel/core": "^7.2.2",
+        "@babel/plugin-proposal-object-rest-spread": "^7.3.2",
         "@babel/preset-env": "^7.3.1",
         "@polymer/iron-component-page": "^3.0.0-pre.21",
         "@polymer/iron-demo-helpers": "^3.0.0",
         "babel-loader": "^8.0.5",
-        "@babel/plugin-proposal-object-rest-spread": "^7.3.2",
         "copy-webpack-plugin": "^4.4.2",
         "docdash": "^1.0.0",
         "exports-loader": "^0.6.4",
@@ -41,6 +42,7 @@
         "webpack-uglify-js-plugin": "^1.1.9"
     },
     "dependencies": {
+        "@babel/polyfill": "^7.2.5",
         "@channelstream/channelstream": "^0.0.5",
         "@polymer/iron-collapse": "^3.0.0",
         "@polymer/iron-icon": "^3.0.0",
