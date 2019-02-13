@@ -23,7 +23,10 @@
 
     <script src="{{ request.static_url('channelstream:static/webcomponentsjs/custom-elements-es5-adapter.js') }}"></script>
     <script src="{{ request.static_url('channelstream:static/webcomponentsjs/webcomponents-loader.js') }}"></script>
-    <script src="{{ request.static_url('channelstream:static/channelstream-admin.js') }}"></script>
+    <script type="module">
+        import '{{ request.static_url('channelstream:static/channelstream-admin.js') }}';
+    </script>
+{#    <script nomodule src="{{ request.static_url('channelstream:static/channelstream-admin.es5.js') }}"></script>#}
 
 </head>
 <body>
