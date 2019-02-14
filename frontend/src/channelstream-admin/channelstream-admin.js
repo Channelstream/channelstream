@@ -16,7 +16,8 @@ const fetchServerInfo = (url, store) => {
 
     fetch(url, {
         method: 'get',
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        cache: "no-store"
     }).then(function(response) {
         return response.json();
     }).then(function(response) {

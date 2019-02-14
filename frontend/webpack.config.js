@@ -64,6 +64,10 @@ let configFactory = (name, suffix = null, babelConfig) => {
                     to: path.join(CHANNELSTREAM_STATIC, 'webcomponentsjs')
                 },
                 {
+                    from: path.resolve(__dirname, 'node_modules/@babel/polyfill'),
+                    to: path.join(CHANNELSTREAM_STATIC, '@babel/polyfill')
+                },
+                {
                     from: path.resolve(__dirname, 'dist/'),
                     to: path.join(CHANNELSTREAM_STATIC, '')
                 }
