@@ -6,7 +6,8 @@ import copy
 import pytest
 
 from webtest import TestApp
-from channelstream.cli import RoutingApplication, SHARED_DEFAULTS
+from channelstream.cli import SHARED_DEFAULTS
+from channelstream.cli.start import RoutingApplication
 
 
 @pytest.mark.usefixtures("cleanup_globals")
