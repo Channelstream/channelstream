@@ -6,7 +6,7 @@ import argparse
 import copy
 import logging
 import pprint
-import sys
+import os
 import configparser
 
 import gevent
@@ -67,66 +67,8 @@ def cli_start():
     parser.add_argument(
         "-i", "--ini", dest="ini", help="Config file path", default=None
     )
-    parser.add_argument(
-        "-s", "--secret", dest="secret", help="Secret used to secure your API requests"
-    )
-    parser.add_argument(
-        "-u", "--admin_username", dest="admin_user", help="Administrator username"
-    )
-    parser.add_argument(
-        "-a",
-        "--admin_secret",
-        dest="admin_secret",
-        help="Secret used to secure your admin panel",
-    )
-    parser.add_argument(
-        "-host", "--host", dest="host", help="Host ip on which the server listens to"
-    )
-    parser.add_argument(
-        "-p",
-        "--port",
-        type=int,
-        dest="port",
-        help="Port on which the server listens to",
-    )
-    parser.add_argument("-d", "--debug", dest="debug", help="Does nothing for now")
-    parser.add_argument(
-        "-l", "--log-level", dest="log_level", help="Does nothing for now"
-    )
-    parser.add_argument("-e", "--demo", dest="demo", help="Does nothing, BW.compat")
-    parser.add_argument(
-        "-x",
-        "--allowed_post_ip",
-        dest="allow_posting_from",
-        help="comma separated list of ip's " "that can post to server",
-    )
-    parser.add_argument(
-        "-c",
-        "--allow_cors",
-        dest="allow_cors",
-        help="comma separated list of domains's " "that can connect to server",
-    )
-    parser.add_argument(
-        "--validate-requests",
-        dest="validate_requests",
-        help="Enable timestamp check on signed requests",
-    )
-    parser.add_argument(
-        "--enforce-https", dest="enforce_https", help="Enforce HTTPS connections"
-    )
-    parser.add_argument(
-        "--http-scheme",
-        dest="http_scheme",
-        help="Sets protocol schema between http/https",
-        choices=["http", "https"],
-    )
-    parser.add_argument(
-        "--cookie-secret",
-        dest="cookie_secret",
-        help="secret for auth_tkt cookie signing. ",
-    )
     args = parser.parse_args()
-
+    ini_path = args.ini or os.environ.get("CHANNELSTREAM_INI")
     parameters = (
         "debug",
         "log_level",
@@ -144,9 +86,9 @@ def cli_start():
     )
 
     # set values from ini/cli
-    if args.ini:
+    if ini_path:
         parser = configparser.ConfigParser()
-        parser.read(args.ini)
+        parser.read(ini_path)
         settings = dict(parser.items("channelstream"))
         for key in parameters:
             try:
@@ -155,8 +97,8 @@ def cli_start():
                 pass
     else:
         for key in parameters:
-            conf_value = getattr(args, key)
-            if conf_value:
+            conf_value = os.environ.get(f"channelstream_{key}".upper())
+            if conf_value is not None:
                 config[key] = conf_value
 
     config = set_config_types(config)
