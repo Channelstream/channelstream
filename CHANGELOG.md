@@ -14,8 +14,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Fixed -->
 
 ## Unreleased
-### Changed
+### Removed
 * [breaking] dropped six compat layer
+* [breaking] test only in python 3.6+
+* [breaking] Allow configuration only from ini files, drop all other arguments from CLI
+### Changed
+* Admin views can also authenticate via API keys
+* Updated frontend code to support ESM browsers by default, fallback to ES5 browsers optionally
 
 
 ## [0.6.14] - 2019-02-09
