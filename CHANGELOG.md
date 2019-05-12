@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Removed -->
 <!-- ### Fixed -->
 
-## Unreleased
+## [0.7.0rc1] - 2019-05-12
 ### Removed
 * [breaking] dropped six compat layer
 * [breaking] test only in python 3.6+
