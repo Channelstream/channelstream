@@ -61,13 +61,6 @@ SHARED_DEFAULTS = {
 
 
 def cli_start():
-    if sys.version_info.major < 3 or (
-        sys.version_info.major <= 3 and sys.version_info.minor < 6
-    ):
-        logging.warning(
-            "\n---\n Branch 0.6.x is the last to support Python older than 3.6\n---\n"
-        )
-
     config = copy.deepcopy(SHARED_DEFAULTS)
 
     parser = argparse.ArgumentParser(add_help=True)
