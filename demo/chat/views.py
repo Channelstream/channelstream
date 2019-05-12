@@ -167,12 +167,7 @@ class DemoViews(object):
     @view_config(match_param=["section=demo", "action=info"])
     def info(self):
         """gets information for the "admin" demo page"""
-        admin = "admin"
-        admin_secret = self.request.registry.settings["admin_secret"]
-        basic_auth = HTTPBasicAuth(admin, admin_secret)
-        result = make_server_request(
-            self.request, {}, "/admin/admin.json", auth=basic_auth
-        )
+        result = make_server_request(self.request, {}, "/admin/admin.json")
         self.request.response.status = result.status_code
         return result.json()
 
