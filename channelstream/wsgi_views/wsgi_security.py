@@ -37,9 +37,13 @@ class APIFactory(object):
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]
 
 
-class BasicAuthFactory(object):
+class AdminAuthFactory(object):
     def __init__(self, request):
         self.__acl__ = []
         user = request.authenticated_userid
         if user:
             self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]
+        else:
+            # try the API auth factory too for server requests
+            context_obj = APIFactory(request)
+            self.__acl__ = context_obj.__acl__

@@ -25,17 +25,17 @@ def includeme(config):
     config.add_route(
         "admin",
         "/admin",
-        factory="channelstream.wsgi_views." "wsgi_security:BasicAuthFactory",
+        factory="channelstream.wsgi_views.wsgi_security:AdminAuthFactory",
     )
     config.add_route(
         "admin_json",
         "/admin/admin.json",
-        factory="channelstream.wsgi_views." "wsgi_security:BasicAuthFactory",
+        factory="channelstream.wsgi_views.wsgi_security:AdminAuthFactory",
     )
     config.add_route(
         "admin_action",
         "/admin/{action}",
-        factory="channelstream.wsgi_views." "wsgi_security:BasicAuthFactory",
+        factory="channelstream.wsgi_views.wsgi_security:AdminAuthFactory",
     )
     # Backend API
     config.add_route("connect", "/connect")
