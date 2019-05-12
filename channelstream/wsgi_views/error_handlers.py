@@ -27,7 +27,11 @@ def itsdangerous_signer_error(context, request):
 
 @forbidden_view_config()
 def unauthorized_handler(context, request, renderer="json"):
-    if request.matched_route and request.matched_route.pattern.startswith("/admin"):
+    if (
+        request.matched_route
+        and request.matched_route.pattern.startswith("/admin")
+        or "api-explorer" in request.url
+    ):
         url = request.route_url("admin_action", action="sign_in")
         return HTTPFound(url)
     return HTTPForbidden()

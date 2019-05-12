@@ -684,15 +684,13 @@ def info(request):
     return channels_info
 
 
-@view_defaults(route_name="action", renderer="json", permission="access")
+@view_defaults(route_name="action", renderer="json", permission="admin")
 class ServerViews(object):
     def __init__(self, request):
         self.request = request
         self.utils = SharedUtils(request)
 
-    @view_config(
-        route_name="admin", renderer="templates/admin.jinja2", permission="access"
-    )
+    @view_config(route_name="admin", renderer="templates/admin.jinja2")
     def admin(self):
         """
         Serve admin page html
@@ -701,10 +699,7 @@ class ServerViews(object):
         return {}
 
     @view_config(
-        route_name="admin_action",
-        match_param=("action=debug",),
-        renderer="string",
-        permission="access",
+        route_name="admin_action", match_param=("action=debug",), renderer="string"
     )
     def admin_debug(self):
         return "\n".join(gevent.util.format_run_info())
@@ -742,10 +737,7 @@ class ServerViews(object):
         return HTTPFound(url, headers=headers)
 
     @view_config(
-        route_name="admin_json",
-        renderer="json",
-        request_method=("POST", "GET"),
-        permission="access",
+        route_name="admin_json", renderer="json", request_method=("POST", "GET")
     )
     def admin_json(self):
         """
@@ -823,9 +815,7 @@ class ServerViews(object):
             "version": str(__version__),
         }
 
-    @view_config(
-        route_name="openapi_spec", permission=NO_PERMISSION_REQUIRED, renderer="json"
-    )
+    @view_config(route_name="openapi_spec", renderer="json")
     def api_spec(self):
         """
         OpenApi 2.0 spec

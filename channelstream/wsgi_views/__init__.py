@@ -21,7 +21,11 @@ def includeme(config):
         permission=NO_PERMISSION_REQUIRED,
     )
     config.add_route("index", "/")
-    config.add_route("openapi_spec", "/openapi.json")
+    config.add_route(
+        "openapi_spec",
+        "/openapi.json",
+        factory="channelstream.wsgi_views.wsgi_security:AdminAuthFactory",
+    )
     config.add_route(
         "admin",
         "/admin",

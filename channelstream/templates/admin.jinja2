@@ -23,6 +23,11 @@
 <h1>Channelstream Admin</h1>
 
 <div class="container">
+
+    <p>
+        <a href="{{ request.route_url('pyramid_apispec.api_explorer_path') }}">Api Explorer</a>
+    </p>
+
     <channelstream-admin></channelstream-admin>
 </div>
 {% endblock %}

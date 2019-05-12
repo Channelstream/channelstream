@@ -49,7 +49,10 @@ def make_app(server_config):
     config.pyramid_apispec_add_explorer(
         spec_route_name="openapi_spec",
         script_generator="channelstream.utils:swagger_ui_script_template",
-        permission=NO_PERMISSION_REQUIRED,
+        permission="admin",
+        route_args={
+            "factory": "channelstream.wsgi_views.wsgi_security:AdminAuthFactory"
+        },
     )
     app = config.make_wsgi_app()
     return app

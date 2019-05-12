@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 * Admin views can also authenticate via API keys
 * Updated frontend code to support ESM browsers by default, fallback to ES5 browsers optionally
+* Depend on pyramid_apispec 0.3.3
+* /api-explorer is now only accessible for admin users
 
 ## [0.6.14] - 2019-02-09
 ### Changed
