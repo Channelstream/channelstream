@@ -107,7 +107,7 @@ class SharedUtils(object):
         return channels_info
 
 
-@view_config(route_name="legacy_connect", request_method="POST", renderer="json")
+@view_config(route_name="connect", request_method="POST", renderer="json")
 def connect(request):
     """
     Connect view
@@ -116,7 +116,7 @@ def connect(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "connects users to the server"
       description: ""
       operationId: "connect"
@@ -166,7 +166,7 @@ def connect(request):
     }
 
 
-@view_config(route_name="legacy_subscribe", request_method="POST", renderer="json")
+@view_config(route_name="subscribe", request_method="POST", renderer="json")
 def subscribe(request):
     """
     Subscribe view
@@ -175,7 +175,7 @@ def subscribe(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "Subscribes connection to new channels"
       description: ""
       operationId: "subscribe"
@@ -217,7 +217,7 @@ def subscribe(request):
     }
 
 
-@view_config(route_name="legacy_unsubscribe", request_method="POST", renderer="json")
+@view_config(route_name="unsubscribe", request_method="POST", renderer="json")
 def unsubscribe(request):
     """
     Unsubscribe view
@@ -226,7 +226,7 @@ def unsubscribe(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "Removes connection from channels"
       description: ""
       operationId: "unsubscribe"
@@ -328,7 +328,7 @@ def await_data(connection, config):
     return messages
 
 
-@view_config(route_name="legacy_user_state", request_method="POST", renderer="json")
+@view_config(route_name="user_state", request_method="POST", renderer="json")
 def user_state(request):
     """
     Sets the state of a user object
@@ -337,7 +337,7 @@ def user_state(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "set the status of specific user"
       description: ""
       operationId: "user_state"
@@ -419,7 +419,7 @@ def messages_post(request):
     return shared_messages(request)
 
 
-@view_config(route_name="legacy_message", request_method="POST", renderer="json")
+@view_config(route_name="message", request_method="POST", renderer="json")
 def message(request):
     """
     Send message to channels and/or users
@@ -428,7 +428,7 @@ def message(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "Send message to channels and/or users"
       description: ""
       operationId: "message"
@@ -452,7 +452,7 @@ def message(request):
     return shared_messages(request)
 
 
-@view_config(route_name="legacy_message", request_method="PATCH", renderer="json")
+@view_config(route_name="message", request_method="PATCH", renderer="json")
 def messages_patch(request):
     """
     Edit existing message in history and emit changes
@@ -461,7 +461,7 @@ def messages_patch(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "Edit existing message in history and emit changes"
       description: ""
       operationId: "edit_messages"
@@ -490,7 +490,7 @@ def messages_patch(request):
     return data
 
 
-@view_config(route_name="legacy_message", request_method="DELETE", renderer="json")
+@view_config(route_name="message", request_method="DELETE", renderer="json")
 def messages_delete(request):
     """
     Delete message from history and emit changes
@@ -499,7 +499,7 @@ def messages_delete(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "Delete message from history and  emit changes"
       description: ""
       operationId: "messages_delete"
@@ -588,7 +588,7 @@ def disconnect(request):
     return operations.disconnect(conn_id=data["conn_id"])
 
 
-@view_config(route_name="legacy_channel_config", request_method="POST", renderer="json")
+@view_config(route_name="channel_config", request_method="POST", renderer="json")
 def channel_config(request):
     """
     Set channel configuration
@@ -597,7 +597,7 @@ def channel_config(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "Set channel configuration"
       description: ""
       operationId: "channel_config"
@@ -632,7 +632,7 @@ def channel_config(request):
     return channels_info
 
 
-@view_config(route_name="legacy_info", renderer="json")
+@view_config(route_name="info", renderer="json")
 def info(request):
     """
     Returns channel information
@@ -641,7 +641,7 @@ def info(request):
       security:
         - APIKeyHeader: []
       tags:
-      - "Legacy API"
+      - "API"
       summary: "Returns channel information"
       description: ""
       operationId: "info"
@@ -753,7 +753,7 @@ class ServerViews(object):
         ---
         get:
           tags:
-          - "Legacy Admin API"
+          - "Admin API"
           summary: "Return server information in json format for admin panel
           purposes"
           description: ""
@@ -773,7 +773,7 @@ class ServerViews(object):
               description: "Success"
         post:
           tags:
-          - "Legacy Admin API"
+          - "Admin API"
           summary: "Return server information in json format for admin panel
           purposes"
           description: ""
@@ -870,22 +870,18 @@ class ServerViews(object):
         spec.components.schema("ChannelConfigBody", schema=schemas.ChannelConfigSchema)
         spec.components.schema("ChannelInfoBody", schema=schemas.ChannelInfoBodySchema)
 
-        # legacy api
-        add_pyramid_paths(spec, "legacy_connect", request=self.request)
-        add_pyramid_paths(spec, "legacy_subscribe", request=self.request)
-        add_pyramid_paths(spec, "legacy_unsubscribe", request=self.request)
-        add_pyramid_paths(spec, "legacy_user_state", request=self.request)
-        add_pyramid_paths(spec, "legacy_message", request=self.request)
-        add_pyramid_paths(spec, "legacy_channel_config", request=self.request)
-        add_pyramid_paths(spec, "legacy_info", request=self.request)
+        # api
+        add_pyramid_paths(spec, "connect", request=self.request)
+        add_pyramid_paths(spec, "subscribe", request=self.request)
+        add_pyramid_paths(spec, "unsubscribe", request=self.request)
+        add_pyramid_paths(spec, "user_state", request=self.request)
+        add_pyramid_paths(spec, "message", request=self.request)
+        add_pyramid_paths(spec, "channel_config", request=self.request)
+        add_pyramid_paths(spec, "info", request=self.request)
 
         add_pyramid_paths(spec, "api_listen", request=self.request)
         add_pyramid_paths(spec, "api_listen_ws", request=self.request)
         add_pyramid_paths(spec, "api_disconnect", request=self.request)
-
-        # v1 api
-        # do not expose this yet
-        # add_pyramid_paths(spec, "api_v1_messages", request=self.request)
 
         add_pyramid_paths(spec, "admin_json", request=self.request)
         spec_dict = spec.to_dict()

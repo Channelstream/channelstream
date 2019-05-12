@@ -37,22 +37,19 @@ def includeme(config):
         "/admin/{action}",
         factory="channelstream.wsgi_views." "wsgi_security:BasicAuthFactory",
     )
-    # legacy API
-    config.add_route("legacy_connect", "/connect")
-    config.add_route("legacy_subscribe", "/subscribe")
-    config.add_route("legacy_unsubscribe", "/unsubscribe")
-    config.add_route("legacy_user_state", "/user_state")
-    config.add_route("legacy_message", "/message")
-    config.add_route("legacy_channel_config", "/channel_config")
-    config.add_route("legacy_info", "/info")
+    # Backend API
+    config.add_route("connect", "/connect")
+    config.add_route("subscribe", "/subscribe")
+    config.add_route("unsubscribe", "/unsubscribe")
+    config.add_route("user_state", "/user_state")
+    config.add_route("message", "/message")
+    config.add_route("channel_config", "/channel_config")
+    config.add_route("info", "/info")
 
     # listening API
     config.add_route("api_listen", "/listen")
     config.add_route("api_listen_ws", "/ws")
     config.add_route("api_disconnect", "/disconnect")
-
-    # do not expose V1 API yet
-    # config.include(add_v1_routes, route_prefix='/api/v1/')
 
     config.add_route("section_action", "/{section}/{action}")
 
