@@ -14,6 +14,7 @@ from gevent.server import StreamServer
 
 import channelstream.wsgi_app as pyramid_app
 import channelstream
+from channelstream.cli import CONFIGURABLE_PARAMS, SHARED_DEFAULTS
 from channelstream.gc import gc_conns_forever, gc_users_forever
 from channelstream.policy_server import client_handle
 from channelstream.ws_app import ChatApplicationSocket
@@ -39,64 +40,41 @@ class RoutingApplication(object):
         return self.wsgi_app(environ, start_response)
 
 
-SHARED_DEFAULTS = {
-    "secret": "secret",
-    "admin_user": "admin",
-    "admin_secret": "admin_secret",
-    "cookie_secret": "",
-    "gc_conns_after": 30,
-    "gc_channels_after": 3600 * 72,
-    "wake_connections_after": 5,
-    "allow_posting_from": "127.0.0.1",
-    "port": 8000,
-    "host": "0.0.0.0",
-    "debug": False,
-    "log_level": "INFO",
-    "demo": False,
-    "allow_cors": "",
-    "validate_requests": True,
-    "enforce_https": False,
-    "http_scheme": "",
-}
-
-
-def cli_start():
+def main():
     config = copy.deepcopy(SHARED_DEFAULTS)
 
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument(
         "-i", "--ini", dest="ini", help="Config file path", default=None
     )
-    args = parser.parse_args()
-    ini_path = args.ini or os.environ.get("CHANNELSTREAM_INI")
-    parameters = (
-        "debug",
-        "log_level",
-        "port",
-        "host",
-        "secret",
-        "admin_user",
-        "admin_secret",
-        "cookie_secret",
-        "allow_posting_from",
-        "allow_cors",
-        "validate_requests",
-        "enforce_https",
-        "http_scheme",
+    parser.add_argument(
+        "-v",
+        "--version",
+        dest="version",
+        help="Print version info and exit",
+        default=None,
+        nargs="*",
     )
+    args = parser.parse_args()
+
+    if args.version is not None:
+        print(channelstream.__version__)
+        exit()
+
+    ini_path = args.ini or os.environ.get("CHANNELSTREAM_INI")
 
     # set values from ini/cli
     if ini_path:
         parser = configparser.ConfigParser()
         parser.read(ini_path)
         settings = dict(parser.items("channelstream"))
-        for key in parameters:
+        for key in CONFIGURABLE_PARAMS:
             try:
                 config[key] = settings[key]
             except KeyError:
                 pass
     else:
-        for key in parameters:
+        for key in CONFIGURABLE_PARAMS:
             conf_value = os.environ.get(f"channelstream_{key}".upper())
             if conf_value is not None:
                 config[key] = conf_value
@@ -120,7 +98,7 @@ def cli_start():
         log.warning("Using default secret! Remember to set that for production.")
     if config["admin_secret"] == "admin_secret":
         log.warning("Using default admin secret! Remember to set that for production.")
-
+    log.warning(f"IP's allowed to post to API {config['allow_posting_from']}")
     server = WSGIServer(
         (config["host"], config["port"]),
         RoutingApplication(config),

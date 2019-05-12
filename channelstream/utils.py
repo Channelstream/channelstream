@@ -79,9 +79,11 @@ def set_config_types(config):
     for key in ["allow_posting_from", "allow_cors"]:
         if not config[key]:
             continue
-        try:
-            listed = [ip.strip() for ip in config[key].split(",")]
-            config[key] = listed
-        except ValueError:
-            pass
+        # if those keys are strings from ini convert to lists of individual values
+        if isinstance(config[key], str):
+            try:
+                listed = [ip.strip() for ip in config[key].split(",") if ip.strip()]
+                config[key] = listed
+            except ValueError:
+                pass
     return config

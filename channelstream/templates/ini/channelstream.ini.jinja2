@@ -1,0 +1,18 @@
+[channelstream]
+admin_user = {{ admin_user }}
+# admin panel password
+admin_secret = {{ admin_secret }}
+# auth cookie secret, leave empty for random string generated at server start
+# fill in if you need to have multiple servers and want to keep admin session between them
+cookie_secret = {{ cookie_secret }}
+# API password
+secret = {{ secret }}
+port = {{ port }}
+allow_posting_from = {% for ip in allow_posting_from -%}
+{{ ip }}{% if not loop.last %},{% endif %}
+                     {% endfor %}
+log_level = {{ log_level }}
+# should require SSL connections?
+enforce_https = {{ enforce_https }}
+# enforce https:// in links
+http_scheme = {{ http_scheme }}

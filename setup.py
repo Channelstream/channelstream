@@ -52,5 +52,10 @@ setup(
         "dev": ["coverage", "pytest", "pyramid", "tox", "mock", "webtest"],
         "lint": ["black"],
     },
-    entry_points={"console_scripts": ["channelstream = channelstream.cli:cli_start"]},
+    entry_points={
+        "console_scripts": [
+            "channelstream = channelstream.cli.start:main",
+            "channelstream_utils = channelstream.cli.utils:main",
+        ]
+    },
 )

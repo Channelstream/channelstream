@@ -11,29 +11,18 @@ Visit http://channelstream.org for more information.
 
 Obtain source from github and do:
 
-    python setup.py develop
+    YOUR_PYTHON_ENV/bin/pip install channelstream
 
-Basic usage:
+Generate new configuration:
 
-    YOUR_PYTHON_ENV/bin/channelstream
+    YOUR_PYTHON_ENV/bin/channelstream_utils make_config -o config.ini
 
-The server can (and should be) also be configured via ini files (channelstream -i filename), example:
+Start the server:
 
-    [channelstream]
-    debug = 0
-    port = 8000
-    secret = YOURSECRET
-    admin_secret = YOURADMINSECRET
-    allow_posting_from = 127.0.0.1,
-                         x.x.x.x,
-                         y.y.y.y,
+    YOUR_PYTHON_ENV/bin/channelstream -i config.ini
 
-To build frontend files:
+The server can be configured via ini files (channelstream -i filename), example:
 
-    cd frontend
-    yarn
-    yarn build # build minified bundles
-    yarn dev   # run watcher process and rebuild on the fly
 
 ## Demos
 
