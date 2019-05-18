@@ -25,7 +25,9 @@ def make_app(server_config):
     )
     config.include("pyramid_jinja2")
 
-    authn_policy = AuthTktAuthenticationPolicy(server_config["cookie_secret"])
+    authn_policy = AuthTktAuthenticationPolicy(
+        server_config["cookie_secret"], max_age=2592000
+    )
     authz_policy = ACLAuthorizationPolicy()
 
     config.set_authentication_policy(authn_policy)
