@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Removed -->
 <!-- ### Fixed -->
 
+
+## [0.7.0] - 2019-05-18
+### Changed
+* Logout and api-explorer links in admin panel
+* Persist auth cookie for admin panel
+
 ## [0.7.0rc1] - 2019-05-12
 ### Added
 * `channelstream_utils` command, right now it can create fresh config INI files
