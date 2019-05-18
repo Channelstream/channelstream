@@ -18,6 +18,14 @@
         padding: 20px;
     }
 
+    a, a:link, a:visited{
+        color: #1b61d6;
+        text-decoration: none;
+    }
+    a:hover{
+        color: #b54926;
+    }
+
 </style>
 
 <h1>Channelstream Admin</h1>
@@ -26,6 +34,7 @@
 
     <p>
         <a href="{{ request.route_url('pyramid_apispec.api_explorer_path') }}">Api Explorer</a>
+        <a href="{{ request.route_url('admin_action', action="sign_out") }}"> Sign Out</a>
     </p>
 
     <channelstream-admin></channelstream-admin>
