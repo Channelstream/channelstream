@@ -20,7 +20,7 @@ requires = [
 
 setup(
     name="channelstream",
-    version="0.7.0rc1",
+    version="0.7.0",
     description="Websocket server supporting channels/users communication",
     keywords="websockets async communication chat notification django flask pyramid",
     url="https://github.com/Channelstream/channelstream",
