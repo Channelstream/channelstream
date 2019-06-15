@@ -2,6 +2,7 @@ from gevent import monkey
 
 monkey.patch_all()
 
+import argparse
 import os
 from gevent.pywsgi import WSGIServer
 from pyramid.config import Configurator
@@ -10,47 +11,62 @@ from pyramid.config import Configurator
 def main():
     demo_path = os.path.dirname(os.path.abspath(__file__))
 
+    parser = argparse.ArgumentParser(description="Run demo.")
+    parser.add_argument("--demo-port", default=6543, type=int, help="Demo app port")
+    parser.add_argument(
+        "--channelstream-url",
+        default="http://127.0.0.1:8000",
+        help="Channelstream API URL",
+    )
+    parser.add_argument(
+        "--channelstream-ws-url",
+        default="http://127.0.0.1:8000/ws",
+        help="Channelstream Websocket URL",
+    )
+    parser.add_argument(
+        "--channelstream-secret", default="secret", help="Channelstream secret"
+    )
+    parser.add_argument(
+        "--channelstream-admin-secret",
+        default="admin_secret",
+        help="Channelstream admin secret",
+    )
+
+    args = parser.parse_args()
+
     with Configurator() as config:
         config.include("pyramid_jinja2")
         # small hack to get non-registered app working
         config.add_static_view(name="static", path="__main__:static")
         # set up channelstream config
-        # hardcoded for now
-        host = "127.0.0.1"
-        port = 8000
-        secret = "secret"
-        admin_secret = "admin_secret"
-        config.registry.settings["host"] = host
-        config.registry.settings["port"] = port
-        config.registry.settings["secret"] = secret
-        config.registry.settings["admin_secret"] = admin_secret
+        config.registry.settings["channelstream_url"] = args.channelstream_url
+        config.registry.settings["channelstream_ws_url"] = args.channelstream_ws_url
+        config.registry.settings["secret"] = args.channelstream_secret
+        config.registry.settings["admin_secret"] = args.channelstream_admin_secret
 
         # our routes
         config.add_route("/", "/")
         config.add_route("section_action", "/{section}/{action}")
         config.add_route(
-            "api_listen", "http://{host}:{port}/listen".format(host=host, port=port)
+            "api_listen", "{url}/listen".format(url=args.channelstream_url)
         )
+        config.add_route("api_listen_ws", args.channelstream_ws_url)
         config.add_route(
-            "api_listen_ws", "http://{host}:{port}/ws".format(host=host, port=port)
-        )
-        config.add_route(
-            "api_disconnect",
-            "http://{host}:{port}/disconnect".format(host=host, port=port),
+            "api_disconnect", "{url}/disconnect".format(url=args.channelstream_url)
         )
         print(os.path.join(demo_path, "static"))
 
         config.scan("views")
         app = config.make_wsgi_app()
 
-    server = WSGIServer(("0.0.0.0", 6543), app)
+    server = WSGIServer(("0.0.0.0", args.demo_port), app)
     print(
-        "Assuming Channelstream server is runnng on http://{host}:{port}".format(
-            host=host, port=port
+        "Assuming Channelstream server is runnng on {url}".format(
+            url=args.channelstream_url
         )
     )
     print("The demo is assuming DEFAULT secret variables")
-    print("visit demo at http://127.0.0.1:6543/")
+    print("visit demo at http://127.0.0.1:{port}/".format(port=args.demo_port))
     server.serve_forever()
 
 

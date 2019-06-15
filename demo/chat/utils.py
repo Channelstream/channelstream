@@ -17,7 +17,7 @@ def make_server_request(request, payload, endpoint, auth=None, method="post"):
     :param auth:
     :return:
     """
-    server_port = request.registry.settings["port"]
+    channelstream_url = request.registry.settings["channelstream_url"]
     signer = TimestampSigner(request.registry.settings["secret"])
     sig_for_server = signer.sign("channelstream")
     if not six.PY2:
@@ -26,7 +26,7 @@ def make_server_request(request, payload, endpoint, auth=None, method="post"):
         "x-channelstream-secret": sig_for_server,
         "Content-Type": "application/json",
     }
-    url = "http://127.0.0.1:%s%s" % (server_port, endpoint)
+    url = "{url}{endpoint}".format(url=channelstream_url, endpoint=endpoint)
     response = getattr(requests, method)(
         url, data=json.dumps(payload), headers=secret_headers, auth=auth
     )
