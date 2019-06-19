@@ -7,7 +7,7 @@ import requests
 from pyramid.security import NO_PERMISSION_REQUIRED
 from pyramid.view import view_config, view_defaults
 from requests.auth import HTTPBasicAuth
-from utils import make_server_request, send_welcome_message
+from utils import make_server_request, send_welcome_message, ssl_rewriter
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class DemoViews(object):
     def demo(self):
         """Render demo page"""
         random_name = "anon_%s" % random.randint(1, 999999)
-        return {"username": random_name}
+        return {"username": random_name, "ssl_rewriter": ssl_rewriter}
 
     @view_config(match_param=["section=demo", "action=connect"], request_method="POST")
     def connect(self):

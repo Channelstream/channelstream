@@ -8,15 +8,15 @@
         var AppConf = {
             baseUrl: '{{ request.route_url('/')[:-1] }}',
             connectUrl: '{{ request.route_url('section_action',  section='demo', action='connect') }}',
-            disconnectUrl: '{{ request.route_url('api_disconnect') }}',
+            disconnectUrl: '{{ ssl_rewriter(request, request.route_url('api_disconnect')) }}',
             subscribeUrl: '{{ request.route_url('section_action',  section='demo', action='subscribe') }}',
             unsubscribeUrl: '{{ request.route_url('section_action',  section='demo', action='unsubscribe') }}',
             messageUrl: '{{ request.route_url('section_action',  section='demo', action='message') }}',
             messageEditUrl: '{{ request.route_url('section_action',  section='demo', action='message') }}',
             messageDeleteUrl: '{{ request.route_url('section_action',  section='demo', action='message') }}',
             userStateUrl: '{{ request.route_url('section_action',  section='demo', action='user_state') }}',
-            longPollUrl: '{{ request.route_url('api_listen') }}',
-            websocketUrl: '{{ request.route_url('api_listen_ws').replace('http', 'ws') }}',
+            longPollUrl: '{{ ssl_rewriter(request, request.route_url('api_listen')) }}',
+            websocketUrl: '{{ ssl_rewriter(request, request.route_url('api_listen_ws').replace('http', 'ws')) }}',
             infoUrl: '{{ request.route_url('section_action', section='demo', action='info') }}'
         }
 

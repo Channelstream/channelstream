@@ -6,6 +6,7 @@ import argparse
 import os
 from gevent.pywsgi import WSGIServer
 from pyramid.config import Configurator
+from pyramid.events import NewRequest
 
 
 def main():
@@ -54,8 +55,16 @@ def main():
         config.add_route(
             "api_disconnect", "{url}/disconnect".format(url=args.channelstream_url)
         )
-        print(os.path.join(demo_path, "static"))
+        # gevent wsgi server doesn't set scheme based on proxy settings
+        def new_request_sub(event):
+            environ = event.request.environ
+            if (
+                environ.get("HTTP_X_FORWARDED_PROTO") == "https"
+                or environ.get("HTTP_X_FORWARDED_SSL") == "on"
+            ):
+                environ["wsgi.url_scheme"] = "https"
 
+        config.add_subscriber(new_request_sub, NewRequest)
         config.scan("views")
         app = config.make_wsgi_app()
 
