@@ -69,7 +69,7 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
         this.appConfig = window.AppConf;
     }
 
-    _stateChanged(state) {
+    stateChanged(state) {
         this.channels = state.serverInfo.channels;
         this.serverStats = state.serverInfo.serverStats;
         this.currentActions = state.currentActions;

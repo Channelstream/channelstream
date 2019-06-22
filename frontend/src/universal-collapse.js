@@ -35,7 +35,6 @@ class UniversalCollapse extends HTMLElement {
     }
 
     toggle(){
-        console.log('TOGGLED');
         this.collapsed = !this.collapsed;
     }
 
