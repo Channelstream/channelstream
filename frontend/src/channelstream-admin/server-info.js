@@ -1,12 +1,9 @@
 import {LitElement, html} from 'lit-element';
 import {repeat} from 'lit-html/directives/repeat.js';
-import '@polymer/iron-collapse/iron-collapse.js';
-import '@polymer/iron-icons/iron-icons.js';
-import '@polymer/iron-icons/social-icons.js';
-import '@polymer/paper-button/paper-button.js';
-import '@polymer/paper-card/paper-card.js';
-import '@polymer/paper-tooltip/paper-tooltip.js';
+import '@material/mwc-icon/mwc-icon.js';
+import '@material/mwc-button/mwc-button.js';
 import '../debug.js';
+import '../universal-collapse.js';
 
 import {ReduxMixin} from './redux/store';
 import {actions as channelsActions} from './redux/server_info/channels';
@@ -26,19 +23,18 @@ class ServerInfo extends LitElement {
             let channel = channels.filter((i) => i.uuid === selectedChannel)[0];
 
             channelInfo = html`
-                        <paper-card .heading="channel: ${channel.name}" class="channel-${channel.uuid}">
-            <div class="card-actions">
-                <span>
-                <paper-button raised toggles  @tap=${(e) => this.toggleHistory(channel.uuid)}">
-                    <iron-icon icon="icons:history"></iron-icon>History</paper-button>
-                <paper-tooltip position="top" animation-delay="0">Shows this channels history</paper-tooltip>
-                </span>
-                <span>
-                <paper-button raised toggles  @tap=${(e) => this.toggleUsers(channel.uuid)}">
-                    <iron-icon icon="social:people-outline"></iron-icon>Users</paper-button>
-                <paper-tooltip position="top" animation-delay="0">Shows currently connected users</paper-tooltip>
-                </span>
-            </div>
+            <div class="channel-${channel.uuid} paper-card">
+                <h1>Channel: ${channel.name}</h1>
+                <div class="card-actions">
+                    <span>
+                    <mwc-button raised toggles @click=${(e) => this.toggleHistory(channel.uuid)} title="Shows this channels history">
+                         <mwc-icon>history</mwc-icon>History</mwc-button>
+                    </span>
+                    <span>
+                    <mwc-button raised toggles @click=${(e) => this.toggleUsers(channel.uuid)} title="Shows currently connected users">
+                        <mwc-icon>account_box</mwc-icon>Users</mwc-button>
+                    </span>
+                </div>
                 <div class="card-content">
                     <ul>
                         <li><strong>Long name</strong>: ${channel.long_name}</li>
@@ -49,26 +45,26 @@ class ServerInfo extends LitElement {
                     <p><strong>Config</strong></p>
                     <app-debug .data="${channel.settings}"></app-debug>
 
-                    <iron-collapse class="channel-history-${channel.uuid}">
+                    <universal-collapse class="channel-history-${channel.uuid}" collapsed>
                         <div class="history-holder">
                             <strong>Message history:</strong>
                             ${channel.history.map((item) => html`
                             <app-debug .data="${item}"></app-debug>
                             `)}
                         </div>
-                    </iron-collapse>
+                    </universal-collapse>
 
-                    <iron-collapse class="channel-users-${channel.uuid}">
+                    <universal-collapse class="channel-users-${channel.uuid}" collapsed>
                         <div class="users-holder">
                             <strong>Connected users:</strong>
                             ${channel.users.map((item) => html`
                             <div>${item}</div>
                             `)}
                         </div>
-                    </iron-collapse>
+                    </universal-collapse>
 
+                </div>
             </div>
-            </paper-card>
             `
         }
 
@@ -81,21 +77,21 @@ class ServerInfo extends LitElement {
                 position: relative;
             }
 
-            .server-stat > paper-badge {
-                --paper-badge-margin-bottom: -20px;
-            }
-
-            paper-card {
+            .paper-card {
                 width: 100%;
-
-            }
-
-            paper-material {
                 padding: 25px;
             }
 
-            paper-button iron-icon {
+            mwc-button mwc-icon {
                 margin-right: 10px;
+            }
+
+            h1{
+                margin-top: 0;
+            }
+
+            .card-actions{
+                margin: 15px 0px;
             }
 
             ul {
@@ -165,7 +161,7 @@ class ServerInfo extends LitElement {
             <div class="column-left">
             <ul>
             ${repeat(channels, (channel) => channel.name, (channel, index) => html`
-            <li><paper-button  @click="${(e) => this.selectChannel(channel.uuid)}">${index + 1} - ${channel.name}</paper-button></li>
+            <li><mwc-button @click="${(e) => this.selectChannel(channel.uuid)}">${index + 1} - ${channel.name}</mwc-button></li>
             `)}
             </ul>
             </div>

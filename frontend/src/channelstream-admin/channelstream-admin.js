@@ -1,5 +1,5 @@
 import {LitElement, html} from 'lit-element';
-import '@polymer/paper-progress/paper-progress.js';
+import '@material/mwc-linear-progress/mwc-linear-progress.js';
 import './server-info.js';
 import '../debug.js';
 import { connect } from 'pwa-helpers/connect-mixin.js';
@@ -47,15 +47,7 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
 
     render() {
         return html`
-        <style>
-            #admin-page-progress {
-                width: 100%;
-                --paper-progress-indeterminate-cycle-duration: 3s;
-                margin-bottom: 15px;
-            }
-        </style>
-
-        <paper-progress id="admin-page-progress" indeterminate ?disabled=${this.currentActions.active.length === 0}></paper-progress>
+        <mwc-linear-progress id="admin-page-progress" indeterminate .closed=${this.currentActions.active.length === 0}></mwc-linear-progress>
         <server-info .channels=${this.channels} .serverStats=${this.serverStats}></server-info>
         `;
     }
@@ -111,6 +103,14 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
     _handleAjaxRequest(event){
         store.dispatch(currentActions.currentActionStart(
             event.target.dataset.type, event.detail));
+    }
+
+    createRenderRoot() {
+        /**
+         * Render template in light DOM. Note that shadow DOM features like
+         * encapsulated CSS are unavailable.
+         */
+        return this;
     }
 
 }
