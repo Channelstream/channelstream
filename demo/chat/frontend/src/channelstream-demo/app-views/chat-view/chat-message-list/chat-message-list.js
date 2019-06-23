@@ -13,7 +13,6 @@ class ChatMessageList extends connect(store)(LitElement) {
         return html`
         <style>
             .message-list {
-                height: 500px;
                 width: 100%;
                 overflow-y: auto;
             }
@@ -39,11 +38,11 @@ class ChatMessageList extends connect(store)(LitElement) {
         super.update();
         setTimeout(() => {
             let listElem = this.shadowRoot.querySelector('.message-list');
-            listElem.scrollTop = listElem.scrollHeight;
+            this.scrollTop = this.scrollHeight;
         }, 0)
     }
 
-    _stateChanged(state) {
+    stateChanged(state) {
         this.messages = state.chatView.messages;
         this.selectedChannel = state.chatView.ui.selectedChannel;
         this.user = state.user;

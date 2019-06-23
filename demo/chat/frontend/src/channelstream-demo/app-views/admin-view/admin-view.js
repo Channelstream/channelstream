@@ -2,8 +2,7 @@ import {LitElement, html} from 'lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../redux/store.js';
 
-import '@polymer/iron-ajax/iron-ajax.js';
-import '@polymer/paper-progress/paper-progress.js';
+import '@material/mwc-linear-progress/mwc-linear-progress.js';
 import '../../../../../../../frontend/src/channelstream-admin/server-info.js';
 import {fetchServerInfo} from '../../../../../../../frontend/src/channelstream-admin/channelstream-admin';
 
@@ -12,14 +11,9 @@ class AdminView extends connect(store)(LitElement) {
     render() {
         return html`
         <style>
-            #admin-page-progress {
-                width: 100%;
-                --paper-progress-indeterminate-cycle-duration: 3s;
-                margin-bottom: 15px;
-            }
         </style>
 
-        <paper-progress id="admin-page-progress" indeterminate ?disabled=${this.currentActions.active.length === 0}></paper-progress>
+        <mwc-linear-progress id="admin-page-progress" indeterminate .closed=${this.currentActions.active.length === 0}></mwc-linear-progress>
 
         <server-info .channels=${this.channels} .serverStats=${this.serverStats}></server-info>
         `;
@@ -43,7 +37,7 @@ class AdminView extends connect(store)(LitElement) {
         this.appConfig = window.AppConf;
     }
 
-    _stateChanged(state) {
+    stateChanged(state) {
         this.user = state.user;
         this.channels = state.adminView.channels;
         this.serverStats = state.adminView.serverStats;
@@ -75,17 +69,6 @@ class AdminView extends connect(store)(LitElement) {
             clearInterval(this.interval);
         }
     }
-
-    loadingChange(newVal) {
-        if (newVal) {
-            this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', false);
-        }
-        else {
-            this.shadowRoot.querySelector('paper-progress').toggleClass('transparent', true);
-        }
-    }
-
-
 }
 
 customElements.define(AdminView.is, AdminView);

@@ -1,5 +1,5 @@
 import {LitElement, html} from 'lit-element';
-import '@polymer/iron-image/iron-image.js';
+import '@power-elements/lazy-image/lazy-image.js';
 import gravatar from './gravatarjs.js';
 
 class ChatAvatar extends LitElement {
@@ -7,15 +7,16 @@ class ChatAvatar extends LitElement {
     render(){
         return html`
         <style>
-            iron-image {
+            lazy-image {
                 border-radius: 25px;
                 border: 3px solid #eeeeee;
                 background-color: #ffffff;
                 width: var(--chat-avatar-width, 50px);
                 height: var(--chat-avatar-height, 50px);
+                overflow: hidden;
             }
         </style>
-        <iron-image sizing="cover" .src=${this._getAvatar(this.username, this.email)} preload fade></iron-image>
+        <lazy-image .src=${this._getAvatar(this.username, this.email)} preload fade></lazy-image>
         `
     }
 

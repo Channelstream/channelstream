@@ -1,27 +1,17 @@
 import {LitElement, html} from 'lit-element';
-import '@polymer/paper-listbox/paper-listbox.js';
-import '@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '@polymer/paper-item/paper-item.js';
+import 'weightless/select/select.js';
 
 
 class ChatStatusSelector extends LitElement {
 
     render() {
         return html`
-        <style>
-            paper-item {
-                width: 150px;
-            }
-        </style>
-        <paper-dropdown-menu label="Status Color">
-            <paper-listbox slot="dropdown-content" class="dropdown-content"
-            @selected-changed=${(e) => this._changeColor(e)} attr-for-selected="value">
-                <paper-item value="black">Black</paper-item>
-                <paper-item value="red">Red</paper-item>
-                <paper-item value="green">Green</paper-item>
-                <paper-item value="blue">Blue</paper-item>
-            </paper-listbox>
-        </paper-dropdown-menu>
+       <wl-select name="value" label="Status Color?" @input=${(e) => this._changeColor(e)}>
+          <option value="black">Black</option>
+          <option value="red">Red</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+       </wl-select>
         `
     }
 
@@ -42,8 +32,9 @@ class ChatStatusSelector extends LitElement {
     }
 
     _changeColor(event) {
+        console.log(event.target);
         this.dispatchEvent(new CustomEvent('change-status', {
-            detail: {color: event.target.selected},
+            detail: {color: event.target.value},
             bubbles: true,
             composed: true
         }));

@@ -1,8 +1,7 @@
 import {LitElement, html} from 'lit-element';
-
-import '@polymer/iron-image/iron-image.js';
-import '@polymer/paper-icon-button/paper-icon-button.js';
-import '@polymer/paper-input/paper-input';
+import 'weightless/button/button.js';
+import 'weightless/icon/icon.js';
+import 'weightless/textfield/textfield.js';
 import '../../../chat-avatar/chat-avatar.js'
 
 
@@ -22,8 +21,12 @@ class ChatMessage extends LitElement {
 
         if (this.message.user === this.user.username){
             editIcons = html`
-            <paper-icon-button icon="create" @tap=${(e) => this.messageEdit()}></paper-icon-button>
-            <paper-icon-button icon="delete" @tap=${(e) => this.messageDelete()}></paper-icon-button>
+                <wl-button fab flat inverted @click=${(e) => this.messageEdit()}>
+                   <wl-icon>create</wl-icon>
+                </wl-button>
+                <wl-button fab flat inverted @click=${(e) => this.messageDelete()}>
+                   <wl-icon>delete</wl-icon>
+                </wl-button>
             `;
         }
 
@@ -37,9 +40,10 @@ class ChatMessage extends LitElement {
         if (this.edited){
             messageNode = html`
             <form onsubmit="return false;">
-            <iron-a11y-keys id="a11y" keys="enter" @keys-pressed=${(e) => this.messageEdited(e)}></iron-a11y-keys>
-                <paper-input name="message" label="Message" .value="${this.message.message.text}"></paper-input>
-                <paper-icon-button icon="icons:send" @tap=${(e) => this.messageEdited(e)}></paper-icon-button>
+                <wl-textfield name="message" required label="Message"  .value="${this.message.message.text}"></wl-textfield>
+                <wl-button fab flat inverted @click=${(e) => this.messageEdited(e)}>
+                    <wl-icon>send</wl-icon>
+                </wl-button>
             </form>`;
         }
         else{
@@ -50,9 +54,11 @@ class ChatMessage extends LitElement {
         <style>
             :host {
                 display: block;
+                --button-fab-size: 25px;
+                --button-font-size: 10px;
             }
 
-            paper-input{
+            wl-textfield{
                 width: 80%;
                 display: inline-block;
             }
@@ -116,7 +122,7 @@ class ChatMessage extends LitElement {
     messageEdited(event){
         event.preventDefault();
         let message = {...this.message, message:{...this.message.message}};
-        message.message.text = this.shadowRoot.querySelector('paper-input').value;
+        message.message.text = this.shadowRoot.querySelector('wl-textfield').value;
         this.edited = false;
         this.dispatchEvent(new CustomEvent('message-edit', {
             detail: message,

@@ -36,7 +36,16 @@
     body {
         padding: 0;
         margin: 0;
-        font-family: sans-serif;
+        font-family: "Roboto Slab", "Roboto", sans-serif;
+        height: 100%;
+    }
+
+    html{
+        height: 100%;
+    }
+
+    * {
+        box-sizing: border-box;
     }
 
     h1 {
@@ -46,14 +55,39 @@
         color: #ffffff;
     }
 
-    .container {
-        padding: 20px;
+    channelstream-chat-demo{
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        --mdc-theme-primary: #2c528b;
+        --input-font-family: "Roboto Slab", "Roboto", sans-serif;
+    }
+
+    mwc-top-app-bar{
+        --tab-color: #ffffff;
+        --tab-color-active: #ffffff;
+        --tab-color-active-hover: #ffffff;
+        --tab-color-hover: #ffffff;
+        --tab-bg: transparent;
+        --tab-bg-hover: transparent;
+        --tab-group-bg: transparent;
+        --tab-group-indicator-bg: #ff9800;
+        --tab-group-indicator-size: 3px;
+        --divider-size: 0;
+    }
+
+    .pad-content{
+        flex: 1;
+        margin-top: 70px;
+        padding: 0px 25px;
+        width: 100%;
     }
 
 </style>
 
-<div>
-    <channelstream-chat-demo></channelstream-chat-demo>
-</div>
+
+<channelstream-chat-demo></channelstream-chat-demo>
+
 </body>
 </html>

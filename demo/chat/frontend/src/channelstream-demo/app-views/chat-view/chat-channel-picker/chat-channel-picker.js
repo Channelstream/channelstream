@@ -1,6 +1,6 @@
 import {LitElement, html} from 'lit-element';
-import '@polymer/paper-button/paper-button.js';
-import '@polymer/iron-icon/iron-icon.js';
+import '@material/mwc-button/mwc-button.js';
+import '@material/mwc-icon/mwc-icon.js';
 
 
 class ChatChannelPicker extends LitElement {
@@ -11,11 +11,10 @@ class ChatChannelPicker extends LitElement {
     render() {
         return html`
         ${this.possibleChannels.map((channel) => html`
-        <paper-button raised @tap=${(e) => this.subscribeToChannel(e, channel)}>
-        <iron-icon .icon="icons:${(this.subscribedChannels.indexOf(channel) !== -1 ? 'check-box' : 'check-box-outline-blank')}">
-        </iron-icon>
+        <mwc-button outlined @click=${(e) => this.subscribeToChannel(e, channel)}>
+        <mwc-icon>${(this.subscribedChannels.indexOf(channel) !== -1 ? 'check_box' : 'check_box_outline_blank')}</mwc-icon>
         ${this.subscribedChannels.indexOf(channel) !== -1 ? 'Connected to ' : 'Connect to'} "${channel}"
-        </paper-button>`)}
+        </mwc-button>`)}
         `
     }
 

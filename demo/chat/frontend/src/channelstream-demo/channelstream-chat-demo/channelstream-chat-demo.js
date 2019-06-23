@@ -1,7 +1,8 @@
 import {LitElement, html} from 'lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
-import '@polymer/paper-tabs/paper-tabs.js';
-import '@polymer/app-layout/app-toolbar/app-toolbar.js';
+import 'weightless/tab-group/tab-group.js';
+import 'weightless/tab/tab.js';
+import '@material/mwc-top-app-bar/mwc-top-app-bar.js';
 import '../../../../../../frontend/src/debug.js';
 import '@channelstream/channelstream';
 import '../app-views/admin-view/admin-view.js';
@@ -17,22 +18,13 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
 
     render() {
         let currentPage;
-        if (this.page === 'chat'){ currentPage = html`<chat-view></chat-view>`};
-        if (this.page === 'admin'){ currentPage =  html`<admin-view></admin-view>`};
+        if (this.page === 'chat') {
+            currentPage = html`<chat-view></chat-view>`
+        }
+        if (this.page === 'admin') {
+            currentPage = html`<admin-view></admin-view>`
+        }
         return html`
-        <style>
-            .pad-content {
-                padding: 20px;
-            }
-
-            app-toolbar {
-                background-color: #4285f4;
-                color: #fff;
-                margin: 0 0 20px 0;
-            }
-
-        </style>
-
         <channelstream-connection
                 id="channelstream-connection"
                 .username=${this.user.username}
@@ -44,14 +36,16 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
                 @channelstream-channels-changed=${(e) => this.handleChannelsChange(e)}>
         </channelstream-connection>
 
-        <app-toolbar>
-            <span class="title">Channelstream Demo - Hello ${this.user.username}</span>
+        <mwc-top-app-bar type="fixed">
+            <span slot="title" class="title">Channelstream Demo - Hello ${this.user.username}</span>
 
-            <paper-tabs .selected=${this.page} attr-for-selected="name" @selected-changed=${(e) => this.changedTab(e)}>
-                <paper-tab name="chat">Chat</paper-tab>
-                <paper-tab name="admin">Admin Stats</paper-tab>
-            </paper-tabs>
-        </app-toolbar>
+
+            <wl-tab-group slot="actionItems">
+               <wl-tab @click=${(e) => this.switchTab("chat")} checked>Chat</wl-tab>
+               <wl-tab @click=${(e) => this.switchTab("admin")}>Admin Stats</wl-tab>
+            </wl-tab-group>
+
+        </mwc-top-app-bar>
 
         <div class="pad-content">
             ${currentPage}
@@ -73,7 +67,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         };
     }
 
-    _stateChanged(state) {
+    stateChanged(state) {
         let oldUser = this.user;
         this.user = state.user;
         this.channels = state.chatView.channels;
@@ -81,10 +75,10 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         this.page = state.app.selectedPage;
     }
 
-    update(changedProps){
+    update(changedProps) {
         super.update();
         let changedUser = changedProps.get('user');
-        if (changedUser && changedUser.username !== this.user.username){
+        if (changedUser && changedUser.username !== this.user.username) {
             this.handleUserChange();
         }
     }
@@ -94,15 +88,16 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         this.appConfig = window.AppConf;
     }
 
-    changedTab(event) {
-        store.dispatch(appActions.setPage(event.detail.value));
+    switchTab(tabName) {
+        console.log('switchTab', tabName);
+        store.dispatch(appActions.setPage(tabName));
     }
 
     receivedMessage(event) {
         for (let message of event.detail.messages) {
             // add message
             // console.info('message', message);
-            if ( message.type === 'message' || message.type === 'presence') {
+            if (message.type === 'message' || message.type === 'presence') {
                 store.dispatch(chatViewMessagesActions.setChannelMessages([message]));
             }
             if (message.type === 'message:edit') {
@@ -125,7 +120,10 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
                 }
             }
             if (message.type === 'user_state_change') {
-                store.dispatch(chatViewUsersActions.setUserStates([{user: message.user, state: message.message.state}]));
+                store.dispatch(chatViewUsersActions.setUserStates([{
+                    user: message.user,
+                    state: message.message.state
+                }]));
             }
         }
     }
@@ -136,7 +134,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
     }
 
     /** edit the message via channelstream conn manager */
-    messageEdit(event){
+    messageEdit(event) {
         this.getConnection().edit(event.detail);
     }
 
@@ -152,7 +150,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
 
     /** kicks off the connection */
     firstUpdated() {
-        var channelstreamConnection = this.shadowRoot.querySelector('channelstream-connection');
+        var channelstreamConnection = this.querySelector('channelstream-connection');
         channelstreamConnection.connectUrl = this.appConfig.connectUrl;
         channelstreamConnection.disconnectUrl = this.appConfig.disconnectUrl;
         channelstreamConnection.subscribeUrl = this.appConfig.subscribeUrl;
@@ -198,14 +196,13 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         var shouldUnsubscribe = connection.calculateUnsubscribe();
         if (shouldUnsubscribe.length > 0) {
             connection.unsubscribe(shouldUnsubscribe);
-        }
-        else {
+        } else {
             connection.subscribe();
         }
     }
 
     getConnection() {
-        return this.shadowRoot.querySelector('channelstream-connection');
+        return this.querySelector('channelstream-connection');
     }
 
     handleConnected(event) {
@@ -226,8 +223,7 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         if (index !== -1) {
             var toUnsubscribe = connection.calculateUnsubscribe([channel]);
             connection.unsubscribe(toUnsubscribe);
-        }
-        else {
+        } else {
             var toSubscribe = connection.calculateSubscribe([channel]);
             connection.subscribe(toSubscribe);
         }
@@ -253,6 +249,15 @@ class ChannelStreamChatDemo extends connect(store)(LitElement) {
         }
         store.dispatch(userActions.setChannels(event.detail.data.channels));
     }
+
+    createRenderRoot() {
+        /**
+         * Render template in light DOM. Note that shadow DOM features like
+         * encapsulated CSS are unavailable.
+         */
+        return this;
+    }
+
 }
 
 customElements.define(ChannelStreamChatDemo.is, ChannelStreamChatDemo);

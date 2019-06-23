@@ -1,8 +1,6 @@
 import {LitElement, html} from 'lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../../redux/store.js';
-
-import '@polymer/iron-image/iron-image.js';
 import '../../../chat-avatar/chat-avatar.js';
 
 
@@ -53,7 +51,7 @@ class ChatUserList extends connect(store)(LitElement) {
         };
     }
 
-    _stateChanged(state) {
+    stateChanged(state) {
         this.users = state.chatView.users;
         this.channelsUsers = state.chatView.channels.users;
     }

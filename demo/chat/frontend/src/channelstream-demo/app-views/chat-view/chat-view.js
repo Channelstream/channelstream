@@ -2,14 +2,14 @@ import {LitElement, html} from 'lit-element';
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {store} from '../../redux/store.js';
 
-import '@polymer/iron-a11y-keys/iron-a11y-keys.js';
-import '@polymer/iron-form/iron-form.js';
-import '@polymer/paper-dialog/paper-dialog.js';
-import '@polymer/paper-button/paper-button.js';
-import '@polymer/paper-input/paper-input.js';
-import '@polymer/paper-icon-button/paper-icon-button.js';
-import '@polymer/paper-tabs/paper-tabs.js';
-import '@polymer/iron-flex-layout/iron-flex-layout-classes.js';
+import 'weightless/tab-group/tab-group.js';
+import 'weightless/tab/tab.js';
+import 'weightless/button/button.js';
+import 'weightless/icon/icon.js';
+import 'weightless/dialog/dialog.js';
+import 'weightless/textfield/textfield.js';
+import '@material/mwc-icon/mwc-icon.js';
+import '@material/mwc-button/mwc-button.js';
 
 import './chat-message-list/chat-message-list.js';
 import './chat-channel-picker/chat-channel-picker.js';
@@ -25,24 +25,38 @@ class ChatView extends connect(store)(LitElement) {
     render() {
 
         let dialogButton = null;
-        if (this.user.anonymous){
+        if (this.user.anonymous) {
             dialogButton = html`
-                <paper-button @tap=${(e) => this.openDialog(e)} raised>
-                <iron-icon icon="social:person-outline"></iron-icon>
+                <mwc-button @click=${(e) => this.openDialog(e)} raised>
+                <mwc-icon>account_box</mwc-icon>
                 Change username
-                </paper-button>
+                </mwc-button>
             `
         }
 
         return html`
             <style>
+            * {
+                box-sizing: border-box;
+                --button-bg: var(--mdc-theme-primary);
+            }
+
+            #vertical-holder{
+                display: flex;
+                flex-direction: column;
+            }
+
             #column-holder{
-            display: flex;
+                display: flex;
+                height: calc(100vh - 300px);
+            }
+
+            #bottom-holder{
+                margin-top: 5px;
             }
 
             :host > *{
-                --paper-tabs-selection-bar-color: #4285f4;
-                --paper-tab-ink: #4285f4;
+
             }
             .right-column {
                 width: 250px;
@@ -51,62 +65,59 @@ class ChatView extends connect(store)(LitElement) {
 
             .left-column {
                 flex-grow: 1;
+                overflow: auto;
             }
 
             #message-input {
                 display: inline-block;
                 min-width: 50%;
             }
-
-            paper-tabs {
-                display: inline-flex;
-            }
         </style>
 
-        <paper-dialog id="loginDialog" with-backdrop>
-            <p>Log in to post messages</p>
+        <wl-dialog fixed backdrop id="loginDialog">
+           <p slot="header">Change your username</p>
+           <div slot="content">
+                <form method="post" id="login-form" enctype="multipart/form-data">
+                    <input type="text" value="aa" name="test">
+                    <wl-textfield label="User Name" name="username" min-length="1" auto-validate required></wl-textfield>
+                    <wl-textfield label="Email" name="email" min-length="1" auto-validate required></wl-textfield>
+                </form>
+           </div>
+           <div slot="footer">
+              <mwc-button @click=${(e) => this.changeUser(e)} autofocus>Confirm credentials</mwc-button>
+           </div>
+        </wl-dialog>
 
-            <iron-form id="login-form">
-            <form method="post" @iron-form-presubmit=${(e) => this.formPresubmit(e)}>
-                <iron-a11y-keys id="a11y" keys="enter" @keys-pressed=${(e) => this.changeUser(e)}></iron-a11y-keys>
-                <paper-input label="User Name" name="username" min-length="1" auto-validate required></paper-input>
-                <paper-input label="Email" name="email" min-length="1" auto-validate required></paper-input>
-            </form>
-            </iron-form>
-
-
-            <div class="buttons">
-                <paper-button @tap=${(e) => this.changeUser(e)} autofocus>Confirm credentials</paper-button>
-            </div>
-        </paper-dialog>
+        <div id="vertical-holder">
+                <wl-tab-group>
+                    ${this.user.subscribedChannels.map((channel) => html`
+                    <wl-tab @click=${(e) => this.selectChannel(channel)} ?checked=${this.selectedChannel == channel}>
+                            Channel: ${channel}
+                    </wl-tab>
+                    `)}
+                </wl-tab-group>
 
         <div id="column-holder">
-            <div class="left-column">
-                <paper-tabs .selected=${this.selectedChannel} attr-for-selected="name"
-                            @selected-changed=${(e) => this.selectedChannelChanged(e)}>
-                    ${this.user.subscribedChannels.map((channel) => html`
-                    <paper-tab .name=${channel}>Channel: ${channel}</paper-tab>
-                    `) }
-                </paper-tabs>
-                <chat-message-list></chat-message-list>
-            </div>
+                <chat-message-list class="left-column"></chat-message-list>
             <div class="right-column">
                 <chat-status-selector></chat-status-selector>
                 <chat-user-list .selectedChannel=${this.selectedChannel}></chat-user-list>
             </div>
-
         </div>
-        <iron-form id="message-form" @iron-form-presubmit=${(e) => this.formPresubmit(e)}>
-            <form method="post">
-                <iron-a11y-keys id="a11y" keys="enter" @keys-pressed=${(e) => this.messageSend(e)}></iron-a11y-keys>
-                <paper-input id="message-input" name="message" label="Your message"></paper-input>
-                <paper-icon-button icon="icons:send" @tap=${(e) => this.messageSend(e)}></paper-icon-button>
-                <br/>
-                ${dialogButton}
-                <chat-channel-picker .subscribedChannels=${this.user.subscribedChannels}
-                                     .possibleChannels=${this.possibleChannels}></chat-channel-picker>
-            </form>
-        </iron-form>
+
+        <form method="post" id="message-form" enctype="multipart/form-data">
+            <wl-textfield id="message-input" name="message" label="Your message"></wl-textfield>
+            <wl-button fab flat inverted @click=${(e) => this.messageSend(e)} style="vertical-align: middle;">
+               <wl-icon>send</wl-icon>
+            </wl-button>
+        </form>
+
+        <div id="bottom-holder">
+        ${dialogButton}
+        <chat-channel-picker .subscribedChannels=${this.user.subscribedChannels}
+                             .possibleChannels=${this.possibleChannels}></chat-channel-picker>
+        </div>
+        </div>
         `
     }
 
@@ -125,7 +136,7 @@ class ChatView extends connect(store)(LitElement) {
         };
     }
 
-    _stateChanged(state) {
+    stateChanged(state) {
         this.user = state.user;
         this.channels = state.chatView.channels;
         this.possibleChannels = state.chatView.ui.possibleChannels;
@@ -134,14 +145,14 @@ class ChatView extends connect(store)(LitElement) {
         this.users = state.chatView.users;
     }
 
-    constructor(){
+    constructor() {
         super();
         this.selectedChannel = 'pub_chan';
     }
 
-    selectedChannelChanged(event) {
-        console.log('selectedChannelChanged', event.detail.value);
-        store.dispatch(channelViewUiActions.setViewedChannel(event.detail.value));
+    selectChannel(channelName) {
+        console.log('selectChannel', channelName);
+        store.dispatch(channelViewUiActions.setViewedChannel(channelName));
     }
 
     loadHistory(messageList, channel) {
@@ -149,19 +160,19 @@ class ChatView extends connect(store)(LitElement) {
     }
 
     openDialog() {
-        this.shadowRoot.querySelector('paper-dialog').open();
+        this.shadowRoot.querySelector('wl-dialog').show();
     }
 
     changeUser(event) {
         event.preventDefault();
         let loginForm = this.shadowRoot.querySelector('#login-form');
-        let formData = loginForm.serializeForm();
-        if (loginForm.validate()) {
+        let formData = new FormData(loginForm);
+        if (loginForm.checkValidity()) {
             store.dispatch(userActions.set({
-                username: formData.username,
-                email: formData.email
+                username: formData.get('username'),
+                email: formData.get('email')
             }));
-            this.shadowRoot.querySelector('paper-dialog').close();
+            this.shadowRoot.querySelector('wl-dialog').open = false;
         }
     }
 
@@ -175,12 +186,12 @@ class ChatView extends connect(store)(LitElement) {
     messageSend(event) {
         event.preventDefault();
         let msgForm = this.shadowRoot.querySelector('#message-form');
-        let formData = msgForm.serializeForm();
+        let formData = new FormData(msgForm)
         this.dispatchEvent(new CustomEvent('message-send',
             {
                 detail: {
                     message: {
-                        text: formData.message,
+                        text: formData.get('message'),
                         email: this.user.email,
                     },
                     channel: this.selectedChannel,
@@ -188,7 +199,7 @@ class ChatView extends connect(store)(LitElement) {
                 },
                 composed: true, bubbles: true
             }));
-        this.shadowRoot.querySelector('#message-form paper-input').value = '';
+        this.shadowRoot.querySelector('#message-form wl-textfield').value = '';
     }
 }
 
