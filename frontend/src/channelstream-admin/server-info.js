@@ -78,7 +78,6 @@ class ServerInfo extends LitElement {
             }
 
             .paper-card {
-                width: 100%;
                 padding: 25px;
             }
 
