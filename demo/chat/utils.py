@@ -62,6 +62,7 @@ def send_welcome_message(request, username):
     WELCOME_MESSAGE_TEXT = """
     This is a welcome message that you see upon creating connection/reconnection.
     Only you see it (it's not stored to history), and is only sent to your user.
+    Open multiple tabs with this page to see real-time communication.
 
     There are 3 channels with different configurations:
 
