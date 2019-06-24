@@ -78,7 +78,6 @@ class ChatView extends connect(store)(LitElement) {
            <p slot="header">Change your username</p>
            <div slot="content">
                 <form method="post" id="login-form" enctype="multipart/form-data">
-                    <input type="text" value="aa" name="test">
                     <wl-textfield label="User Name" name="username" min-length="1" auto-validate required></wl-textfield>
                     <wl-textfield label="Email" name="email" min-length="1" auto-validate required></wl-textfield>
                 </form>
