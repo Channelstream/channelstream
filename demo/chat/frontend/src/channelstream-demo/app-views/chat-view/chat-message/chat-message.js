@@ -1,4 +1,5 @@
 import {LitElement, html} from 'lit-element';
+import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import 'weightless/button/button.js';
 import 'weightless/icon/icon.js';
 import 'weightless/textfield/textfield.js';
@@ -32,6 +33,10 @@ class ChatMessage extends LitElement {
 
         if (this.message.type === 'message'){
             messageText = this.message.message.text
+            // insafe hack, but should be ok for simple demo
+            if (messageText.includes('https://github.com/Channelstream')){
+                messageText = unsafeHTML(messageText);
+            }
         }
         else{
             messageText = `User ${this.message.message.action}`

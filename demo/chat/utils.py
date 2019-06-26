@@ -64,11 +64,7 @@ def send_welcome_message(request, username):
     Only you see it (it's not stored to history), and is only sent to your user.
     Open multiple tabs with this page to see real-time communication.
 
-    There are 3 channels with different configurations:
-
-    - pub_chan: notifies about joins/parts, stores history, history size: 10
-    - notify: notifies about joins/parts, stores history, doesn't send user state change messages, history size: 50
-    - second_channel: doesn't notify about user presence, doesn't store history, doesn't send user state change messages
+    <a href="https://github.com/Channelstream/channelstream/tree/master/demo/chat" target="_blank">See the source code for this application</a>
     """
 
     payload = {
