@@ -72,7 +72,7 @@ class DemoViews(object):
         self.request.response.status = result.status_code
         server_response = result.json()
         # add a demo message when user connects after a while
-        gevent.spawn_later(5, send_welcome_message, self.request, username)
+        gevent.spawn_later(2, send_welcome_message, self.request, username)
         return server_response
 
     @view_config(
