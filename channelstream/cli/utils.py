@@ -24,14 +24,17 @@ def main():
         "-o", "--output", dest="output", help="Output file", required=True
     )
     args = parser.parse_args()
-    data_json = {}
     if args.json:
         data_json = json.loads(args.json)
-
-    for key in CONFIGURABLE_PARAMS:
-        conf_value = data_json.get(key)
-        if conf_value:
-            config[key] = conf_value
+        for key in CONFIGURABLE_PARAMS:
+            conf_value = data_json.get(key)
+            if conf_value:
+                config[key] = conf_value
+    else:
+        for key in CONFIGURABLE_PARAMS:
+            conf_value = os.environ.get(f"channelstream_{key}".upper())
+            if conf_value is not None:
+                config[key] = conf_value
 
     if args.operation == "make_config":
         template_path = os.path.join("templates", "ini", "channelstream.ini.jinja2")

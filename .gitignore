@@ -96,3 +96,6 @@ frontend/build
 /.idea/
 /.pytest_cache/
 /frontend/out/
+/.vscode/
+/pip-tools-env/
+env

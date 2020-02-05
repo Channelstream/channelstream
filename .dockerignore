@@ -9,5 +9,6 @@
 !pyproject.toml
 !pytest.ini
 !README.md
+!requirements.txt
 !setup.cfg
 !setup.py
