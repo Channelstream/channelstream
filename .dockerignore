@@ -1,5 +1,6 @@
 *
 !channelstream
+!docker-entrypoint.sh
 !AUTHORS
 !CHANGELOG.md
 !CLA_ENTITY.md
@@ -12,3 +13,4 @@
 !requirements.txt
 !setup.cfg
 !setup.py
+**/*.pyc
