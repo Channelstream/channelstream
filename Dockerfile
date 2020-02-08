@@ -18,6 +18,8 @@ USER channelstream
 RUN python -m venv env
 # Install any needed packages specified in requirements.txt
 RUN env/bin/pip install  --disable-pip-version-check --trusted-host pypi.python.org -r /tmp/requirements.txt --no-cache-dir
+# make channelstream scripts visible
+ENV PATH $PATH:env/bin
 # Copy the current directory contents into the container at /channelstream
 COPY . /channelstream
 RUN mkdir /channelstream/config
@@ -27,7 +29,6 @@ RUN env/bin/pip install  --disable-pip-version-check --trusted-host pypi.python.
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 VOLUME /channelstream/config
-
 ENTRYPOINT ["/channelstream/docker-entrypoint.sh"]
 # Run channelstream when the container launches
-CMD ["-i", "/channelstream/config/channelstream_config.ini"]
+CMD ["channelstream", "-i", "/channelstream/config/channelstream_config.ini"]
