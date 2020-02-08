@@ -7,6 +7,7 @@ import jinja2
 import os
 
 from channelstream.cli import CONFIGURABLE_PARAMS, SHARED_DEFAULTS
+from channelstream.utils import set_config_types
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -35,6 +36,7 @@ def main():
             conf_value = os.environ.get(f"channelstream_{key}".upper())
             if conf_value is not None:
                 config[key] = conf_value
+        config = set_config_types(config)
 
     if args.operation == "make_config":
         template_path = os.path.join("templates", "ini", "channelstream.ini.jinja2")
