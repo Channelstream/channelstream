@@ -20,18 +20,14 @@ RUN python -m venv env
 RUN env/bin/pip install  --disable-pip-version-check --trusted-host pypi.python.org -r /tmp/requirements.txt --no-cache-dir
 # Copy the current directory contents into the container at /channelstream
 COPY . /channelstream
-# We don't want any pyc files from host system
-RUN find /channelstream/channelstream -name '*.pyc' -delete
 RUN mkdir /channelstream/config
 # install the app
 RUN env/bin/pip install  --disable-pip-version-check --trusted-host pypi.python.org -e .
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
-
-# make config
-RUN env/bin/channelstream_utils make_config -o /channelstream/config/channelstream_config.ini
 VOLUME /channelstream/config
 
+ENTRYPOINT ["/channelstream/docker-entrypoint.sh"]
 # Run channelstream when the container launches
-CMD ["env/bin/channelstream", "-i", "/channelstream/config/channelstream_config.ini"]
+CMD ["-i", "/channelstream/config/channelstream_config.ini"]
