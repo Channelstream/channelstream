@@ -12,7 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Added -->
 <!-- ### Removed -->
 <!-- ### Fixed -->
-
+## Unreleased
+### Changed
+* channelstream-utils can now generate config out of ENV vars
 
 ## [0.7.0] - 2019-05-18
 ### Changed
