@@ -2,7 +2,7 @@
 
 [![Build Status]](https://travis-ci.org/Channelstream/channelstream)
 
-This is a websocket-based communication server for python applications,
+This is a websocket-based real-time communication server,
 your applications communicate with it via simple JSON REST API.
 
 Visit http://channelstream.org for more information.
@@ -21,32 +21,12 @@ Start the server:
 
     YOUR_PYTHON_ENV/bin/channelstream -i config.ini
 
-The server can be configured via ini files (channelstream -i filename), example:
-
 
 ## Demos
 
-This repository provides demonstrative applications on how to connect with the server
-and send information to clients.
+Demo applications live in https://github.com/Channelstream/channelstream_demos repository.
 
-You have a simple notification demo built on flask:
-
-    cd demo/notification/
-    YOUR_PYTHON_ENV/bin/pip install flask
-    YOUR_PYTHON_ENV/bin/flask run
-
-Now you can open multiple browser windows to http://127.0.0.1:5000/ and test notifications.
-
-There is also more complex chat application demo included, it showcases
-multiple channel subscriptions, message edits and user state changing.
-
-    YOUR_PYTHON_ENV/bin/python demo/chat/app.py
-
-Open your browser and point it to following url:
-
-    http://127.0.0.1:6543
-
-To run the demo you will need to have the `requests` package installed in your environment.
+They show common patterns used in real-time applications.
 
 ### Security and communication model
 
