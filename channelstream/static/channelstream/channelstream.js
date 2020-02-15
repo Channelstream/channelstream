@@ -4,7 +4,7 @@
 export class ChannelStreamConnection {
 
     static get version() {
-        return '0.0.2';
+        return '0.1.1';
     }
 
     constructor() {

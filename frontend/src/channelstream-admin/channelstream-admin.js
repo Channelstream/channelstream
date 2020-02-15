@@ -4,15 +4,11 @@ import './server-info.js';
 import '../debug.js';
 import { connect } from 'pwa-helpers/connect-mixin.js';
 import {store} from './redux/store.js';
-import {actions as channelsActions} from './redux/server_info/channels';
-import {actions as statsActions} from './redux/server_info/server_stats';
-import {actions as currentActions} from './redux/current_actions';
 
 
 const fetchServerInfo = (url, store) => {
     const action_type = 'SERVER_INFO';
-    store.dispatch(currentActions.currentActionStart(
-        action_type, {url}));
+    store.dispatch({ type: 'currentActions/start', payload: {subtype:action_type, url} });
 
     fetch(url, {
         method: 'get',
@@ -21,24 +17,22 @@ const fetchServerInfo = (url, store) => {
     }).then(function(response) {
         return response.json();
     }).then(function(response) {
-        store.dispatch(currentActions.currentActionFinish(
-            action_type, response));
-        store.dispatch(statsActions.set({
-            "remembered_user_count": response.remembered_user_count,
-            "unique_user_count": response.unique_user_count,
-            "total_connections": response.total_connections,
-            "total_channels": response.total_channels,
-            "total_messages": response.total_messages,
-            "total_unique_messages": response.total_unique_messages,
-            "uptime": response.uptime
-        }));
+        store.dispatch({ type: 'currentActions/finish', payload: {subtype:action_type, response} });
+        store.dispatch({ type: 'serverStats/set', payload: {
+                "remembered_user_count": response.remembered_user_count,
+                "unique_user_count": response.unique_user_count,
+                "total_connections": response.total_connections,
+                "total_channels": response.total_channels,
+                "total_messages": response.total_messages,
+                "total_unique_messages": response.total_unique_messages,
+                "uptime": response.uptime
+            } });
 
         let channels = Object.values(response.channels);
-        store.dispatch(channelsActions.set(channels));
+        store.dispatch({ type: 'channelStats/set', payload: channels });
 
     }).catch(function(err) {
-        store.dispatch(currentActions.currentActionError(
-            action_type, err));
+        store.dispatch({ type: 'currentActions/error', payload: {subtype: action_type, err} });
     });
 
 };
@@ -70,8 +64,8 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
     }
 
     stateChanged(state) {
-        this.channels = state.serverInfo.channels;
-        this.serverStats = state.serverInfo.serverStats;
+        this.channels = state.channelStats;
+        this.serverStats = state.serverStats;
         this.currentActions = state.currentActions;
     }
 
@@ -91,7 +85,7 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
     }
 
     _addInterval() {
-        this.interval = setInterval(this.refresh.bind(this), 5000);
+        this.interval = setInterval(this.refresh.bind(this), 10000);
     }
 
     _clearInterval() {
@@ -117,4 +111,4 @@ class ChannelStreamAdmin extends connect(store)(LitElement) {
 
 customElements.define(ChannelStreamAdmin.is, ChannelStreamAdmin);
 
-export {fetchServerInfo, ChannelStreamAdmin};
+export {ChannelStreamAdmin};

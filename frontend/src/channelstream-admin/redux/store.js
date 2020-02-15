@@ -1,12 +1,10 @@
-import {createStore, compose, combineReducers, applyMiddleware} from 'redux/dist/redux';
+import { init } from '@rematch/core'
 import logger from 'redux-logger/dist/redux-logger';
 
-import serverInfo from './server_info';
-import currentActions from './current_actions';
+import * as models from './models'
 
-
-const combinedReducers = combineReducers({serverInfo, currentActions});
-
-const store = createStore(combinedReducers, {}, applyMiddleware(logger));
+const store = init({
+    models,
+});
 
 export {store};

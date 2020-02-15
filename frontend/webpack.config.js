@@ -51,17 +51,8 @@ let configFactory = (name, suffix = null, babelConfig) => {
             // remain in ES2015. We’ll talk about this a bit later :)
             new CopyWebpackPlugin([
                 {
-                    from: path.resolve(__dirname, 'node_modules/web-animations-js'),
-                    to: path.join(CHANNELSTREAM_STATIC, 'web-animations-js')
-                },
-                {
                     from: path.resolve(__dirname, 'node_modules/@channelstream/channelstream/src'),
                     to: path.join(CHANNELSTREAM_STATIC, 'channelstream')
-                },
-                {
-                    from: '**/*.js',
-                    context: path.resolve(__dirname, 'node_modules/@webcomponents/webcomponentsjs'),
-                    to: path.join(CHANNELSTREAM_STATIC, 'webcomponentsjs')
                 },
                 {
                     from: path.resolve(__dirname, 'node_modules/@babel/polyfill'),
@@ -100,20 +91,6 @@ let modernBabelConfig = {
     plugins: ["@babel/plugin-proposal-object-rest-spread", "transform-regenerator"]
 };
 
-let legacyBabelConfig = {
-    presets: [
-        ["@babel/preset-env", {
-            targets: {
-                browsers: ['IE 11']
-            },
-            modules: false,
-            debug: true
-        }]
-    ],
-    plugins: ["@babel/plugin-proposal-object-rest-spread", "transform-regenerator"]
-};
-
 let modernConfig = configFactory('modern', suffix = '', babelConfig = modernBabelConfig);
-let legacyConfig = configFactory('legacy', suffix = 'es5', babelConfig = legacyBabelConfig);
 
-module.exports = [modernConfig, legacyConfig];
+module.exports = [modernConfig];

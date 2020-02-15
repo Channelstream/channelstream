@@ -5,11 +5,6 @@ import '@material/mwc-button/mwc-button.js';
 import '../debug.js';
 import '../universal-collapse.js';
 
-import {ReduxMixin} from './redux/store';
-import {actions as channelsActions} from './redux/server_info/channels';
-import {actions as statsActions} from './redux/server_info/server_stats';
-import {actions as currentActions} from './redux/current_actions';
-
 class ServerInfo extends LitElement {
 
     render() {

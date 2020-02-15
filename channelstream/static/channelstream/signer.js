@@ -1,5 +1,9 @@
 import {jsSHA1 as jsSHA} from "./sha1-esm.js";
 
+/**
+ * Small class that allows sending signed messages to channelstream backend API
+ * Implements itsdangerous TimedSigner
+ */
 export class ChannelStreamSigner {
 
     constructor(secret) {
