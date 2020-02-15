@@ -99,3 +99,4 @@ frontend/build
 /.vscode/
 /pip-tools-env/
 env
+/.mypy_cache/
