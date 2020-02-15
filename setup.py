@@ -49,7 +49,7 @@ setup(
     python_requires=">=3.6",
     setup_requires=["pytest-runner"],
     extras_require={
-        "dev": ["coverage", "pytest", "pyramid", "tox", "mock", "webtest"],
+        "dev": ["coverage", "pytest", "pyramid", "tox", "mock", "webtest", "mypy"],
         "lint": ["black"],
     },
     entry_points={
