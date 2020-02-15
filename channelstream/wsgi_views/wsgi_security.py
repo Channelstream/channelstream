@@ -1,6 +1,5 @@
 import logging
 
-from itsdangerous import TimestampSigner
 from pyramid.security import Allow, Everyone, ALL_PERMISSIONS
 
 log = logging.getLogger(__name__)
@@ -16,7 +15,7 @@ def is_allowed_ip(addr, config):
     return addr in config["allow_posting_from"]
 
 
-class APIFactory(object):
+class APIFactory:
     def __init__(self, request):
         self.__acl__ = []
         config = request.registry.settings
@@ -30,8 +29,7 @@ class APIFactory(object):
 
         if req_secret:
             max_age = 60 if config["validate_requests"] else None
-            signer = TimestampSigner(config["secret"])
-            signer.unsign(req_secret, max_age=max_age)
+            request.registry.signature_checker.unsign(req_secret, max_age=max_age)
         else:
             return
         self.__acl__ = [(Allow, Everyone, ALL_PERMISSIONS)]

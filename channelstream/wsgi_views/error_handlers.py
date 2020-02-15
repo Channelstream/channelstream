@@ -17,9 +17,8 @@ def marshmallow_invalid_data(context, request):
     return context.messages
 
 
-@exception_view_config(context="itsdangerous.BadTimeSignature", renderer="json")
-@exception_view_config(context="itsdangerous.BadSignature", renderer="json")
-def itsdangerous_signer_error(context, request):
+@exception_view_config(context="channelstream.exceptions.BadSignature", renderer="json")
+def signer_error(context, request):
     request.response.status = 401
     log.error("Request had incorrect signature")
     return {"request": "Bad Signature"}

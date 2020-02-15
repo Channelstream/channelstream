@@ -16,6 +16,7 @@ SHARED_DEFAULTS = {
     "validate_requests": True,
     "enforce_https": False,
     "http_scheme": "",
+    "signature_checker": "channelstream.utils.DefaultSigner",
 }
 
 CONFIGURABLE_PARAMS = (
@@ -32,4 +33,5 @@ CONFIGURABLE_PARAMS = (
     "validate_requests",
     "enforce_https",
     "http_scheme",
+    "signature_checker",
 )

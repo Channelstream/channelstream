@@ -21,9 +21,7 @@ def main():
         "operation", help="Operation", default=None, choices=["make_config"]
     )
     parser.add_argument("-j", "--json", dest="json", help="Config JSON", default=None)
-    parser.add_argument(
-        "-o", "--output", dest="output", help="Output file", required=True
-    )
+    parser.add_argument("-o", "--output", dest="output", help="Output file")
     args = parser.parse_args()
     if args.json:
         data_json = json.loads(args.json)
@@ -44,6 +42,9 @@ def main():
         template = jinja2.Template(template_str.decode("utf8"))
         template_vars = config
         compiled = template.render(**template_vars)
-        with open(args.output, "w") as f:
-            f.write(compiled)
-        log.info("Config written")
+        if args.output:
+            with open(args.output, "w") as f:
+                f.write(compiled)
+            log.info("Config written")
+        else:
+            print(compiled)

@@ -2,8 +2,15 @@ import copy
 import uuid
 
 import marshmallow
+from itsdangerous import (
+    TimestampSigner,
+    BadSignature as itsBadSignature,
+    BadTimeSignature,
+)
 from pyramid.renderers import render
 from pyramid.settings import asbool
+
+from channelstream.exceptions import BadSignature
 
 
 def handle_cors(request):
@@ -87,3 +94,14 @@ def set_config_types(config):
             except ValueError:
                 pass
     return config
+
+
+class DefaultSigner:
+    def __init__(self, secret, **kwargs):
+        self.signer = TimestampSigner(secret, **kwargs)
+
+    def unsign(self, secret, **kwargs):
+        try:
+            self.signer.unsign(secret, **kwargs)
+        except (itsBadSignature, BadTimeSignature):
+            raise BadSignature(f"Signature {secret} does not match")

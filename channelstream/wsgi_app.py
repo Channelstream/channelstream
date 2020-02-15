@@ -1,5 +1,6 @@
 import datetime
 import uuid
+import importlib
 
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
@@ -24,7 +25,9 @@ def make_app(server_config):
         settings=server_config, root_factory=APIFactory, default_permission="access"
     )
     config.include("pyramid_jinja2")
-
+    module_, class_ = server_config["signature_checker"].rsplit(".", maxsplit=1)
+    signature_checker_cls = getattr(importlib.import_module(module_), class_)
+    config.registry.signature_checker = signature_checker_cls(server_config["secret"])
     authn_policy = AuthTktAuthenticationPolicy(
         server_config["cookie_secret"], max_age=2592000
     )
