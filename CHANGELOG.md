@@ -12,8 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 <!-- ### Added -->
 <!-- ### Removed -->
 <!-- ### Fixed -->
-## Unreleased
-### Changed
+<!-- ## Unreleased -->
+<!-- ### Changed -->
+
+## [0.7.1] - 2020-02-22
+
 * channelstream-utils can now generate config out of ENV vars
 * add option to use different signature checkers
 * added more tests
