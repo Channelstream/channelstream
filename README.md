@@ -12,7 +12,7 @@ Visit http://channelstream.org for more information.
 Use from docker:
 
     docker pull channelstream/channelstream:latest
-    docker run --rm -p 8000:8000 channelstream/channelstream:latest
+    docker run --rm -p 8000:8000 -e CHANNELSTREAM_ALLOW_POSTING_FROM=0.0.0.0 channelstream/channelstream:latest
 
 Obtain source from github and do:
 
