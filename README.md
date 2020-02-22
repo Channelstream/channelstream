@@ -9,6 +9,11 @@ Visit http://channelstream.org for more information.
 
 ## Installation and Setup
 
+Use from docker:
+
+    docker pull channelstream/channelstream:latest
+    docker run --rm -p 8000:8000 channelstream/channelstream:latest
+
 Obtain source from github and do:
 
     YOUR_PYTHON_ENV/bin/pip install channelstream
