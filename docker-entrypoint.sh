@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 # create config file if it doesn't exist in the config volume
-if [ ! -f /channelstream/config/channelstream_config.ini ]; then
+if [ ! -f /opt/application/rundir/config.ini ]; then
     echo "Creating fresh configuration file"
-    channelstream_utils make_config -o /channelstream/config/channelstream_config.ini
+    channelstream_utils make_config -o /opt/application/rundir/config.ini
 fi;
 
 exec "$@"

@@ -14,6 +14,8 @@ Use from docker:
     docker pull channelstream/channelstream:latest
     docker run --rm -p 8000:8000 -e CHANNELSTREAM_ALLOW_POSTING_FROM=0.0.0.0 channelstream/channelstream:latest
 
+# Direct usage
+
 Obtain source from github and do:
 
     YOUR_PYTHON_ENV/bin/pip install channelstream

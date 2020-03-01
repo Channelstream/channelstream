@@ -1,34 +1,38 @@
 # Use an official Python runtime as a parent image
 FROM python:3.7.6-slim-stretch
 
-# Set the working directory to /channelstream
-WORKDIR /channelstream
+# Set the working directory to /opt/application
+WORKDIR /opt/application
 
-# create channelstream user
-RUN useradd --create-home channelstream
+# create application user
+RUN useradd --create-home application
 
-RUN chown channelstream /channelstream
+RUN chown application /opt/application
 
-# Copy the current directory contents into the container at /channelstream
+# Copy the current directory contents into the container at /opt/application
 COPY requirements.txt /tmp/requirements.txt
 
 # change to non-root user
-USER channelstream
+USER application
 
-RUN python -m venv env
-# Install any needed packages specified in requirements.txt
-RUN env/bin/pip install  --disable-pip-version-check --trusted-host pypi.python.org -r /tmp/requirements.txt --no-cache-dir
+RUN python -m venv /home/application/env
 # make channelstream scripts visible
-ENV PATH $PATH:env/bin
-# Copy the current directory contents into the container at /channelstream
-COPY . /channelstream
-RUN mkdir /channelstream/config
+ENV PATH /home/application/env/bin:$PATH
+# Install any needed packages specified in requirements.txt
+RUN pip install --disable-pip-version-check --trusted-host pypi.python.org -r /tmp/requirements.txt --no-cache-dir
+# Copy the current directory contents into the container at /application
+COPY --chown=application:application . /opt/application/src
+RUN mkdir /opt/application/rundir
 # install the app
-RUN env/bin/pip install  --disable-pip-version-check --trusted-host pypi.python.org -e .
+RUN pip install --disable-pip-version-check --trusted-host pypi.python.org -e /opt/application/src
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
-VOLUME /channelstream/config
-ENTRYPOINT ["/channelstream/docker-entrypoint.sh"]
+VOLUME /application/rundir
+
+# change back to root user so we can later manipulate UID/GID
+#USER root
+
+ENTRYPOINT ["/opt/application/src/docker-entrypoint.sh"]
 # Run channelstream when the container launches
-CMD ["channelstream", "-i", "/channelstream/config/channelstream_config.ini"]
+CMD ["channelstream", "-i", "/opt/application/rundir/config.ini"]
