@@ -35,7 +35,7 @@ VOLUME /application/rundir
 ENV CHANNELSTREAM_HOST 0.0.0.0
 ENV CHANNELSTREAM_PORT 8000
 HEALTHCHECK --interval=1m --timeout=3s \
-  CMD curl -f http://$CHANNELSTREAM_HOST:$CHANNELSTREAM_PORT/admin/sign_in || exit 1
+  CMD curl -s -o /dev/null -w "%{http_code}" http://$CHANNELSTREAM_HOST:$CHANNELSTREAM_PORT/admin/sign_in || exit 1
 
 # change back to root user so we can later manipulate UID/GID
 USER root
