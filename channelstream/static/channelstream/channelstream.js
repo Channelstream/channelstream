@@ -867,7 +867,7 @@ class ChannelStreamRequest {
     };
 
     /**
-     * Placeholder for sucessful response handler
+     * Placeholder for successful response handler
      * @param request
      * @param respText
      */
