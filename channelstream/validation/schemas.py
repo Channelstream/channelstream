@@ -4,7 +4,6 @@ import marshmallow
 from marshmallow import validate, fields
 
 from channelstream.validation import (
-    BackportedDict,
     ChannelstreamSchema,
     gen_uuid,
     validate_connection_id,
@@ -77,13 +76,13 @@ class ConnectBodySchema(ChannelstreamSchema):
         description="What state keys should be visible/emitted to other users",
     )
 
-    fresh_user_state = BackportedDict(
+    fresh_user_state = fields.Dict(
         missing=lambda: {},
         values=UserStateField(allow_none=True),
         keys=fields.String(),
         description="Default user state if user object is not in server memory",
     )
-    user_state = BackportedDict(
+    user_state = fields.Dict(
         missing=lambda: {},
         values=UserStateField(allow_none=True),
         keys=fields.String(),
@@ -91,7 +90,7 @@ class ConnectBodySchema(ChannelstreamSchema):
         "values not present in dict are kept intact, valid values are: "
         "string, int, float and boolean",
     )
-    channel_configs = BackportedDict(
+    channel_configs = fields.Dict(
         missing=lambda: {},
         values=fields.Nested(ChannelConfigSchema()),
         keys=fields.String(),
@@ -116,7 +115,7 @@ class SubscribeBodySchema(ChannelstreamSchema):
     )
     info = fields.Nested(InfoResolutionSchema(), missing=lambda: {})
 
-    channel_configs = BackportedDict(
+    channel_configs = fields.Dict(
         missing=lambda: {},
         values=fields.Nested(ChannelConfigSchema()),
         keys=fields.String(),
@@ -125,7 +124,7 @@ class SubscribeBodySchema(ChannelstreamSchema):
     )
 
     @marshmallow.pre_load
-    def get_connection(self, in_data):
+    def get_connection(self, in_data, many=False, partial=False):
         in_data.setdefault("conn_id", self.context["request"].GET.get("conn_id"))
         return in_data
 
@@ -139,7 +138,7 @@ class UserStateBodySchema(ChannelstreamSchema):
         required=True, validate=[validate.Length(min=1, max=512), validate_username]
     )
 
-    user_state = BackportedDict(
+    user_state = fields.Dict(
         missing=lambda: {},
         values=UserStateField(allow_none=True),
         keys=fields.String(),
@@ -176,12 +175,14 @@ class PayloadDeliveryInfo(ChannelstreamSchema):
 
 
 class MessageBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
+    class Meta:
+        unknown = marshmallow.INCLUDE
+
     uuid = fields.UUID(
         default=gen_uuid, missing=gen_uuid, description="Identifier of emitted message"
     )
     timestamp = fields.DateTime(
-        missing=lambda: datetime.utcnow().isoformat(),
-        description="Registered timestamp of message",
+        missing=lambda: datetime.utcnow(), description="Registered timestamp of message"
     )
     user = fields.String(
         required=True,
@@ -191,7 +192,7 @@ class MessageBodySchema(PayloadDeliveryInfo, ChannelstreamSchema):
     message = fields.Dict(description="Message payload, can hold other keys")
 
     @marshmallow.post_load()
-    def _add_unknown(self, data):
+    def _add_unknown(self, data, many=False, partial=False):
         data["edited"] = None
         return data
 
@@ -206,7 +207,7 @@ class MessageEditBodySchema(MessageBodySchema):
     edited = fields.DateTime(missing=lambda: datetime.utcnow().isoformat())
 
     @marshmallow.post_load()
-    def _add_unknown(self, data):
+    def _add_unknown(self, data, many=False, partial=False):
         return data
 
 

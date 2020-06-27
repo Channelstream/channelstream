@@ -141,7 +141,7 @@ def connect(request):
     """
     shared_utils = SharedUtils(request)
     schema = schemas.ConnectBodySchema(context={"request": request})
-    json_body = schema.load(request.json_body).data
+    json_body = schema.load(request.json_body)
     channels = sorted(json_body["channels"])
     connection, user = operations.connect(
         username=json_body["username"],
@@ -199,7 +199,7 @@ def subscribe(request):
     server_state = get_state()
     shared_utils = SharedUtils(request)
     schema = schemas.SubscribeBodySchema(context={"request": request})
-    json_body = schema.load(request.json_body).data
+    json_body = schema.load(request.json_body)
     connection = server_state.connections.get(json_body["conn_id"])
     channels = json_body["channels"]
     channel_configs = json_body.get("channel_configs", {})
@@ -250,7 +250,7 @@ def unsubscribe(request):
     server_state = get_state()
     shared_utils = SharedUtils(request)
     schema = schemas.UnsubscribeBodySchema(context={"request": request})
-    json_body = schema.load(request.json_body).data
+    json_body = schema.load(request.json_body)
     connection = server_state.connections.get(json_body["conn_id"])
     unsubscribed_from = operations.unsubscribe(
         connection=connection, unsubscribe_channels=json_body["channels"]
@@ -360,7 +360,7 @@ def user_state(request):
     """
     server_state = get_state()
     schema = schemas.UserStateBodySchema(context={"request": request})
-    data = schema.load(request.json_body).data
+    data = schema.load(request.json_body)
     user_inst = server_state.users[data["user"]]
     # can be empty list!
     if data["state_public_keys"] is not None:
@@ -378,7 +378,7 @@ def user_state(request):
 def shared_messages(request):
     server_state = get_state()
     schema = schemas.MessageBodySchema(context={"request": request}, many=True)
-    data = schema.load(request.json_body).data
+    data = schema.load(request.json_body)
     data = [m for m in data if m.get("channel") or m.get("pm_users")]
     for msg in data:
         gevent.spawn(operations.pass_message, msg, server_state.stats)
@@ -484,7 +484,7 @@ def messages_patch(request):
     """
 
     schema = schemas.MessageEditBodySchema(context={"request": request}, many=True)
-    data = schema.load(request.json_body).data
+    data = schema.load(request.json_body)
     for msg in data:
         gevent.spawn(operations.edit_message, msg)
     return data
@@ -522,7 +522,7 @@ def messages_delete(request):
     """
 
     schema = schemas.MessagesDeleteBodySchema(context={"request": request}, many=True)
-    data = schema.load(request.json_body).data
+    data = schema.load(request.json_body)
     for msg in data:
         gevent.spawn(operations.delete_message, msg)
     return data
@@ -584,7 +584,7 @@ def disconnect(request):
     else:
         json_body = request.json_body
         payload = {"conn_id": json_body.get("conn_id")}
-    data = schema.load(payload).data
+    data = schema.load(payload)
     return operations.disconnect(conn_id=data["conn_id"])
 
 
@@ -624,7 +624,7 @@ def channel_config(request):
     schema = schemas.ChannelConfigSchema(context={"request": request})
     json_body = request.json_body
     for k in json_body.keys():
-        deserialized[k] = schema.load(json_body[k]).data
+        deserialized[k] = schema.load(json_body[k])
     operations.set_channel_config(channel_configs=deserialized)
     channels_info = shared_utils.get_channel_info(
         deserialized.keys(), include_history=False, include_users=False
@@ -673,7 +673,7 @@ def info(request):
         }
     else:
         schema = schemas.ChannelInfoBodySchema(context={"request": request})
-        data = schema.load(request.json_body).data
+        data = schema.load(request.json_body)
         # get info config for channel information
         info_config = data.get("info") or {}
         req_channels = info_config.get("channels", None)
