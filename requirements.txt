@@ -12,7 +12,7 @@ greenlet==0.4.15          # via gevent
 hupper==1.9.1             # via pyramid
 idna==2.8                 # via requests
 itsdangerous==1.1.0
-jinja2==2.11.1            # via pyramid-jinja2
+jinja2==2.11.3            # via pyramid-jinja2
 markupsafe==1.1.1         # via jinja2, pyramid-jinja2
 marshmallow==2.18.0
 pastedeploy==2.1.0        # via plaster-pastedeploy
