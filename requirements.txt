@@ -22,7 +22,7 @@ pyramid==1.10.4
 pyramid-jinja2==2.8
 pyramid_apispec==0.3.3
 python-dateutil==2.8.1
-pyyaml==5.3               # via apispec
+pyyaml==5.4               # via apispec
 requests==2.22.0
 six==1.14.0               # via python-dateutil
 translationstring==1.3    # via pyramid
